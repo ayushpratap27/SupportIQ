@@ -93,9 +93,7 @@ export default function Sidebar() {
 
             <SectionLabel>Analytics</SectionLabel>
             <NavItem to="/analytics" exact label="Overview" icon={ICONS.chart} />
-            <NavItem to="/analytics/ai" label="AI Insights" icon={ICONS.ai} />
             <NavItem to="/analytics/agents" label="Agent Performance" icon={ICONS.user} />
-            <NavItem to="/analytics/queues" label="Queue Monitor" icon={ICONS.queue} />
             <NavItem to="/analytics/reports" label="Reports" icon={ICONS.reports} />
 
             <SectionLabel>System</SectionLabel>
