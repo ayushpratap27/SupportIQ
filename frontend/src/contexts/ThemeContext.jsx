@@ -5,8 +5,10 @@ const ThemeContext = createContext(null)
 export function ThemeProvider({ children }) {
   const [dark, setDark] = useState(() => {
     const stored = localStorage.getItem('theme')
-    if (stored) return stored === 'dark'
-    return true // default to dark mode
+    // Only honour an explicit 'light' choice if the user toggled it themselves
+    // (i.e. 'light' was written by this app, not inherited from an old session)
+    if (stored === 'light' && localStorage.getItem('theme-user-set') === 'true') return false
+    return true // dark by default
   })
 
   useEffect(() => {
@@ -14,9 +16,11 @@ export function ThemeProvider({ children }) {
     if (dark) {
       root.classList.add('dark')
       localStorage.setItem('theme', 'dark')
+      localStorage.setItem('theme-user-set', 'true')
     } else {
       root.classList.remove('dark')
       localStorage.setItem('theme', 'light')
+      localStorage.setItem('theme-user-set', 'true')
     }
   }, [dark])
 
