@@ -128,7 +128,7 @@ export default function SLAManagement() {
               <div>
                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 dark:text-gray-600 mb-1">Priority</label>
                 <select name="priority" value={form.priority} onChange={handleChange}
-                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="select-field w-full">
                   {PRIORITIES.map((p) => <option key={p}>{p}</option>)}
                 </select>
               </div>

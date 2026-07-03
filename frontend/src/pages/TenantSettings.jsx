@@ -87,7 +87,7 @@ export default function TenantSettings() {
             name="plan"
             value={form.plan}
             onChange={handleChange}
-            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="select-field w-full"
           >
             <option value="free">Free</option>
             <option value="starter">Starter</option>

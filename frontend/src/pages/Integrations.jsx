@@ -225,7 +225,7 @@ export default function Integrations() {
                   <select
                     value={form.provider}
                     onChange={(e) => setForm((f) => ({ ...f, provider: e.target.value, config: {} }))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    className="select-field w-full"
                   >
                     {Object.entries(PROVIDER_META).map(([key, meta]) => (
                       <option key={key} value={key}>{meta.icon} {meta.label}</option>

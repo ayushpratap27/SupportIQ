@@ -140,7 +140,7 @@ export default function Reports() {
               <select
                 value={form.report_type}
                 onChange={e => setForm(f => ({ ...f, report_type: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="select-field w-full"
               >
                 {REPORT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
@@ -150,7 +150,7 @@ export default function Reports() {
               <select
                 value={form.period}
                 onChange={e => setForm(f => ({ ...f, period: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="select-field w-full"
               >
                 {PERIOD_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
@@ -160,7 +160,7 @@ export default function Reports() {
               <select
                 value={form.format}
                 onChange={e => setForm(f => ({ ...f, format: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="select-field w-full"
               >
                 {FORMAT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>

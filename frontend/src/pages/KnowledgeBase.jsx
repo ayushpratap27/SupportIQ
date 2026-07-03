@@ -61,7 +61,7 @@ function DocForm({ initial, onSubmit, onCancel, saving }) {
         <select
           value={form.category}
           onChange={(e) => set('category', e.target.value)}
-          className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+          className="select-field w-full"
         >
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>{c}</option>
@@ -230,7 +230,7 @@ export default function KnowledgeBase() {
           <select
             value={categoryFilter}
             onChange={(e) => { setCategoryFilter(e.target.value); setPage(1) }}
-            className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+            className="select-field"
           >
             <option value="">All Categories</option>
             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}

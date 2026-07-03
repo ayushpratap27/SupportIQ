@@ -203,7 +203,7 @@ export default function EmailAccounts() {
                   <select
                     value={form.provider}
                     onChange={e => setForm(f => ({ ...f, provider: e.target.value }))}
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm"
+                    className="select-field w-full"
                   >
                     {PROVIDERS.map(p => <option key={p}>{p}</option>)}
                   </select>
