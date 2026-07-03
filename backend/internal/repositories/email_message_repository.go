@@ -1,7 +1,6 @@
 package repositories
 
 import (
-	"context"
 	"time"
 
 	"github.com/ayush/supportiq/internal/models"
@@ -9,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// EmailMessageRepository encapsulates all database access for email_messages.
+// EmailMessageRepository handles all database access for email_messages.
 type EmailMessageRepository struct {
 	db *gorm.DB
 }
@@ -18,135 +17,130 @@ func NewEmailMessageRepository(db *gorm.DB) *EmailMessageRepository {
 	return &EmailMessageRepository{db: db}
 }
 
-func (r *EmailMessageRepository) Create(m *models.EmailMessage) error {
-	return r.db.Create(m).Error
+func (r *EmailMessageRepository) Create(msg *models.EmailMessage) error {
+	return r.db.Create(msg).Error
 }
 
-func (r *EmailMessageRepository) FindByID(id uint) (*models.EmailMessage, error) {
-	var m models.EmailMessage
-	if err := r.db.First(&m, id).Error; err != nil {
+func (r *EmailMessageRepository) FindByMessageID(tenantID uuid.UUID, messageID string) (*models.EmailMessage, error) {
+	var msg models.EmailMessage
+	if err := r.db.Where("tenant_id = ? AND message_id = ?", tenantID, messageID).First(&msg).Error; err != nil {
 		return nil, err
 	}
-	return &m, nil
+	return &msg, nil
 }
 
-// FindByTicketID returns all emails for a ticket ordered oldest-first.
-func (r *EmailMessageRepository) FindByTicketID(ticketID uuid.UUID) ([]models.EmailMessage, error) {
-	var msgs []models.EmailMessage
-	err := r.db.Where("ticket_id = ?", ticketID).
-		Order("created_at asc").
-		Find(&msgs).Error
-	return msgs, err
+func (r *EmailMessageRepository) ListByTicketID(tenantID uuid.UUID, ticketID uuid.UUID) ([]models.EmailMessage, error) {
+	var messages []models.EmailMessage
+	err := r.db.Where("tenant_id = ? AND ticket_id = ?", tenantID, ticketID).
+		Order("created_at ASC").Find(&messages).Error
+	return messages, err
 }
 
-// FindTicketByMessageID resolves an RFC 2822 Message-ID to a ticket UUID.
-func (r *EmailMessageRepository) FindTicketByMessageID(_ context.Context, messageID string) (uuid.UUID, error) {
-	var m models.EmailMessage
-	if err := r.db.Select("ticket_id").
-		Where("message_id = ?", messageID).
-		First(&m).Error; err != nil {
+func (r *EmailMessageRepository) Update(msg *models.EmailMessage) error {
+	return r.db.Save(msg).Error
+}
+
+// FindTicketByMessageID finds the ticket_id of the email with the given message_id.
+func (r *EmailMessageRepository) FindTicketByMessageID(_ interface{}, messageID string) (uuid.UUID, error) {
+	var msg models.EmailMessage
+	if err := r.db.Where("message_id = ?", messageID).First(&msg).Error; err != nil {
 		return uuid.Nil, err
 	}
-	return m.TicketID, nil
+	return msg.TicketID, nil
 }
 
-// FindTicketByThreadID resolves a thread-ID header value to a ticket UUID.
-func (r *EmailMessageRepository) FindTicketByThreadID(_ context.Context, threadID string) (uuid.UUID, error) {
-	var m models.EmailMessage
-	if err := r.db.Select("ticket_id").
-		Where("thread_id = ?", threadID).
-		First(&m).Error; err != nil {
+// FindTicketByThreadID finds the ticket_id of the email with the given thread_id.
+func (r *EmailMessageRepository) FindTicketByThreadID(_ interface{}, threadID string) (uuid.UUID, error) {
+	var msg models.EmailMessage
+	if err := r.db.Where("thread_id = ?", threadID).First(&msg).Error; err != nil {
 		return uuid.Nil, err
 	}
-	return m.TicketID, nil
+	return msg.TicketID, nil
 }
 
-// FindTicketBySubject tries to match an open ticket that received an email with
-// the same normalised subject from the same sender address within 30 days.
-func (r *EmailMessageRepository) FindTicketBySubject(_ context.Context, subject, fromAddress string) (uuid.UUID, error) {
-	var m models.EmailMessage
-	since := time.Now().AddDate(0, 0, -30)
-	if err := r.db.Select("ticket_id").
-		Where("subject = ? AND sender LIKE ? AND created_at >= ?",
-			subject, "%"+fromAddress+"%", since).
-		Order("created_at desc").
-		First(&m).Error; err != nil {
+// FindTicketBySubject finds the ticket_id of the most recent email matching subject and sender.
+func (r *EmailMessageRepository) FindTicketBySubject(_ interface{}, subject, sender string) (uuid.UUID, error) {
+	var msg models.EmailMessage
+	if err := r.db.Where("subject = ? AND sender = ?", subject, sender).
+		Order("created_at DESC").First(&msg).Error; err != nil {
 		return uuid.Nil, err
 	}
-	return m.TicketID, nil
+	return msg.TicketID, nil
 }
 
-// FindLatestInboundByTicket returns the last INBOUND message for threading.
+// FindLatestInboundByTicket returns the most recent inbound message for a ticket.
 func (r *EmailMessageRepository) FindLatestInboundByTicket(ticketID uuid.UUID) (*models.EmailMessage, error) {
-	var m models.EmailMessage
-	if err := r.db.
-		Where("ticket_id = ? AND direction = ?", ticketID, models.EmailDirectionInbound).
-		Order("created_at desc").
-		First(&m).Error; err != nil {
+	var msg models.EmailMessage
+	err := r.db.Where("ticket_id = ? AND direction = 'INBOUND'", ticketID).
+		Order("created_at DESC").First(&msg).Error
+	if err != nil {
 		return nil, err
 	}
-	return &m, nil
+	return &msg, nil
 }
 
-// FindQueued returns all outbound messages with status QUEUED ordered oldest-first.
+// FindQueued returns outbound messages in QUEUED status, up to limit.
 func (r *EmailMessageRepository) FindQueued(limit int) ([]models.EmailMessage, error) {
 	var msgs []models.EmailMessage
-	err := r.db.Where("direction = ? AND status = ?",
-		models.EmailDirectionOutbound, models.EmailStatusQueued).
-		Order("created_at asc").
-		Limit(limit).
-		Find(&msgs).Error
+	err := r.db.Where("direction = 'OUTBOUND' AND status = 'QUEUED'").
+		Order("created_at ASC").Limit(limit).Find(&msgs).Error
 	return msgs, err
 }
 
-// FindFailedRetryable returns FAILED outbound messages with retry_count < maxRetries.
+// FindFailedRetryable returns outbound messages in FAILED status with retries below max.
 func (r *EmailMessageRepository) FindFailedRetryable(maxRetries int) ([]models.EmailMessage, error) {
 	var msgs []models.EmailMessage
-	err := r.db.Where("direction = ? AND status = ? AND retry_count < ?",
-		models.EmailDirectionOutbound, models.EmailStatusFailed, maxRetries).
-		Order("created_at asc").
-		Find(&msgs).Error
+	err := r.db.Where("direction = 'OUTBOUND' AND status = 'FAILED' AND retry_count < ?", maxRetries).
+		Order("created_at ASC").Find(&msgs).Error
 	return msgs, err
 }
 
+// UpdateStatus sets the status (and optional error) on a message.
 func (r *EmailMessageRepository) UpdateStatus(id uint, status models.EmailStatus, errMsg string) error {
 	updates := map[string]interface{}{"status": status}
 	if errMsg != "" {
 		updates["error_message"] = errMsg
 	}
-	if status == models.EmailStatusSent {
-		now := time.Now()
-		updates["sent_at"] = now
-	}
 	return r.db.Model(&models.EmailMessage{}).Where("id = ?", id).Updates(updates).Error
 }
 
+// IncrementRetry increments the retry_count column.
 func (r *EmailMessageRepository) IncrementRetry(id uint) error {
 	return r.db.Model(&models.EmailMessage{}).Where("id = ?", id).
 		UpdateColumn("retry_count", gorm.Expr("retry_count + 1")).Error
 }
 
-// ── Statistics ────────────────────────────────────────────────────────────────
+// FindByTicketID returns all messages for a ticket, ordered by creation time.
+func (r *EmailMessageRepository) FindByTicketID(ticketID uuid.UUID) ([]models.EmailMessage, error) {
+	var msgs []models.EmailMessage
+	err := r.db.Where("ticket_id = ?", ticketID).Order("created_at ASC").Find(&msgs).Error
+	return msgs, err
+}
 
+// CountByStatus returns total email messages with the given status.
 func (r *EmailMessageRepository) CountByStatus(status models.EmailStatus) (int64, error) {
-	var n int64
-	return n, r.db.Model(&models.EmailMessage{}).Where("status = ?", status).Count(&n).Error
+	var count int64
+	err := r.db.Model(&models.EmailMessage{}).Where("status = ?", status).Count(&count).Error
+	return count, err
 }
 
+// CountSentToday returns outbound SENT messages created today.
 func (r *EmailMessageRepository) CountSentToday() (int64, error) {
-	var n int64
-	today := time.Now().Truncate(24 * time.Hour)
-	return n, r.db.Model(&models.EmailMessage{}).
-		Where("direction = ? AND status = ? AND sent_at >= ?",
-			models.EmailDirectionOutbound, models.EmailStatusSent, today).
-		Count(&n).Error
+	var count int64
+	now := time.Now().UTC()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	err := r.db.Model(&models.EmailMessage{}).
+		Where("direction = 'OUTBOUND' AND status = 'SENT' AND created_at >= ?", today).
+		Count(&count).Error
+	return count, err
 }
-
+// CountReceivedToday returns inbound RECEIVED messages created today.
 func (r *EmailMessageRepository) CountReceivedToday() (int64, error) {
-	var n int64
-	today := time.Now().Truncate(24 * time.Hour)
-	return n, r.db.Model(&models.EmailMessage{}).
-		Where("direction = ? AND created_at >= ?",
-			models.EmailDirectionInbound, today).
-		Count(&n).Error
+        var count int64
+        now := time.Now().UTC()
+        today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+        err := r.db.Model(&models.EmailMessage{}).
+                Where("direction = 'INBOUND' AND status = 'RECEIVED' AND created_at >= ?", today).
+                Count(&count).Error
+        return count, err
 }

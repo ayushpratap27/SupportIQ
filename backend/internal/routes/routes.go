@@ -114,6 +114,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			knowledgeRepo := repositories.NewKnowledgeRepository(db)
 			replyRepo     := repositories.NewReplyRepository(db)
 			jobRepo       := repositories.NewJobRepository(db)
+			tenantRepo    := repositories.NewTenantRepository(db)
 
 			// Email repositories
 			emailAccountRepo  := repositories.NewEmailAccountRepository(db)
@@ -263,7 +264,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 
 			// Analytics — admins see everything; agents see personal metrics only
 			analyticsRepo      := analytics.NewAnalyticsRepository(db)
-			analyticsAggregator := analytics.NewAggregator(analyticsRepo)
+				analyticsAggregator := analytics.NewAggregator(analyticsRepo, tenantRepo)
 			analyticsSvc       := analytics.NewService(analyticsRepo, analyticsAggregator)
 			reportSvc          := analyticsreports.NewService(db, cfg.ReportStoragePath, cfg.ReportRetentionDays)
 			collector          := analyticsreports.NewDataCollector(db)
@@ -303,7 +304,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			integrationHandler  := handlers.NewIntegrationHandler(integrationSvc)
 
 			// Start integration background worker
-			integrationWorker := integrationspkg.NewWorker(integrationRepo, ticketRepo, integrationRegistry, cfg.JWTAccessSecret)
+				integrationWorker := integrationspkg.NewWorker(integrationRepo, activityRepo, ticketRepo, tenantRepo, integrationRegistry, cfg.JWTAccessSecret)
 			go integrationWorker.Start(context.Background())
 
 			intGroup := protected.Group("/integrations", middleware.RequireRole(models.RoleAdmin))
@@ -321,14 +322,32 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			tickets.POST("/:id/create-jira",        integrationHandler.CreateJiraIssue)
 			tickets.POST("/:id/create-linear",      integrationHandler.CreateLinearIssue)
 			tickets.POST("/:id/create-github-issue", integrationHandler.CreateGitHubIssue)
-		}
+
+						// Tenant Settings (current tenant admin)
+						tenantSvc     := services.NewTenantService(tenantRepo)
+						tenantHandler := handlers.NewTenantHandler(tenantSvc)
+						settingsGroup := protected.Group("/settings")
+						{
+							settingsGroup.GET("",  tenantHandler.GetSettings)
+							settingsGroup.PUT("",  middleware.RequireRole(models.RoleAdmin), tenantHandler.UpdateSettings)
+						}
+
+						// SuperAdmin routes
+						adminGroup := protected.Group("/admin", middleware.RequireSuperAdmin())
+						{
+							adminGroup.GET("/tenants",        tenantHandler.List)
+							adminGroup.POST("/tenants",       tenantHandler.Create)
+							adminGroup.GET("/tenants/:id",    tenantHandler.GetByID)
+							adminGroup.PUT("/tenants/:id",    tenantHandler.Update)
+							adminGroup.DELETE("/tenants/:id", tenantHandler.Delete)
+							adminGroup.GET("/overview",       tenantHandler.Overview)
+						}
+				}
 	}
 
 	return router
 }
 
-// subscribeToWorkerEvents listens to the Redis pub/sub channel and broadcasts
-// all events to WebSocket clients connected to the hub.
 func subscribeToWorkerEvents(rq *redisqueue.Client, hub *appws.Hub) {
 	sub := rq.Subscribe(context.Background())
 	defer sub.Close()

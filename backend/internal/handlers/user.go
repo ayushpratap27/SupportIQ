@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ayush/supportiq/internal/dto"
+	"github.com/ayush/supportiq/internal/middleware"
 	"github.com/ayush/supportiq/internal/models"
 	"github.com/ayush/supportiq/internal/repositories"
 	"github.com/ayush/supportiq/internal/utils"
@@ -22,7 +23,7 @@ func NewUserHandler(userRepo *repositories.UserRepository) *UserHandler {
 // ListAgents handles GET /api/v1/users/agents
 // Returns all active SupportAgent users — used by the ticket assignment UI.
 func (h *UserHandler) ListAgents(c *gin.Context) {
-	users, err := h.userRepo.ListByRole(models.RoleSupportAgent)
+	users, err := h.userRepo.ListByRole(middleware.GetTenantID(c), models.RoleSupportAgent)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, "Failed to retrieve agents")
 		return

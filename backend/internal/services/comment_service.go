@@ -19,13 +19,14 @@ func NewCommentService(commentRepo *repositories.CommentRepository, activityRepo
 	return &CommentService{commentRepo: commentRepo, activityRepo: activityRepo}
 }
 
-func (s *CommentService) Create(ticketID uuid.UUID, req *dto.CreateCommentRequest, userID uint) (*dto.CommentResponse, int, error) {
+func (s *CommentService) Create(tenantID uuid.UUID, ticketID uuid.UUID, req *dto.CreateCommentRequest, userID uint) (*dto.CommentResponse, int, error) {
 	commentType := models.CommentTypePublic
 	if req.CommentType == "INTERNAL" {
 		commentType = models.CommentTypeInternal
 	}
 
 	comment := &models.TicketComment{
+		TenantID:    tenantID,
 		TicketID:    ticketID,
 		UserID:      userID,
 		Message:     req.Message,
@@ -35,14 +36,14 @@ func (s *CommentService) Create(ticketID uuid.UUID, req *dto.CreateCommentReques
 		return nil, http.StatusInternalServerError, err
 	}
 
-	// Reload with user association
-	loaded, err := s.commentRepo.FindByID(comment.ID)
+	loaded, err := s.commentRepo.FindByID(tenantID, comment.ID)
 	if err != nil {
 		r := toCommentResponse(comment)
 		return &r, http.StatusCreated, nil
 	}
 
 	_ = s.activityRepo.Create(&models.TicketActivity{
+		TenantID:     tenantID,
 		TicketID:     ticketID,
 		UserID:       userID,
 		ActivityType: models.ActivityCommentAdded,
@@ -53,8 +54,8 @@ func (s *CommentService) Create(ticketID uuid.UUID, req *dto.CreateCommentReques
 	return &r, http.StatusCreated, nil
 }
 
-func (s *CommentService) List(ticketID uuid.UUID) ([]dto.CommentResponse, int, error) {
-	comments, err := s.commentRepo.ListByTicketID(ticketID)
+func (s *CommentService) List(tenantID uuid.UUID, ticketID uuid.UUID) ([]dto.CommentResponse, int, error) {
+	comments, err := s.commentRepo.ListByTicketID(tenantID, ticketID)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}

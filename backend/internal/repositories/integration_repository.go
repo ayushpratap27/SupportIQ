@@ -23,22 +23,31 @@ func (r *IntegrationRepository) Create(integration *models.Integration) error {
 	return r.db.Create(integration).Error
 }
 
-func (r *IntegrationRepository) FindByID(id uint) (*models.Integration, error) {
+func (r *IntegrationRepository) FindByID(tenantID uuid.UUID, id uint) (*models.Integration, error) {
 	var integration models.Integration
-	err := r.db.Preload("Creator").First(&integration, id).Error
+	err := r.db.Preload("Creator").Where("tenant_id = ? AND id = ?", tenantID, id).First(&integration).Error
 	if err != nil {
 		return nil, err
 	}
 	return &integration, nil
 }
 
-func (r *IntegrationRepository) FindAll() ([]models.Integration, error) {
+func (r *IntegrationRepository) FindAll(tenantID uuid.UUID) ([]models.Integration, error) {
 	var integrations []models.Integration
-	err := r.db.Order("created_at DESC").Find(&integrations).Error
+	err := r.db.Where("tenant_id = ?", tenantID).Order("created_at DESC").Find(&integrations).Error
 	return integrations, err
 }
 
-func (r *IntegrationRepository) FindEnabled() ([]models.Integration, error) {
+func (r *IntegrationRepository) FindEnabled(tenantID uuid.UUID) ([]models.Integration, error) {
+	var integrations []models.Integration
+	err := r.db.Where("tenant_id = ? AND enabled = true AND status != ?", tenantID, models.IntegrationStatusError).
+		Order("created_at DESC").
+		Find(&integrations).Error
+	return integrations, err
+}
+
+// FindAllEnabled returns enabled integrations across all tenants (used by background workers).
+func (r *IntegrationRepository) FindAllEnabled() ([]models.Integration, error) {
 	var integrations []models.Integration
 	err := r.db.Where("enabled = true AND status != ?", models.IntegrationStatusError).
 		Order("created_at DESC").
@@ -46,9 +55,9 @@ func (r *IntegrationRepository) FindEnabled() ([]models.Integration, error) {
 	return integrations, err
 }
 
-func (r *IntegrationRepository) FindByProvider(provider models.IntegrationProvider) ([]models.Integration, error) {
+func (r *IntegrationRepository) FindByProvider(tenantID uuid.UUID, provider models.IntegrationProvider) ([]models.Integration, error) {
 	var integrations []models.Integration
-	err := r.db.Where("provider = ? AND enabled = true", provider).Find(&integrations).Error
+	err := r.db.Where("tenant_id = ? AND provider = ? AND enabled = true", tenantID, provider).Find(&integrations).Error
 	return integrations, err
 }
 
@@ -56,8 +65,8 @@ func (r *IntegrationRepository) Update(integration *models.Integration) error {
 	return r.db.Save(integration).Error
 }
 
-func (r *IntegrationRepository) Delete(id uint) error {
-	return r.db.Delete(&models.Integration{}, id).Error
+func (r *IntegrationRepository) Delete(tenantID uuid.UUID, id uint) error {
+	return r.db.Where("tenant_id = ?", tenantID).Delete(&models.Integration{}, id).Error
 }
 
 // ─── IntegrationEvent ───────────────────────────────────────────────────────
@@ -66,7 +75,19 @@ func (r *IntegrationRepository) CreateEvent(event *models.IntegrationEvent) erro
 	return r.db.Create(event).Error
 }
 
-func (r *IntegrationRepository) FindPendingEvents(limit int) ([]models.IntegrationEvent, error) {
+func (r *IntegrationRepository) FindPendingEvents(tenantID uuid.UUID, limit int) ([]models.IntegrationEvent, error) {
+	var events []models.IntegrationEvent
+	err := r.db.
+		Where("tenant_id = ? AND status IN (?, ?)", tenantID, models.IntEventPending, models.IntEventFailed).
+		Where("retry_count < 5").
+		Order("created_at ASC").
+		Limit(limit).
+		Find(&events).Error
+	return events, err
+}
+
+// FindAllPendingEvents returns pending events across all tenants (for background worker).
+func (r *IntegrationRepository) FindAllPendingEvents(limit int) ([]models.IntegrationEvent, error) {
 	var events []models.IntegrationEvent
 	err := r.db.
 		Where("status IN (?, ?)", models.IntEventPending, models.IntEventFailed).
@@ -80,7 +101,7 @@ func (r *IntegrationRepository) FindPendingEvents(limit int) ([]models.Integrati
 func (r *IntegrationRepository) UpdateEventStatus(id uint, status models.IntegrationEventStatus, errMsg string) error {
 	now := time.Now()
 	updates := map[string]interface{}{
-		"status":       status,
+		"status":        status,
 		"error_message": errMsg,
 	}
 	if status == models.IntEventProcessed {
@@ -104,30 +125,20 @@ func (r *IntegrationRepository) CreateTicketIntegration(ti *models.TicketIntegra
 	return r.db.Create(ti).Error
 }
 
-func (r *IntegrationRepository) FindTicketIntegrations(ticketID uuid.UUID) ([]models.TicketIntegration, error) {
+func (r *IntegrationRepository) FindTicketIntegrations(tenantID uuid.UUID, ticketID uuid.UUID) ([]models.TicketIntegration, error) {
 	var items []models.TicketIntegration
 	err := r.db.Preload("Integration").
-		Where("ticket_id = ?", ticketID).
+		Where("tenant_id = ? AND ticket_id = ?", tenantID, ticketID).
 		Find(&items).Error
 	return items, err
 }
 
-func (r *IntegrationRepository) FindTicketIntegrationByProvider(ticketID uuid.UUID, integrationID uint) (*models.TicketIntegration, error) {
+func (r *IntegrationRepository) FindTicketIntegrationByProvider(tenantID uuid.UUID, ticketID uuid.UUID, integrationID uint) (*models.TicketIntegration, error) {
 	var ti models.TicketIntegration
-	err := r.db.Where("ticket_id = ? AND integration_id = ?", ticketID, integrationID).
+	err := r.db.Where("tenant_id = ? AND ticket_id = ? AND integration_id = ?", tenantID, ticketID, integrationID).
 		First(&ti).Error
 	if err != nil {
 		return nil, err
 	}
 	return &ti, nil
-}
-
-// FindSinceActivityID returns activities with ID > minID, ordered ascending.
-func (r *IntegrationRepository) FindActivitiesSince(minID uint, limit int) ([]models.TicketActivity, error) {
-	var activities []models.TicketActivity
-	err := r.db.Where("id > ?", minID).
-		Order("id ASC").
-		Limit(limit).
-		Find(&activities).Error
-	return activities, err
 }

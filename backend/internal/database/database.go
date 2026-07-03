@@ -32,6 +32,7 @@ func Connect(cfg *config.Config) (*gorm.DB, error) {
 	sqlDB.SetConnMaxLifetime(5 * time.Minute)
 
 	if err := db.AutoMigrate(
+		&models.Tenant{},
 		&models.User{},
 		&models.Ticket{},
 		&models.TicketCounter{},
@@ -54,9 +55,7 @@ func Connect(cfg *config.Config) (*gorm.DB, error) {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
-	// Seed the single ticket counter row used for sequential ticket numbers.
-	db.FirstOrCreate(&models.TicketCounter{}, models.TicketCounter{ID: 1})
-
+	// TicketCounter now uses TenantID as primary key — no seeding needed (created on first ticket per tenant)
 	utils.Logger.Info("Database connected and migrations applied")
 	return db, nil
 }

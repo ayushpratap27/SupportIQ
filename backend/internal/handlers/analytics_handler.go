@@ -8,6 +8,7 @@ import (
 	"github.com/ayush/supportiq/internal/analytics"
 	"github.com/ayush/supportiq/internal/analytics/reports"
 	"github.com/ayush/supportiq/internal/dto"
+	"github.com/ayush/supportiq/internal/middleware"
 	"github.com/ayush/supportiq/internal/models"
 	"github.com/ayush/supportiq/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -29,7 +30,7 @@ func NewAnalyticsHandler(svc *analytics.Service, reportSvc *reports.Service, col
 
 // Overview handles GET /api/v1/analytics/overview
 func (h *AnalyticsHandler) Overview(c *gin.Context) {
-	resp, err := h.svc.GetOverview()
+	resp, err := h.svc.GetOverview(middleware.GetTenantID(c))
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, err.Error())
 		return
@@ -42,7 +43,7 @@ func (h *AnalyticsHandler) Overview(c *gin.Context) {
 // TicketStats handles GET /api/v1/analytics/tickets
 func (h *AnalyticsHandler) TicketStats(c *gin.Context) {
 	f := h.parseFilter(c)
-	resp, err := h.svc.GetTicketStats(f)
+	resp, err := h.svc.GetTicketStats(middleware.GetTenantID(c), f)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, err.Error())
 		return
@@ -64,7 +65,7 @@ func (h *AnalyticsHandler) AgentStats(c *gin.Context) {
 			utils.SendError(c, http.StatusUnauthorized, "invalid user context")
 			return
 		}
-		resp, err := h.svc.GetPersonalAgentStats(uid)
+		resp, err := h.svc.GetPersonalAgentStats(middleware.GetTenantID(c), uid)
 		if err != nil {
 			utils.SendError(c, http.StatusInternalServerError, err.Error())
 			return
@@ -73,7 +74,7 @@ func (h *AnalyticsHandler) AgentStats(c *gin.Context) {
 		return
 	}
 
-	resp, err := h.svc.GetAgentStats()
+	resp, err := h.svc.GetAgentStats(middleware.GetTenantID(c))
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, err.Error())
 		return
@@ -86,7 +87,7 @@ func (h *AnalyticsHandler) AgentStats(c *gin.Context) {
 // AIStats handles GET /api/v1/analytics/ai
 func (h *AnalyticsHandler) AIStats(c *gin.Context) {
 	f := h.parseFilter(c)
-	resp, err := h.svc.GetAIStats(f)
+	resp, err := h.svc.GetAIStats(middleware.GetTenantID(c), f)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, err.Error())
 		return
@@ -98,7 +99,7 @@ func (h *AnalyticsHandler) AIStats(c *gin.Context) {
 
 // QueueStats handles GET /api/v1/analytics/queues
 func (h *AnalyticsHandler) QueueStats(c *gin.Context) {
-	resp, err := h.svc.GetQueueStats()
+	resp, err := h.svc.GetQueueStats(middleware.GetTenantID(c))
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, err.Error())
 		return
@@ -111,7 +112,7 @@ func (h *AnalyticsHandler) QueueStats(c *gin.Context) {
 // EmailStats handles GET /api/v1/analytics/email
 func (h *AnalyticsHandler) EmailStats(c *gin.Context) {
 	f := h.parseFilter(c)
-	resp, err := h.svc.GetEmailStats(f)
+	resp, err := h.svc.GetEmailStats(middleware.GetTenantID(c), f)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, err.Error())
 		return
@@ -124,7 +125,7 @@ func (h *AnalyticsHandler) EmailStats(c *gin.Context) {
 // Trends handles GET /api/v1/analytics/trends
 func (h *AnalyticsHandler) Trends(c *gin.Context) {
 	f := h.parseFilter(c)
-	resp, err := h.svc.GetTrends(f)
+	resp, err := h.svc.GetTrends(middleware.GetTenantID(c), f)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, err.Error())
 		return
@@ -289,14 +290,14 @@ func toReportResponse(r *models.Report) dto.ReportResponse {
 	return dto.ReportResponse{
 		ID:           r.ID,
 		Name:         r.Name,
-		ReportType:   r.ReportType,
+		ReportType:   r.Type,
 		Format:       string(r.Format),
 		Status:       string(r.Status),
 		FileSize:     r.FileSize,
-		Filters:      r.Filters,
+		Filters:      r.Parameters,
 		GeneratedBy:  r.GeneratedBy,
-		ErrorMessage: r.ErrorMessage,
+		ErrorMessage: r.ErrorMsg,
 		CreatedAt:    r.CreatedAt,
-		CompletedAt:  r.CompletedAt,
+		CompletedAt:  nil,
 	}
 }

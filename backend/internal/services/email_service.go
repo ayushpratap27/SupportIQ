@@ -164,7 +164,7 @@ func (s *EmailService) TriggerAIForTicket(ticketID uuid.UUID) {
 // Called after an agent approves an AI reply.
 func (s *EmailService) QueueReplyForTicket(ctx context.Context, ticketID uuid.UUID, replyText string, userID uint) error {
 	// Find the active email account to send from
-	accounts, err := s.accountRepo.FindActive()
+	accounts, err := s.accountRepo.ListAllActive()
 	if err != nil || len(accounts) == 0 {
 		return nil // no email account configured — silently skip
 	}
@@ -174,7 +174,7 @@ func (s *EmailService) QueueReplyForTicket(ctx context.Context, ticketID uuid.UU
 	}
 
 	// Load ticket for customer details
-	ticket, err := s.ticketRepo.FindByID(ticketID)
+	ticket, err := s.ticketRepo.FindByIDUnscoped(ticketID)
 	if err != nil {
 		return fmt.Errorf("email: load ticket: %w", err)
 	}
@@ -218,7 +218,7 @@ func (s *EmailService) QueueReplyForTicket(ctx context.Context, ticketID uuid.UU
 
 // SendEmail sends a manually composed email immediately (admin action).
 func (s *EmailService) SendEmail(ctx context.Context, ticketID uuid.UUID, req *dto.SendEmailRequest, userID uint) error {
-	accounts, err := s.accountRepo.FindActive()
+	accounts, err := s.accountRepo.ListAllActive()
 	if err != nil || len(accounts) == 0 {
 		return fmt.Errorf("no active email account configured")
 	}
@@ -292,7 +292,7 @@ func (s *EmailService) ProcessQueuedOutbound(ctx context.Context) {
 		return
 	}
 
-	accounts, err := s.accountRepo.FindActive()
+	accounts, err := s.accountRepo.ListAllActive()
 	if err != nil || len(accounts) == 0 {
 		return
 	}
@@ -386,7 +386,7 @@ func (s *EmailService) GetMonitorStats() (*dto.EmailMonitorStats, error) {
 	sentToday, _ := s.messageRepo.CountSentToday()
 	receivedToday, _ := s.messageRepo.CountReceivedToday()
 
-	accounts, _ := s.accountRepo.FindAll()
+	accounts, _ := s.accountRepo.ListAllActive()
 	var lastSync *time.Time
 	var accountResp []dto.EmailAccountResponse
 	for i := range accounts {
@@ -438,13 +438,14 @@ func (s *EmailService) createTicketFromEmail(account *models.EmailAccount, p *em
 	}()
 
 	ticketRepo := repositories.NewTicketRepository(s.db)
-	ticketNumber, err := ticketRepo.NextTicketNumber(tx)
+	ticketNumber, err := ticketRepo.NextTicketNumber(account.TenantID, tx)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 
 	ticket := &models.Ticket{
+		TenantID:      account.TenantID,
 		TicketNumber:  ticketNumber,
 		Subject:       p.Subject,
 		Description:   description,
@@ -487,7 +488,7 @@ func (s *EmailService) logActivity(ticketID uuid.UUID, userID uint, actType, des
 		UserID:       userID,
 		ActivityType: actType,
 		Description:  desc,
-	})
+	}) // Note: TenantID is zero here; email service worker is cross-tenant
 }
 
 // generateEmailMessageID creates a unique RFC 2822 Message-ID.

@@ -21,6 +21,8 @@ import AgentPerformance from '../pages/analytics/AgentPerformance'
 import QueueMonitoring from '../pages/analytics/QueueMonitoring'
 import Reports from '../pages/analytics/Reports'
 import Integrations from '../pages/Integrations'
+import TenantSettings from '../pages/TenantSettings'
+import SuperAdminDashboard from '../pages/superadmin/SuperAdminDashboard'
 
 function AppRoutes() {
   return (
@@ -50,6 +52,8 @@ function AppRoutes() {
         <Route path="/tickets/:id" element={<TicketDetails />} />
         <Route path="/tickets/:id/edit" element={<EditTicket />} />
         <Route path="/integrations" element={<Integrations />} />
+        <Route path="/settings" element={<TenantSettings />} />
+        <Route path="/admin" element={<SuperAdminDashboard />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

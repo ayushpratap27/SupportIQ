@@ -49,7 +49,7 @@ func (s *AIService) RetryAnalysis(ticketID uuid.UUID) {
 func (s *AIService) run(ticketID uuid.UUID) {
 	log := utils.Logger.WithField("ticket_id", ticketID)
 
-	ticket, err := s.ticketRepo.FindByID(ticketID)
+	ticket, err := s.ticketRepo.FindByIDUnscoped(ticketID)
 	if err != nil {
 		log.WithError(err).Error("AI: Could not load ticket for analysis")
 		return
@@ -101,6 +101,7 @@ func (s *AIService) run(ticketID uuid.UUID) {
 
 	// Append to the activity timeline
 	_ = s.activityRepo.Create(&models.TicketActivity{
+		TenantID:     ticket.TenantID,
 		TicketID:     ticketID,
 		UserID:       ticket.CreatedBy,
 		ActivityType: models.ActivityAIAnalysisCompleted,
@@ -115,6 +116,6 @@ func (s *AIService) run(ticketID uuid.UUID) {
 
 	// Automatically trigger reply generation now that we have AI context
 	if s.replySvc != nil {
-		s.replySvc.GenerateForTicket(ticketID, ticket.CreatedBy)
+		s.replySvc.GenerateForTicket(ticket.TenantID, ticketID, ticket.CreatedBy)
 	}
 }

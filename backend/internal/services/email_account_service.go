@@ -6,27 +6,28 @@ import (
 
 	emailcrypto "github.com/ayush/supportiq/internal/email/crypto"
 	emailproviders "github.com/ayush/supportiq/internal/email/providers"
-	smtpprovider "github.com/ayush/supportiq/internal/email/providers/smtp"
 	imapprovider "github.com/ayush/supportiq/internal/email/providers/imap"
+	smtpprovider "github.com/ayush/supportiq/internal/email/providers/smtp"
 	"github.com/ayush/supportiq/internal/dto"
 	"github.com/ayush/supportiq/internal/models"
 	"github.com/ayush/supportiq/internal/repositories"
 	"github.com/ayush/supportiq/internal/utils"
+	"github.com/google/uuid"
 )
 
 // EmailAccountService manages CRUD and connection testing for email accounts.
 type EmailAccountService struct {
 	repo          *repositories.EmailAccountRepository
-	encryptionKey string // JWT_ACCESS_SECRET — used to derive the AES key
+	encryptionKey string
 }
 
 func NewEmailAccountService(repo *repositories.EmailAccountRepository, encryptionKey string) *EmailAccountService {
 	return &EmailAccountService{repo: repo, encryptionKey: encryptionKey}
 }
 
-// List returns all accounts (credentials stripped from response).
-func (s *EmailAccountService) List() ([]dto.EmailAccountResponse, int, error) {
-	accounts, err := s.repo.FindAll()
+// List returns all active accounts for a tenant.
+func (s *EmailAccountService) List(tenantID uuid.UUID) ([]dto.EmailAccountResponse, int, error) {
+	accounts, err := s.repo.ListByTenant(tenantID)
 	if err != nil {
 		return nil, http.StatusInternalServerError, fmt.Errorf("failed to list email accounts")
 	}
@@ -38,7 +39,7 @@ func (s *EmailAccountService) List() ([]dto.EmailAccountResponse, int, error) {
 }
 
 // Create persists a new email account after encrypting the password.
-func (s *EmailAccountService) Create(req *dto.CreateEmailAccountRequest) (*dto.EmailAccountResponse, int, error) {
+func (s *EmailAccountService) Create(tenantID uuid.UUID, req *dto.CreateEmailAccountRequest) (*dto.EmailAccountResponse, int, error) {
 	encrypted, err := emailcrypto.Encrypt(s.encryptionKey, req.Password)
 	if err != nil {
 		utils.Logger.WithError(err).Error("EmailAccount: password encryption failed")
@@ -55,6 +56,7 @@ func (s *EmailAccountService) Create(req *dto.CreateEmailAccountRequest) (*dto.E
 	}
 
 	account := &models.EmailAccount{
+		TenantID:          tenantID,
 		Provider:          models.EmailProvider(req.Provider),
 		EmailAddress:      req.EmailAddress,
 		DisplayName:       req.DisplayName,
@@ -66,10 +68,7 @@ func (s *EmailAccountService) Create(req *dto.CreateEmailAccountRequest) (*dto.E
 		SMTPImplicitTLS:   req.SMTPImplicitTLS,
 		Username:          req.Username,
 		EncryptedPassword: encrypted,
-		IsActive:          req.IsActive,
-	}
-	if !req.IsActive {
-		account.IsActive = true // default to active
+		IsActive:          true,
 	}
 
 	if err := s.repo.Create(account); err != nil {
@@ -81,8 +80,8 @@ func (s *EmailAccountService) Create(req *dto.CreateEmailAccountRequest) (*dto.E
 }
 
 // Update applies partial updates to an existing account.
-func (s *EmailAccountService) Update(id uint, req *dto.UpdateEmailAccountRequest) (*dto.EmailAccountResponse, int, error) {
-	account, err := s.repo.FindByID(id)
+func (s *EmailAccountService) Update(tenantID uuid.UUID, id uint, req *dto.UpdateEmailAccountRequest) (*dto.EmailAccountResponse, int, error) {
+	account, err := s.repo.FindByID(tenantID, id)
 	if err != nil {
 		return nil, http.StatusNotFound, fmt.Errorf("email account not found")
 	}
@@ -131,55 +130,46 @@ func (s *EmailAccountService) Update(id uint, req *dto.UpdateEmailAccountRequest
 }
 
 // Delete removes an email account by ID.
-func (s *EmailAccountService) Delete(id uint) (int, error) {
-	if _, err := s.repo.FindByID(id); err != nil {
+func (s *EmailAccountService) Delete(tenantID uuid.UUID, id uint) (int, error) {
+	if _, err := s.repo.FindByID(tenantID, id); err != nil {
 		return http.StatusNotFound, fmt.Errorf("email account not found")
 	}
-	if err := s.repo.Delete(id); err != nil {
+	if err := s.repo.Delete(tenantID, id); err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("failed to delete email account")
 	}
 	return http.StatusOK, nil
 }
 
 // TestSMTP tests the SMTP connection for an account.
-func (s *EmailAccountService) TestSMTP(id uint) error {
-	account, err := s.repo.FindByID(id)
+func (s *EmailAccountService) TestSMTP(tenantID uuid.UUID, id uint) error {
+	account, err := s.repo.FindByID(tenantID, id)
 	if err != nil {
 		return fmt.Errorf("email account not found")
 	}
 	if account.SMTPHost == "" {
 		return fmt.Errorf("SMTP host not configured")
 	}
-
 	pass, err := emailcrypto.Decrypt(s.encryptionKey, account.EncryptedPassword)
 	if err != nil {
 		return fmt.Errorf("failed to decrypt credentials")
 	}
-
-	client := smtpprovider.New(
-		account.SMTPHost, account.SMTPPort,
-		account.Username, pass,
-		account.EmailAddress, account.DisplayName,
-		account.SMTPImplicitTLS,
-	)
+	client := smtpprovider.New(account.SMTPHost, account.SMTPPort, account.Username, pass, account.EmailAddress, account.DisplayName, account.SMTPImplicitTLS)
 	return client.TestConnection(nil)
 }
 
 // TestIMAP tests the IMAP connection for an account.
-func (s *EmailAccountService) TestIMAP(id uint) error {
-	account, err := s.repo.FindByID(id)
+func (s *EmailAccountService) TestIMAP(tenantID uuid.UUID, id uint) error {
+	account, err := s.repo.FindByID(tenantID, id)
 	if err != nil {
 		return fmt.Errorf("email account not found")
 	}
 	if account.IMAPHost == "" {
 		return fmt.Errorf("IMAP host not configured")
 	}
-
 	pass, err := emailcrypto.Decrypt(s.encryptionKey, account.EncryptedPassword)
 	if err != nil {
 		return fmt.Errorf("failed to decrypt credentials")
 	}
-
 	client := imapprovider.New(account.IMAPHost, account.IMAPPort, account.Username, pass, account.IMAPUseTLS)
 	return client.TestConnection(nil)
 }
@@ -190,19 +180,13 @@ func (s *EmailAccountService) BuildSender(account *models.EmailAccount) (emailpr
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt SMTP credentials")
 	}
-	return smtpprovider.New(
-		account.SMTPHost, account.SMTPPort,
-		account.Username, pass,
-		account.EmailAddress, account.DisplayName,
-		account.SMTPImplicitTLS,
-	), nil
+	return smtpprovider.New(account.SMTPHost, account.SMTPPort, account.Username, pass, account.EmailAddress, account.DisplayName, account.SMTPImplicitTLS), nil
 }
-
-// BuildReceiver decrypts credentials and returns a ready-to-use Receiver.
+// BuildReceiver decrypts credentials and returns a ready-to-use IMAP Receiver.
 func (s *EmailAccountService) BuildReceiver(account *models.EmailAccount) (emailproviders.Receiver, error) {
-	pass, err := emailcrypto.Decrypt(s.encryptionKey, account.EncryptedPassword)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt IMAP credentials")
-	}
-	return imapprovider.New(account.IMAPHost, account.IMAPPort, account.Username, pass, account.IMAPUseTLS), nil
+        pass, err := emailcrypto.Decrypt(s.encryptionKey, account.EncryptedPassword)
+        if err != nil {
+                return nil, fmt.Errorf("failed to decrypt IMAP credentials")
+        }
+        return imapprovider.New(account.IMAPHost, account.IMAPPort, account.Username, pass, account.IMAPUseTLS), nil
 }

@@ -19,19 +19,19 @@ func (r *CommentRepository) Create(comment *models.TicketComment) error {
 	return r.db.Create(comment).Error
 }
 
-func (r *CommentRepository) FindByID(id uint) (*models.TicketComment, error) {
+func (r *CommentRepository) FindByID(tenantID uuid.UUID, id uint) (*models.TicketComment, error) {
 	var comment models.TicketComment
-	if err := r.db.Preload("User").First(&comment, id).Error; err != nil {
+	if err := r.db.Preload("User").Where("tenant_id = ? AND id = ?", tenantID, id).First(&comment).Error; err != nil {
 		return nil, err
 	}
 	return &comment, nil
 }
 
-func (r *CommentRepository) ListByTicketID(ticketID uuid.UUID) ([]models.TicketComment, error) {
+func (r *CommentRepository) ListByTicketID(tenantID uuid.UUID, ticketID uuid.UUID) ([]models.TicketComment, error) {
 	var comments []models.TicketComment
 	err := r.db.
 		Preload("User").
-		Where("ticket_id = ?", ticketID).
+		Where("tenant_id = ? AND ticket_id = ?", tenantID, ticketID).
 		Order("created_at ASC").
 		Find(&comments).Error
 	return comments, err

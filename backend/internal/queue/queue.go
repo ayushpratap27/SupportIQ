@@ -11,6 +11,7 @@ type Job struct {
 	ID         string    `json:"id"`          // UUID string
 	Type       string    `json:"type"`        // JobType constant
 	TicketID   string    `json:"ticket_id"`   // ticket UUID string
+	TenantID   string    `json:"tenant_id"`   // tenant UUID string
 	UserID     uint      `json:"user_id"`
 	DBJobID    uint      `json:"db_job_id"`   // background_jobs.id for status updates
 	RetryCount int       `json:"retry_count"`

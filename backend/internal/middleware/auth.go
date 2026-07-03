@@ -9,12 +9,12 @@ import (
 	"github.com/ayush/supportiq/internal/models"
 	"github.com/ayush/supportiq/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-// Authenticate validates the Bearer token in the Authorization header,
-// loads the corresponding user from the database, and stores the user's
-// ID, role, and full record in the Gin context for downstream handlers.
+// Authenticate validates the Bearer token, loads the user from the database,
+// and sets userID, userRole, tenantID, user, and tenant in the Gin context.
 func Authenticate(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
@@ -39,9 +39,49 @@ func Authenticate(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
+		// Set user context
 		c.Set("userID", user.ID)
 		c.Set("userRole", string(user.Role))
 		c.Set("user", &user)
+
+		// SuperAdmin: tenant context is optional (all tenants accessible)
+		if user.Role == models.RoleSuperAdmin {
+			c.Set("tenantID", uuid.Nil)
+			c.Next()
+			return
+		}
+
+		// Load and validate tenant for regular users
+		tenantID := user.TenantID
+		if tenantID == uuid.Nil {
+			utils.SendError(c, http.StatusUnauthorized, "User has no tenant assigned")
+			c.Abort()
+			return
+		}
+
+		var tenant models.Tenant
+		if err := db.First(&tenant, "id = ?", tenantID).Error; err != nil {
+			utils.SendError(c, http.StatusUnauthorized, "Tenant not found")
+			c.Abort()
+			return
+		}
+
+		if tenant.Status == models.TenantStatusSuspended {
+			utils.SendError(c, http.StatusForbidden, "Tenant account is suspended")
+			c.Abort()
+			return
+		}
+
+		c.Set("tenantID", tenantID)
+		c.Set("tenant", &tenant)
 		c.Next()
 	}
+}
+
+// GetTenantID extracts the tenantID from the Gin context.
+// Returns uuid.Nil for SuperAdmin (they have access to all tenants).
+func GetTenantID(c *gin.Context) uuid.UUID {
+	val, _ := c.Get("tenantID")
+	id, _ := val.(uuid.UUID)
+	return id
 }

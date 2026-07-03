@@ -24,24 +24,17 @@ type IntegrationService struct {
 	encryptionKey string
 }
 
-// NewIntegrationService creates a new IntegrationService.
 func NewIntegrationService(
 	repo *repositories.IntegrationRepository,
 	ticketRepo *repositories.TicketRepository,
 	registry *integrations.Registry,
 	encryptionKey string,
 ) *IntegrationService {
-	return &IntegrationService{
-		repo:          repo,
-		ticketRepo:    ticketRepo,
-		registry:      registry,
-		encryptionKey: encryptionKey,
-	}
+	return &IntegrationService{repo: repo, ticketRepo: ticketRepo, registry: registry, encryptionKey: encryptionKey}
 }
 
-// List returns all configured integrations.
-func (s *IntegrationService) List() ([]dto.IntegrationResponse, error) {
-	integrationList, err := s.repo.FindAll()
+func (s *IntegrationService) List(tenantID uuid.UUID) ([]dto.IntegrationResponse, error) {
+	integrationList, err := s.repo.FindAll(tenantID)
 	if err != nil {
 		return nil, err
 	}
@@ -52,14 +45,12 @@ func (s *IntegrationService) List() ([]dto.IntegrationResponse, error) {
 	return resp, nil
 }
 
-// Create validates, encrypts the config, and stores a new integration.
-func (s *IntegrationService) Create(req dto.CreateIntegrationRequest, userID uint) (*dto.IntegrationResponse, error) {
-	// Build provider to validate config before persisting
+func (s *IntegrationService) Create(tenantID uuid.UUID, req dto.CreateIntegrationRequest, userID uint) (*dto.IntegrationResponse, error) {
 	prov, err := s.registry.Build(req.Provider, req.Config)
 	if err != nil {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
-	_ = prov // validation only at creation; TestConnection is explicit
+	_ = prov
 
 	configJSON, err := json.Marshal(req.Config)
 	if err != nil {
@@ -71,6 +62,7 @@ func (s *IntegrationService) Create(req dto.CreateIntegrationRequest, userID uin
 	}
 
 	intg := &models.Integration{
+		TenantID:      tenantID,
 		Provider:      models.IntegrationProvider(req.Provider),
 		Name:          req.Name,
 		Configuration: encrypted,
@@ -85,9 +77,8 @@ func (s *IntegrationService) Create(req dto.CreateIntegrationRequest, userID uin
 	return &resp, nil
 }
 
-// Update applies changes to an existing integration.
-func (s *IntegrationService) Update(id uint, req dto.UpdateIntegrationRequest) (*dto.IntegrationResponse, error) {
-	intg, err := s.repo.FindByID(id)
+func (s *IntegrationService) Update(tenantID uuid.UUID, id uint, req dto.UpdateIntegrationRequest) (*dto.IntegrationResponse, error) {
+	intg, err := s.repo.FindByID(tenantID, id)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +90,6 @@ func (s *IntegrationService) Update(id uint, req dto.UpdateIntegrationRequest) (
 		intg.Enabled = *req.Enabled
 	}
 	if req.Config != nil {
-		// Validate new config
 		if _, err := s.registry.Build(string(intg.Provider), req.Config); err != nil {
 			return nil, fmt.Errorf("invalid configuration: %w", err)
 		}
@@ -109,7 +99,7 @@ func (s *IntegrationService) Update(id uint, req dto.UpdateIntegrationRequest) (
 			return nil, fmt.Errorf("encrypt config: %w", err)
 		}
 		intg.Configuration = encrypted
-		intg.Status = models.IntegrationStatusInactive // re-test required
+		intg.Status = models.IntegrationStatusInactive
 	}
 
 	if err := s.repo.Update(intg); err != nil {
@@ -119,14 +109,12 @@ func (s *IntegrationService) Update(id uint, req dto.UpdateIntegrationRequest) (
 	return &resp, nil
 }
 
-// Delete removes an integration by ID.
-func (s *IntegrationService) Delete(id uint) error {
-	return s.repo.Delete(id)
+func (s *IntegrationService) Delete(tenantID uuid.UUID, id uint) error {
+	return s.repo.Delete(tenantID, id)
 }
 
-// TestConnection attempts a live connection test for the integration.
-func (s *IntegrationService) TestConnection(ctx context.Context, id uint) error {
-	intg, err := s.repo.FindByID(id)
+func (s *IntegrationService) TestConnection(ctx context.Context, tenantID uuid.UUID, id uint) error {
+	intg, err := s.repo.FindByID(tenantID, id)
 	if err != nil {
 		return err
 	}
@@ -142,7 +130,6 @@ func (s *IntegrationService) TestConnection(ctx context.Context, id uint) error 
 		return err
 	}
 
-	// Mark active
 	now := time.Now()
 	intg.Status = models.IntegrationStatusActive
 	intg.ErrorMessage = ""
@@ -151,9 +138,8 @@ func (s *IntegrationService) TestConnection(ctx context.Context, id uint) error 
 	return nil
 }
 
-// GetTicketIntegrations returns all external issue links for a ticket.
-func (s *IntegrationService) GetTicketIntegrations(ticketID uuid.UUID) ([]dto.TicketIntegrationResponse, error) {
-	items, err := s.repo.FindTicketIntegrations(ticketID)
+func (s *IntegrationService) GetTicketIntegrations(tenantID uuid.UUID, ticketID uuid.UUID) ([]dto.TicketIntegrationResponse, error) {
+	items, err := s.repo.FindTicketIntegrations(tenantID, ticketID)
 	if err != nil {
 		return nil, err
 	}
@@ -176,28 +162,25 @@ func (s *IntegrationService) GetTicketIntegrations(ticketID uuid.UUID) ([]dto.Ti
 	return resp, nil
 }
 
-// CreateJiraIssue creates a Jira issue for a ticket.
-func (s *IntegrationService) CreateJiraIssue(ctx context.Context, ticketID uuid.UUID) (*dto.TicketIntegrationResponse, error) {
-	return s.createIssue(ctx, ticketID, "jira")
+func (s *IntegrationService) CreateJiraIssue(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID) (*dto.TicketIntegrationResponse, error) {
+	return s.createIssue(ctx, tenantID, ticketID, "jira")
 }
 
-// CreateLinearIssue creates a Linear issue for a ticket.
-func (s *IntegrationService) CreateLinearIssue(ctx context.Context, ticketID uuid.UUID) (*dto.TicketIntegrationResponse, error) {
-	return s.createIssue(ctx, ticketID, "linear")
+func (s *IntegrationService) CreateLinearIssue(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID) (*dto.TicketIntegrationResponse, error) {
+	return s.createIssue(ctx, tenantID, ticketID, "linear")
 }
 
-// CreateGitHubIssue creates a GitHub issue for a ticket.
-func (s *IntegrationService) CreateGitHubIssue(ctx context.Context, ticketID uuid.UUID) (*dto.TicketIntegrationResponse, error) {
-	return s.createIssue(ctx, ticketID, "github")
+func (s *IntegrationService) CreateGitHubIssue(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID) (*dto.TicketIntegrationResponse, error) {
+	return s.createIssue(ctx, tenantID, ticketID, "github")
 }
 
-func (s *IntegrationService) createIssue(ctx context.Context, ticketID uuid.UUID, providerType string) (*dto.TicketIntegrationResponse, error) {
-	ticket, err := s.ticketRepo.FindByID(ticketID)
+func (s *IntegrationService) createIssue(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, providerType string) (*dto.TicketIntegrationResponse, error) {
+	ticket, err := s.ticketRepo.FindByID(tenantID, ticketID)
 	if err != nil {
 		return nil, fmt.Errorf("ticket not found: %w", err)
 	}
 
-	providerIntgs, err := s.repo.FindByProvider(models.IntegrationProvider(providerType))
+	providerIntgs, err := s.repo.FindByProvider(tenantID, models.IntegrationProvider(providerType))
 	if err != nil || len(providerIntgs) == 0 {
 		return nil, fmt.Errorf("%s integration not configured", providerType)
 	}
@@ -220,6 +203,7 @@ func (s *IntegrationService) createIssue(ctx context.Context, ticketID uuid.UUID
 
 	now := time.Now()
 	ti := &models.TicketIntegration{
+		TenantID:      tenantID,
 		TicketID:      ticket.ID,
 		IntegrationID: intg.ID,
 		ExternalID:    ref.ExternalID,
@@ -228,7 +212,6 @@ func (s *IntegrationService) createIssue(ctx context.Context, ticketID uuid.UUID
 		SyncedAt:      &now,
 	}
 	if err := s.repo.CreateTicketIntegration(ti); err != nil {
-		// Non-fatal: issue was created, just couldn't save the link
 		_ = err
 	}
 
@@ -244,16 +227,14 @@ func (s *IntegrationService) createIssue(ctx context.Context, ticketID uuid.UUID
 	}, nil
 }
 
-// ListEvents returns the most recent events for an integration.
-func (s *IntegrationService) ListEvents(integrationID uint) ([]dto.IntegrationEventResponse, error) {
-	// Verify the integration exists
-	if _, err := s.repo.FindByID(integrationID); err != nil {
+func (s *IntegrationService) ListEvents(tenantID uuid.UUID, integrationID uint) ([]dto.IntegrationEventResponse, error) {
+	if _, err := s.repo.FindByID(tenantID, integrationID); err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, fmt.Errorf("integration not found")
 		}
 		return nil, err
 	}
-	events, err := s.repo.FindPendingEvents(100)
+	events, err := s.repo.FindPendingEvents(tenantID, 100)
 	if err != nil {
 		return nil, err
 	}

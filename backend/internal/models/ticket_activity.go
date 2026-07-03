@@ -40,6 +40,7 @@ const (
 // TicketActivity is an immutable audit-log row. Never edited after creation.
 type TicketActivity struct {
 	ID           uint      `gorm:"primarykey;autoIncrement"  json:"id"`
+	TenantID     uuid.UUID `gorm:"type:uuid;not null;default:'00000000-0000-0000-0000-000000000000';index" json:"tenant_id"`
 	TicketID     uuid.UUID `gorm:"type:uuid;not null;index"  json:"ticket_id"`
 	UserID       uint      `gorm:"not null"                  json:"user_id"`
 	ActivityType string    `gorm:"type:varchar(50);not null" json:"activity_type"`

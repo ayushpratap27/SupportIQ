@@ -5,35 +5,47 @@ import (
 
 	"github.com/ayush/supportiq/internal/models"
 	"github.com/ayush/supportiq/internal/utils"
+	"github.com/google/uuid"
 )
 
 // Aggregator computes and persists pre-aggregated metrics rows.
-// It is called by the Scheduler on a regular interval and by the manual
-// POST /analytics/aggregate endpoint.
 type Aggregator struct {
-	repo *AnalyticsRepository
+	repo        *AnalyticsRepository
+	tenantRepo  TenantLister
 }
 
-// NewAggregator creates an Aggregator.
-func NewAggregator(repo *AnalyticsRepository) *Aggregator {
-	return &Aggregator{repo: repo}
+// TenantLister is a minimal interface so the aggregator can list all active tenants
+// without importing the full tenant repository package (avoids circular deps).
+type TenantLister interface {
+	AllActiveTenantIDs() ([]uuid.UUID, error)
 }
 
-// RunAll aggregates tickets, AI, and agent metrics for today and yesterday.
+func NewAggregator(repo *AnalyticsRepository, tenantRepo TenantLister) *Aggregator {
+	return &Aggregator{repo: repo, tenantRepo: tenantRepo}
+}
+
+// RunAll aggregates tickets, AI, and agent metrics for all active tenants.
 func (a *Aggregator) RunAll() {
+	tenantIDs, err := a.tenantRepo.AllActiveTenantIDs()
+	if err != nil {
+		utils.Logger.WithError(err).Error("Aggregator: failed to list tenants")
+		return
+	}
+
 	today := truncateDay(time.Now())
 	yesterday := today.AddDate(0, 0, -1)
 
-	a.AggregateDailyTickets(today)
-	a.AggregateDailyTickets(yesterday)
-	a.AggregateAIMetrics(today)
-	a.AggregateAIMetrics(yesterday)
-	a.AggregateAllAgents()
+	for _, tenantID := range tenantIDs {
+		a.AggregateDailyTickets(tenantID, today)
+		a.AggregateDailyTickets(tenantID, yesterday)
+		a.AggregateAIMetrics(tenantID, today)
+		a.AggregateAIMetrics(tenantID, yesterday)
+		a.AggregateAllAgents(tenantID)
+	}
 }
 
-// AggregateDailyTickets computes and upserts DailyTicketMetrics for the given date.
-func (a *Aggregator) AggregateDailyTickets(date time.Time) {
-	m, err := a.repo.ComputeDailyTickets(date)
+func (a *Aggregator) AggregateDailyTickets(tenantID uuid.UUID, date time.Time) {
+	m, err := a.repo.ComputeDailyTickets(tenantID, date)
 	if err != nil {
 		utils.Logger.WithError(err).WithField("date", date).
 			Error("Aggregator: failed to compute daily ticket metrics")
@@ -45,9 +57,8 @@ func (a *Aggregator) AggregateDailyTickets(date time.Time) {
 	}
 }
 
-// AggregateAIMetrics computes and upserts AIMetrics for the given date.
-func (a *Aggregator) AggregateAIMetrics(date time.Time) {
-	m, err := a.repo.ComputeAIMetrics(date)
+func (a *Aggregator) AggregateAIMetrics(tenantID uuid.UUID, date time.Time) {
+	m, err := a.repo.ComputeAIMetrics(tenantID, date)
 	if err != nil {
 		utils.Logger.WithError(err).WithField("date", date).
 			Error("Aggregator: failed to compute AI metrics")
@@ -59,26 +70,26 @@ func (a *Aggregator) AggregateAIMetrics(date time.Time) {
 	}
 }
 
-// AggregateAllAgents recalculates metrics for every active agent.
-func (a *Aggregator) AggregateAllAgents() {
-	agents, err := a.repo.AllSupportAgents()
+func (a *Aggregator) AggregateAllAgents(tenantID uuid.UUID) {
+	agents, err := a.repo.AllSupportAgents(tenantID)
 	if err != nil {
 		utils.Logger.WithError(err).Error("Aggregator: failed to fetch agents")
 		return
 	}
 	for _, agent := range agents {
-		a.aggregateAgent(agent)
+		a.aggregateAgent(tenantID, agent)
 	}
 }
 
-func (a *Aggregator) aggregateAgent(agent models.User) {
-	raw, err := a.repo.ComputeAgentMetrics(agent.ID)
+func (a *Aggregator) aggregateAgent(tenantID uuid.UUID, agent models.User) {
+	raw, err := a.repo.ComputeAgentMetrics(tenantID, agent.ID)
 	if err != nil {
 		utils.Logger.WithError(err).WithField("userID", agent.ID).
 			Error("Aggregator: failed to compute agent metrics")
 		return
 	}
 	m := &models.AgentMetrics{
+		TenantID:              tenantID,
 		UserID:                agent.ID,
 		TicketsAssigned:       int(raw.Assigned),
 		TicketsResolved:       int(raw.Resolved),

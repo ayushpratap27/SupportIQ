@@ -8,11 +8,12 @@ import (
 	"fmt"
 	"time"
 
+	emailcrypto "github.com/ayush/supportiq/internal/email/crypto"
 	"github.com/ayush/supportiq/internal/integrations/provider"
 	"github.com/ayush/supportiq/internal/models"
 	"github.com/ayush/supportiq/internal/repositories"
-	emailcrypto "github.com/ayush/supportiq/internal/email/crypto"
 	"github.com/ayush/supportiq/internal/utils"
+	"github.com/google/uuid"
 )
 
 const (
@@ -25,35 +26,40 @@ const (
 // dispatches them to all enabled provider integrations.
 type Worker struct {
 	integrationRepo *repositories.IntegrationRepository
+	activityRepo    *repositories.ActivityRepository
 	ticketRepo      *repositories.TicketRepository
+	tenantRepo      TenantIDLister
 	registry        *Registry
 	encryptionKey   string
 	lastActivityID  uint
 	pollInterval    time.Duration
 }
 
-// NewWorker creates a new integration Worker. encryptionKey is used to decrypt
-// stored integration configurations before building providers.
+// TenantIDLister is a minimal interface for listing active tenant IDs.
+type TenantIDLister interface {
+	AllActiveTenantIDs() ([]uuid.UUID, error)
+}
+
 func NewWorker(
 	integrationRepo *repositories.IntegrationRepository,
+	activityRepo *repositories.ActivityRepository,
 	ticketRepo *repositories.TicketRepository,
+	tenantRepo TenantIDLister,
 	registry *Registry,
 	encryptionKey string,
 ) *Worker {
 	return &Worker{
 		integrationRepo: integrationRepo,
+		activityRepo:    activityRepo,
 		ticketRepo:      ticketRepo,
+		tenantRepo:      tenantRepo,
 		registry:        registry,
 		encryptionKey:   encryptionKey,
 		pollInterval:    defaultPollInterval,
 	}
 }
 
-// Start runs the worker indefinitely until ctx is cancelled.
 func (w *Worker) Start(ctx context.Context) {
-	// Initialise lastActivityID so we don't replay old events.
-	w.initLastActivityID()
-
 	activityTicker := time.NewTicker(w.pollInterval)
 	eventTicker := time.NewTicker(w.pollInterval)
 	defer activityTicker.Stop()
@@ -73,36 +79,31 @@ func (w *Worker) Start(ctx context.Context) {
 	}
 }
 
-func (w *Worker) initLastActivityID() {
-	activities, err := w.integrationRepo.FindActivitiesSince(0, 1)
-	if err != nil || len(activities) == 0 {
-		return
-	}
-	// Find the max ID by querying with a very large offset is not efficient;
-	// use a separate read-all-descending approach.
-	// As a pragmatic bootstrap we simply skip all existing activities.
-	w.lastActivityID = activities[len(activities)-1].ID
-}
-
-// pollActivities fetches new TicketActivity rows and creates IntegrationEvent
-// records for each relevant event type.
 func (w *Worker) pollActivities(ctx context.Context) {
-	activities, err := w.integrationRepo.FindActivitiesSince(w.lastActivityID, eventBatchSize)
+	tenantIDs, err := w.tenantRepo.AllActiveTenantIDs()
 	if err != nil {
-		utils.Logger.WithError(err).Error("Integration worker: poll activities failed")
+		utils.Logger.WithError(err).Error("Integration worker: failed to list tenants")
 		return
 	}
-	for _, act := range activities {
-		if act.ID > w.lastActivityID {
-			w.lastActivityID = act.ID
-		}
-		eventType := activityToEventType(act)
-		if eventType == "" {
+
+	for _, tenantID := range tenantIDs {
+		activities, err := w.activityRepo.FindActivitiesSince(tenantID, w.lastActivityID, eventBatchSize)
+		if err != nil {
+			utils.Logger.WithError(err).Error("Integration worker: poll activities failed")
 			continue
 		}
-		if err := w.createEventsForActivity(ctx, act, eventType); err != nil {
-			utils.Logger.WithError(err).WithField("activity_id", act.ID).
-				Error("Integration worker: create events failed")
+		for _, act := range activities {
+			if act.ID > w.lastActivityID {
+				w.lastActivityID = act.ID
+			}
+			eventType := activityToEventType(act)
+			if eventType == "" {
+				continue
+			}
+			if err := w.createEventsForActivity(ctx, tenantID, act, eventType); err != nil {
+				utils.Logger.WithError(err).WithField("activity_id", act.ID).
+					Error("Integration worker: create events failed")
+			}
 		}
 	}
 }
@@ -129,13 +130,13 @@ func activityToEventType(act models.TicketActivity) string {
 	}
 }
 
-func (w *Worker) createEventsForActivity(ctx context.Context, act models.TicketActivity, eventType string) error {
-	integrations, err := w.integrationRepo.FindEnabled()
+func (w *Worker) createEventsForActivity(ctx context.Context, tenantID uuid.UUID, act models.TicketActivity, eventType string) error {
+	integrations, err := w.integrationRepo.FindEnabled(tenantID)
 	if err != nil {
 		return err
 	}
 
-	ticket, err := w.ticketRepo.FindByID(act.TicketID)
+	ticket, err := w.ticketRepo.FindByIDUnscoped(act.TicketID)
 	if err != nil {
 		return fmt.Errorf("find ticket %s: %w", act.TicketID, err)
 	}
@@ -154,7 +155,6 @@ func (w *Worker) createEventsForActivity(ctx context.Context, act models.TicketA
 	payloadJSON, _ := json.Marshal(payload)
 
 	for _, intg := range integrations {
-		// Filter: only create event if the provider supports it
 		prov, err := w.buildProvider(intg)
 		if err != nil {
 			continue
@@ -171,6 +171,7 @@ func (w *Worker) createEventsForActivity(ctx context.Context, act models.TicketA
 		}
 
 		event := &models.IntegrationEvent{
+			TenantID:      tenantID,
 			IntegrationID: intg.ID,
 			EventType:     eventType,
 			Payload:       string(payloadJSON),
@@ -184,9 +185,8 @@ func (w *Worker) createEventsForActivity(ctx context.Context, act models.TicketA
 	return nil
 }
 
-// processEvents dispatches pending IntegrationEvent rows to their providers.
 func (w *Worker) processEvents(ctx context.Context) {
-	events, err := w.integrationRepo.FindPendingEvents(eventBatchSize)
+	events, err := w.integrationRepo.FindAllPendingEvents(eventBatchSize)
 	if err != nil {
 		utils.Logger.WithError(err).Error("Integration worker: fetch pending events")
 		return
@@ -197,7 +197,7 @@ func (w *Worker) processEvents(ctx context.Context) {
 }
 
 func (w *Worker) dispatchEvent(ctx context.Context, evt models.IntegrationEvent) {
-	intg, err := w.integrationRepo.FindByID(evt.IntegrationID)
+	intg, err := w.integrationRepo.FindByID(evt.TenantID, evt.IntegrationID)
 	if err != nil || !intg.Enabled {
 		_ = w.integrationRepo.UpdateEventStatus(evt.ID, models.IntEventDead, "integration not found or disabled")
 		return

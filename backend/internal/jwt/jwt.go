@@ -5,13 +5,15 @@ import (
 	"time"
 
 	gojwt "github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 // Claims is the JWT payload carried inside every token.
 type Claims struct {
-	UserID uint   `json:"user_id"`
-	Email  string `json:"email"`
-	Role   string `json:"role"`
+	UserID   uint      `json:"user_id"`
+	TenantID uuid.UUID `json:"tenant_id"`
+	Email    string    `json:"email"`
+	Role     string    `json:"role"`
 	gojwt.RegisteredClaims
 }
 
@@ -22,17 +24,15 @@ type TokenPair struct {
 }
 
 // GenerateTokenPair creates a signed access token (15 min) and refresh token (7 days).
-func GenerateTokenPair(userID uint, email, role, accessSecret, refreshSecret string) (*TokenPair, error) {
-	access, err := newSignedToken(userID, email, role, 15*time.Minute, accessSecret)
+func GenerateTokenPair(userID uint, tenantID uuid.UUID, email, role, accessSecret, refreshSecret string) (*TokenPair, error) {
+	access, err := newSignedToken(userID, tenantID, email, role, 15*time.Minute, accessSecret)
 	if err != nil {
 		return nil, err
 	}
-
-	refresh, err := newSignedToken(userID, email, role, 7*24*time.Hour, refreshSecret)
+	refresh, err := newSignedToken(userID, tenantID, email, role, 7*24*time.Hour, refreshSecret)
 	if err != nil {
 		return nil, err
 	}
-
 	return &TokenPair{AccessToken: access, RefreshToken: refresh}, nil
 }
 
@@ -47,7 +47,6 @@ func ValidateToken(tokenStr, secret string) (*Claims, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	claims, ok := token.Claims.(*Claims)
 	if !ok || !token.Valid {
 		return nil, errors.New("invalid token claims")
@@ -55,12 +54,12 @@ func ValidateToken(tokenStr, secret string) (*Claims, error) {
 	return claims, nil
 }
 
-// newSignedToken is a private helper that builds and signs a single token.
-func newSignedToken(userID uint, email, role string, ttl time.Duration, secret string) (string, error) {
+func newSignedToken(userID uint, tenantID uuid.UUID, email, role string, ttl time.Duration, secret string) (string, error) {
 	claims := &Claims{
-		UserID: userID,
-		Email:  email,
-		Role:   role,
+		UserID:   userID,
+		TenantID: tenantID,
+		Email:    email,
+		Role:     role,
 		RegisteredClaims: gojwt.RegisteredClaims{
 			ExpiresAt: gojwt.NewNumericDate(time.Now().Add(ttl)),
 			IssuedAt:  gojwt.NewNumericDate(time.Now()),

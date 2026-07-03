@@ -32,10 +32,12 @@ func (h *GenerateReplyHandler) Handle(ctx context.Context, job queue.Job) error 
 
 	log.Info("Reply Generation: Starting")
 
+	tenantID, _ := uuid.Parse(job.TenantID)
+
 	if job.Type == "REGENERATE_REPLY" {
-		_, err = h.replySvc.Regenerate(ctx, ticketID, job.UserID)
+		_, err = h.replySvc.Regenerate(ctx, tenantID, ticketID, job.UserID)
 	} else {
-		_, err = h.replySvc.Generate(ctx, ticketID, job.UserID)
+		_, err = h.replySvc.Generate(ctx, tenantID, ticketID, job.UserID)
 	}
 
 	if err != nil {

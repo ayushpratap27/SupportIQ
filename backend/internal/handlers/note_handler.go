@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ayush/supportiq/internal/dto"
+	"github.com/ayush/supportiq/internal/middleware"
 	"github.com/ayush/supportiq/internal/services"
 	"github.com/ayush/supportiq/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -35,7 +36,7 @@ func (h *NoteHandler) Create(c *gin.Context) {
 		return
 	}
 
-	resp, statusCode, err := h.service.Create(ticketID, &req, userID)
+		resp, statusCode, err := h.service.Create(middleware.GetTenantID(c), ticketID, &req, userID)
 	if err != nil {
 		utils.SendError(c, statusCode, err.Error())
 		return
@@ -51,7 +52,7 @@ func (h *NoteHandler) List(c *gin.Context) {
 		return
 	}
 
-	resp, statusCode, err := h.service.List(ticketID)
+	resp, statusCode, err := h.service.List(middleware.GetTenantID(c), ticketID)
 	if err != nil {
 		utils.SendError(c, statusCode, err.Error())
 		return

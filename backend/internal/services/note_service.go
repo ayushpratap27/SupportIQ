@@ -19,8 +19,9 @@ func NewNoteService(noteRepo *repositories.NoteRepository, activityRepo *reposit
 	return &NoteService{noteRepo: noteRepo, activityRepo: activityRepo}
 }
 
-func (s *NoteService) Create(ticketID uuid.UUID, req *dto.CreateNoteRequest, userID uint) (*dto.NoteResponse, int, error) {
+func (s *NoteService) Create(tenantID uuid.UUID, ticketID uuid.UUID, req *dto.CreateNoteRequest, userID uint) (*dto.NoteResponse, int, error) {
 	note := &models.TicketNote{
+		TenantID:   tenantID,
 		TicketID:   ticketID,
 		UserID:     userID,
 		Note:       req.Note,
@@ -30,14 +31,14 @@ func (s *NoteService) Create(ticketID uuid.UUID, req *dto.CreateNoteRequest, use
 		return nil, http.StatusInternalServerError, err
 	}
 
-	// Reload with user association
-	loaded, err := s.noteRepo.FindByID(note.ID)
+	loaded, err := s.noteRepo.FindByID(tenantID, note.ID)
 	if err != nil {
 		r := toNoteResponse(note)
 		return &r, http.StatusCreated, nil
 	}
 
 	_ = s.activityRepo.Create(&models.TicketActivity{
+		TenantID:     tenantID,
 		TicketID:     ticketID,
 		UserID:       userID,
 		ActivityType: models.ActivityInternalNoteAdded,
@@ -48,8 +49,8 @@ func (s *NoteService) Create(ticketID uuid.UUID, req *dto.CreateNoteRequest, use
 	return &r, http.StatusCreated, nil
 }
 
-func (s *NoteService) List(ticketID uuid.UUID) ([]dto.NoteResponse, int, error) {
-	notes, err := s.noteRepo.ListByTicketID(ticketID)
+func (s *NoteService) List(tenantID uuid.UUID, ticketID uuid.UUID) ([]dto.NoteResponse, int, error) {
+	notes, err := s.noteRepo.ListByTicketID(tenantID, ticketID)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}

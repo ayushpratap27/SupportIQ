@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/ayush/supportiq/internal/dto"
+	"github.com/ayush/supportiq/internal/middleware"
 	"github.com/ayush/supportiq/internal/services"
 	"github.com/ayush/supportiq/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -25,7 +26,7 @@ func NewEmailHandler(accountSvc *services.EmailAccountService, emailSvc *service
 
 // ListAccounts handles GET /api/v1/email/accounts
 func (h *EmailHandler) ListAccounts(c *gin.Context) {
-	accounts, code, err := h.accountSvc.List()
+	accounts, code, err := h.accountSvc.List(middleware.GetTenantID(c))
 	if err != nil {
 		utils.SendError(c, code, err.Error())
 		return
@@ -40,7 +41,7 @@ func (h *EmailHandler) CreateAccount(c *gin.Context) {
 		utils.SendError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	account, code, err := h.accountSvc.Create(&req)
+	account, code, err := h.accountSvc.Create(middleware.GetTenantID(c), &req)
 	if err != nil {
 		utils.SendError(c, code, err.Error())
 		return
@@ -60,7 +61,7 @@ func (h *EmailHandler) UpdateAccount(c *gin.Context) {
 		utils.SendError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	account, code, err := h.accountSvc.Update(uint(id), &req)
+	account, code, err := h.accountSvc.Update(middleware.GetTenantID(c), uint(id), &req)
 	if err != nil {
 		utils.SendError(c, code, err.Error())
 		return
@@ -75,7 +76,7 @@ func (h *EmailHandler) DeleteAccount(c *gin.Context) {
 		utils.SendError(c, http.StatusBadRequest, "Invalid account ID")
 		return
 	}
-	code, err := h.accountSvc.Delete(uint(id))
+	code, err := h.accountSvc.Delete(middleware.GetTenantID(c), uint(id))
 	if err != nil {
 		utils.SendError(c, code, err.Error())
 		return
@@ -94,9 +95,9 @@ func (h *EmailHandler) TestConnection(c *gin.Context) {
 	protocol := c.DefaultQuery("protocol", "smtp")
 	var testErr error
 	if protocol == "imap" {
-		testErr = h.accountSvc.TestIMAP(uint(id))
+		testErr = h.accountSvc.TestIMAP(middleware.GetTenantID(c), uint(id))
 	} else {
-		testErr = h.accountSvc.TestSMTP(uint(id))
+		testErr = h.accountSvc.TestSMTP(middleware.GetTenantID(c), uint(id))
 	}
 
 	if testErr != nil {

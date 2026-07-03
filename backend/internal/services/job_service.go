@@ -16,7 +16,7 @@ import (
 // monitoring data for the admin API.
 type JobService struct {
 	jobRepo *repositories.JobRepository
-	queue   queue.Queue // nil when Redis is not configured
+	queue   queue.Queue
 }
 
 // JobStatistics holds job counts grouped by status.
@@ -42,27 +42,26 @@ func NewJobService(jobRepo *repositories.JobRepository, q queue.Queue) *JobServi
 	return &JobService{jobRepo: jobRepo, queue: q}
 }
 
-// IsQueueAvailable returns true when a Redis queue is wired in.
 func (s *JobService) IsQueueAvailable() bool {
 	return s.queue != nil
 }
 
-// EnqueueAIAnalysis creates a DB record and pushes an AI_ANALYSIS job to Redis.
 func (s *JobService) EnqueueAIAnalysis(ticketID uuid.UUID, userID uint) error {
-	return s.enqueue(models.JobTypeAIAnalysis, ticketID.String(), userID)
+	return s.enqueue(uuid.Nil, models.JobTypeAIAnalysis, ticketID.String(), userID)
 }
 
-// EnqueueGenerateReply creates a DB record and pushes a GENERATE_REPLY job.
+func (s *JobService) EnqueueAIAnalysisForTenant(tenantID uuid.UUID, ticketID uuid.UUID, userID uint) error {
+	return s.enqueue(tenantID, models.JobTypeAIAnalysis, ticketID.String(), userID)
+}
+
 func (s *JobService) EnqueueGenerateReply(ticketID uuid.UUID, userID uint) error {
-	return s.enqueue(models.JobTypeGenerateReply, ticketID.String(), userID)
+	return s.enqueue(uuid.Nil, models.JobTypeGenerateReply, ticketID.String(), userID)
 }
 
-// EnqueueRegenerateReply creates a DB record and pushes a REGENERATE_REPLY job.
 func (s *JobService) EnqueueRegenerateReply(ticketID uuid.UUID, userID uint) error {
-	return s.enqueue(models.JobTypeRegenerateReply, ticketID.String(), userID)
+	return s.enqueue(uuid.Nil, models.JobTypeRegenerateReply, ticketID.String(), userID)
 }
 
-// RetryJob re-enqueues a FAILED job after resetting its retry count.
 func (s *JobService) RetryJob(id uint) (*models.BackgroundJob, error) {
 	job, err := s.jobRepo.FindByID(id)
 	if err != nil {
@@ -76,7 +75,6 @@ func (s *JobService) RetryJob(id uint) (*models.BackgroundJob, error) {
 		return nil, fmt.Errorf("queue not available — Redis is not configured")
 	}
 
-	// Reset and re-enqueue
 	qJob := queue.Job{
 		ID:         fmt.Sprintf("%d", job.ID),
 		Type:       string(job.JobType),
@@ -90,17 +88,14 @@ func (s *JobService) RetryJob(id uint) (*models.BackgroundJob, error) {
 		return nil, fmt.Errorf("failed to re-enqueue: %w", err)
 	}
 
-	// Reset DB status
 	_ = s.jobRepo.MarkRetrying(job.ID, 0, "Manual retry initiated")
 	return s.jobRepo.FindByID(id)
 }
 
-// GetJob returns a single job by ID.
 func (s *JobService) GetJob(id uint) (*models.BackgroundJob, error) {
 	return s.jobRepo.FindByID(id)
 }
 
-// ListJobs returns a paginated list of jobs with optional filters.
 func (s *JobService) ListJobs(q ListJobsQuery) ([]models.BackgroundJob, int64, int, error) {
 	page := q.Page
 	if page < 1 {
@@ -123,7 +118,6 @@ func (s *JobService) ListJobs(q ListJobsQuery) ([]models.BackgroundJob, int64, i
 	return jobs, total, totalPages, nil
 }
 
-// GetStatistics returns job counts by status.
 func (s *JobService) GetStatistics() (JobStatistics, error) {
 	counts, err := s.jobRepo.Statistics()
 	if err != nil {
@@ -144,7 +138,6 @@ func (s *JobService) GetStatistics() (JobStatistics, error) {
 	return stats, nil
 }
 
-// QueueStats returns live queue lengths from Redis.
 func (s *JobService) QueueStats(ctx context.Context) (map[string]int64, error) {
 	if s.queue == nil {
 		return map[string]int64{"main": 0, "retry": 0, "dead": 0}, nil
@@ -155,11 +148,9 @@ func (s *JobService) QueueStats(ctx context.Context) (map[string]int64, error) {
 	return map[string]int64{"main": main, "retry": retry, "dead": dead}, nil
 }
 
-// ─── Internal helpers ─────────────────────────────────────────────────────────
-
-func (s *JobService) enqueue(jobType models.JobType, ticketID string, userID uint) error {
-	// 1. Persist to DB
+func (s *JobService) enqueue(tenantID uuid.UUID, jobType models.JobType, ticketID string, userID uint) error {
 	dbJob := &models.BackgroundJob{
+		TenantID:    tenantID,
 		JobType:     jobType,
 		ReferenceID: ticketID,
 		Status:      models.JobStatusQueued,
@@ -168,9 +159,8 @@ func (s *JobService) enqueue(jobType models.JobType, ticketID string, userID uin
 		return fmt.Errorf("failed to create job record: %w", err)
 	}
 
-	// 2. Push to Redis queue
 	if s.queue == nil {
-		return nil // DB record created; worker not available in this mode
+		return nil
 	}
 
 	qJob := queue.Job{
@@ -184,7 +174,6 @@ func (s *JobService) enqueue(jobType models.JobType, ticketID string, userID uin
 		EnqueuedAt: time.Now(),
 	}
 	if err := s.queue.Enqueue(context.Background(), qJob); err != nil {
-		// Best-effort: DB record exists as audit trail even if Redis push fails
 		_ = s.jobRepo.MarkFailed(dbJob.ID, fmt.Sprintf("Redis enqueue failed: %s", err.Error()))
 		return fmt.Errorf("failed to enqueue job: %w", err)
 	}

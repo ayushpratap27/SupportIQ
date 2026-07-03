@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ayush/supportiq/internal/models"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -16,33 +17,28 @@ func NewKnowledgeRepository(db *gorm.DB) *KnowledgeRepository {
 	return &KnowledgeRepository{db: db}
 }
 
-// Create inserts a new knowledge base document.
 func (r *KnowledgeRepository) Create(doc *models.KnowledgeBase) error {
 	return r.db.Create(doc).Error
 }
 
-// FindByID loads a single document by primary key.
-func (r *KnowledgeRepository) FindByID(id uint) (*models.KnowledgeBase, error) {
+func (r *KnowledgeRepository) FindByID(tenantID uuid.UUID, id uint) (*models.KnowledgeBase, error) {
 	var doc models.KnowledgeBase
-	if err := r.db.First(&doc, id).Error; err != nil {
+	if err := r.db.Where("tenant_id = ? AND id = ?", tenantID, id).First(&doc).Error; err != nil {
 		return nil, err
 	}
 	return &doc, nil
 }
 
-// Update persists changes to an existing document.
 func (r *KnowledgeRepository) Update(doc *models.KnowledgeBase) error {
 	return r.db.Save(doc).Error
 }
 
-// Delete hard-deletes a document by primary key.
-func (r *KnowledgeRepository) Delete(id uint) error {
-	return r.db.Delete(&models.KnowledgeBase{}, id).Error
+func (r *KnowledgeRepository) Delete(tenantID uuid.UUID, id uint) error {
+	return r.db.Where("tenant_id = ?", tenantID).Delete(&models.KnowledgeBase{}, id).Error
 }
 
-// List returns a paginated, optionally filtered list of documents.
-func (r *KnowledgeRepository) List(search, category string, activeOnly bool, page, limit int) ([]models.KnowledgeBase, int64, error) {
-	q := r.db.Model(&models.KnowledgeBase{})
+func (r *KnowledgeRepository) List(tenantID uuid.UUID, search, category string, activeOnly bool, page, limit int) ([]models.KnowledgeBase, int64, error) {
+	q := r.db.Model(&models.KnowledgeBase{}).Where("tenant_id = ?", tenantID)
 
 	if search != "" {
 		pattern := "%" + search + "%"
@@ -66,16 +62,15 @@ func (r *KnowledgeRepository) List(search, category string, activeOnly bool, pag
 	return docs, total, err
 }
 
-// Search performs a case-insensitive keyword search over active documents.
-// Used by the RAG retrieval layer; designed to be replaced by vector search later.
-func (r *KnowledgeRepository) Search(_ context.Context, query string, limit int) ([]models.KnowledgeBase, error) {
+// Search performs a keyword search over active documents for a specific tenant.
+func (r *KnowledgeRepository) Search(_ context.Context, tenantID uuid.UUID, query string, limit int) ([]models.KnowledgeBase, error) {
 	if limit <= 0 {
 		limit = 5
 	}
 	pattern := "%" + query + "%"
 	var docs []models.KnowledgeBase
 	err := r.db.
-		Where("is_active = true AND (title ILIKE ? OR content ILIKE ?)", pattern, pattern).
+		Where("tenant_id = ? AND is_active = true AND (title ILIKE ? OR content ILIKE ?)", tenantID, pattern, pattern).
 		Order("updated_at DESC").
 		Limit(limit).
 		Find(&docs).Error

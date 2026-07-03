@@ -27,8 +27,8 @@ type TicketService struct {
 	repo         *repositories.TicketRepository
 	userRepo     *repositories.UserRepository
 	activityRepo *repositories.ActivityRepository
-	aiService    *AIService  // goroutine-based fallback when no queue
-	jobSvc       *JobService // Redis-backed queue (preferred when available)
+	aiService    *AIService
+	jobSvc       *JobService
 }
 
 func NewTicketService(
@@ -40,16 +40,14 @@ func NewTicketService(
 	return &TicketService{repo: repo, userRepo: userRepo, activityRepo: activityRepo, aiService: aiService}
 }
 
-// SetJobService injects the job service for Redis-backed async processing.
-// Must be called after both TicketService and JobService are constructed.
 func (s *TicketService) SetJobService(js *JobService) {
 	s.jobSvc = js
 }
 
-// logActivity is fire-and-forget; errors are silently suppressed so they never
-// fail the main operation.
-func (s *TicketService) logActivity(ticketID uuid.UUID, userID uint, actType, oldVal, newVal, desc string) {
+// logActivity is fire-and-forget; errors are silently suppressed.
+func (s *TicketService) logActivity(tenantID uuid.UUID, ticketID uuid.UUID, userID uint, actType, oldVal, newVal, desc string) {
 	_ = s.activityRepo.Create(&models.TicketActivity{
+		TenantID:     tenantID,
 		TicketID:     ticketID,
 		UserID:       userID,
 		ActivityType: actType,
@@ -60,15 +58,16 @@ func (s *TicketService) logActivity(ticketID uuid.UUID, userID uint, actType, ol
 }
 
 // Create inserts a new ticket, generating its sequential number inside a transaction.
-func (s *TicketService) Create(req *dto.CreateTicketRequest, createdBy uint) (*dto.TicketResponse, int, error) {
+func (s *TicketService) Create(tenantID uuid.UUID, req *dto.CreateTicketRequest, createdBy uint) (*dto.TicketResponse, int, error) {
 	var created models.Ticket
 
 	err := s.repo.DB().Transaction(func(tx *gorm.DB) error {
-		ticketNum, err := s.repo.NextTicketNumber(tx)
+		ticketNum, err := s.repo.NextTicketNumber(tenantID, tx)
 		if err != nil {
 			return err
 		}
 		created = models.Ticket{
+			TenantID:      tenantID,
 			Subject:       req.Subject,
 			Description:   req.Description,
 			CustomerName:  req.CustomerName,
@@ -86,24 +85,23 @@ func (s *TicketService) Create(req *dto.CreateTicketRequest, createdBy uint) (*d
 		return nil, http.StatusInternalServerError, err
 	}
 
-	s.logActivity(created.ID, createdBy, models.ActivityCreateTicket, "", "", "Ticket created")
+	s.logActivity(tenantID, created.ID, createdBy, models.ActivityCreateTicket, "", "", "Ticket created")
 
-	// Trigger AI analysis — use Redis queue if available, otherwise fall back to goroutine
 	if s.jobSvc != nil && s.jobSvc.IsQueueAvailable() {
 		_ = s.jobSvc.EnqueueAIAnalysis(created.ID, createdBy)
 	} else {
 		s.aiService.AnalyzeTicket(created.ID)
 	}
 
-	full, err := s.repo.FindByID(created.ID)
+	full, err := s.repo.FindByID(tenantID, created.ID)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
 	return toTicketResponse(full), http.StatusCreated, nil
 }
 
-// List returns a paginated, filtered, and searched set of tickets.
-func (s *TicketService) List(q *dto.ListTicketsQuery) (*dto.ListTicketsResponse, int, error) {
+// List returns a paginated, filtered set of tickets for a tenant.
+func (s *TicketService) List(tenantID uuid.UUID, q *dto.ListTicketsQuery) (*dto.ListTicketsResponse, int, error) {
 	if q.Page < 1 {
 		q.Page = 1
 	}
@@ -111,7 +109,7 @@ func (s *TicketService) List(q *dto.ListTicketsQuery) (*dto.ListTicketsResponse,
 		q.Limit = 20
 	}
 
-	tickets, total, err := s.repo.List(q)
+	tickets, total, err := s.repo.List(tenantID, q)
 	if err != nil {
 		return nil, http.StatusInternalServerError, err
 	}
@@ -135,9 +133,9 @@ func (s *TicketService) List(q *dto.ListTicketsQuery) (*dto.ListTicketsResponse,
 	}, http.StatusOK, nil
 }
 
-// GetByID returns a single ticket by its UUID.
-func (s *TicketService) GetByID(id uuid.UUID) (*dto.TicketResponse, int, error) {
-	t, err := s.repo.FindByID(id)
+// GetByID returns a single ticket by UUID, scoped to tenant.
+func (s *TicketService) GetByID(tenantID uuid.UUID, id uuid.UUID) (*dto.TicketResponse, int, error) {
+	t, err := s.repo.FindByID(tenantID, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, http.StatusNotFound, ErrTicketNotFound
@@ -147,9 +145,9 @@ func (s *TicketService) GetByID(id uuid.UUID) (*dto.TicketResponse, int, error) 
 	return toTicketResponse(t), http.StatusOK, nil
 }
 
-// Update applies editable field changes and logs relevant activity entries.
-func (s *TicketService) Update(id uuid.UUID, req *dto.UpdateTicketRequest, userID uint) (*dto.TicketResponse, int, error) {
-	t, err := s.repo.FindByID(id)
+// Update applies editable field changes.
+func (s *TicketService) Update(tenantID uuid.UUID, id uuid.UUID, req *dto.UpdateTicketRequest, userID uint) (*dto.TicketResponse, int, error) {
+	t, err := s.repo.FindByID(tenantID, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, http.StatusNotFound, ErrTicketNotFound
@@ -184,18 +182,17 @@ func (s *TicketService) Update(id uuid.UUID, req *dto.UpdateTicketRequest, userI
 	}
 
 	if req.Priority != "" && string(t.Priority) != oldPriority {
-		s.logActivity(id, userID, models.ActivityPriorityChanged, oldPriority, string(t.Priority),
+		s.logActivity(tenantID, id, userID, models.ActivityPriorityChanged, oldPriority, string(t.Priority),
 			fmt.Sprintf("Priority changed from %s to %s", oldPriority, string(t.Priority)))
 	}
 	if req.Category != "" && string(t.Category) != oldCategory {
-		s.logActivity(id, userID, models.ActivityCategoryChanged, oldCategory, string(t.Category),
+		s.logActivity(tenantID, id, userID, models.ActivityCategoryChanged, oldCategory, string(t.Category),
 			fmt.Sprintf("Category changed from %s to %s", oldCategory, string(t.Category)))
 	}
 	if req.Subject != "" || req.Description != "" || req.CustomerName != "" || req.CustomerEmail != "" {
-		s.logActivity(id, userID, models.ActivityUpdateTicket, "", "", "Ticket details updated")
+		s.logActivity(tenantID, id, userID, models.ActivityUpdateTicket, "", "", "Ticket details updated")
 	}
 
-	// Re-trigger AI analysis when the ticket content changes
 	if req.Subject != "" || req.Description != "" {
 		if s.jobSvc != nil && s.jobSvc.IsQueueAvailable() {
 			_ = s.jobSvc.EnqueueAIAnalysis(id, userID)
@@ -207,9 +204,9 @@ func (s *TicketService) Update(id uuid.UUID, req *dto.UpdateTicketRequest, userI
 	return toTicketResponse(t), http.StatusOK, nil
 }
 
-// UpdateStatus transitions the ticket to a new status, enforcing the linear workflow.
-func (s *TicketService) UpdateStatus(id uuid.UUID, req *dto.UpdateStatusRequest, userID uint) (*dto.TicketResponse, int, error) {
-	t, err := s.repo.FindByID(id)
+// UpdateStatus transitions the ticket to a new status.
+func (s *TicketService) UpdateStatus(tenantID uuid.UUID, id uuid.UUID, req *dto.UpdateStatusRequest, userID uint) (*dto.TicketResponse, int, error) {
+	t, err := s.repo.FindByID(tenantID, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, http.StatusNotFound, ErrTicketNotFound
@@ -232,19 +229,19 @@ func (s *TicketService) UpdateStatus(id uuid.UUID, req *dto.UpdateStatusRequest,
 	if newStatus == models.TicketStatusClosed {
 		actType = models.ActivityTicketClosed
 	}
-	s.logActivity(id, userID, actType, oldStatus, string(newStatus),
+	s.logActivity(tenantID, id, userID, actType, oldStatus, string(newStatus),
 		fmt.Sprintf("Status changed from %s to %s", oldStatus, string(newStatus)))
 
 	return toTicketResponse(t), http.StatusOK, nil
 }
 
-// Assign sets the assigned_to field. Only Admins may call this; assignee must be a SupportAgent.
-func (s *TicketService) Assign(id uuid.UUID, req *dto.AssignTicketRequest, userID uint, userRole string) (*dto.TicketResponse, int, error) {
+// Assign sets the assigned_to field.
+func (s *TicketService) Assign(tenantID uuid.UUID, id uuid.UUID, req *dto.AssignTicketRequest, userID uint, userRole string) (*dto.TicketResponse, int, error) {
 	if models.Role(userRole) != models.RoleAdmin {
 		return nil, http.StatusForbidden, ErrForbidden
 	}
 
-	t, err := s.repo.FindByID(id)
+	t, err := s.repo.FindByID(tenantID, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, http.StatusNotFound, ErrTicketNotFound
@@ -265,38 +262,38 @@ func (s *TicketService) Assign(id uuid.UUID, req *dto.AssignTicketRequest, userI
 		return nil, http.StatusInternalServerError, err
 	}
 
-	s.logActivity(id, userID, models.ActivityAssignTicket, "", assignee.Name,
+	s.logActivity(tenantID, id, userID, models.ActivityAssignTicket, "", assignee.Name,
 		fmt.Sprintf("Assigned to %s", assignee.Name))
 
 	return toTicketResponse(t), http.StatusOK, nil
 }
 
-// Delete soft-deletes a ticket. Only Admins may delete.
-func (s *TicketService) Delete(id uuid.UUID, userRole string) (int, error) {
+// Delete soft-deletes a ticket.
+func (s *TicketService) Delete(tenantID uuid.UUID, id uuid.UUID, userRole string) (int, error) {
 	if models.Role(userRole) != models.RoleAdmin {
 		return http.StatusForbidden, ErrForbidden
 	}
 
-	if _, err := s.repo.FindByID(id); err != nil {
+	if _, err := s.repo.FindByID(tenantID, id); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return http.StatusNotFound, ErrTicketNotFound
 		}
 		return http.StatusInternalServerError, err
 	}
 
-	if err := s.repo.SoftDelete(id); err != nil {
+	if err := s.repo.SoftDelete(tenantID, id); err != nil {
 		return http.StatusInternalServerError, err
 	}
 	return http.StatusOK, nil
 }
 
 // TakeOwnership lets a SupportAgent claim an unassigned ticket.
-func (s *TicketService) TakeOwnership(id uuid.UUID, userID uint, userRole string) (*dto.TicketResponse, int, error) {
+func (s *TicketService) TakeOwnership(tenantID uuid.UUID, id uuid.UUID, userID uint, userRole string) (*dto.TicketResponse, int, error) {
 	if models.Role(userRole) != models.RoleSupportAgent {
 		return nil, http.StatusForbidden, ErrForbidden
 	}
 
-	t, err := s.repo.FindByID(id)
+	t, err := s.repo.FindByID(tenantID, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, http.StatusNotFound, ErrTicketNotFound
@@ -313,27 +310,27 @@ func (s *TicketService) TakeOwnership(id uuid.UUID, userID uint, userRole string
 		return nil, http.StatusInternalServerError, err
 	}
 
-	s.logActivity(id, userID, models.ActivityTakeOwnership, "", "", "Took ownership of ticket")
+	s.logActivity(tenantID, id, userID, models.ActivityTakeOwnership, "", "", "Took ownership of ticket")
 
-	full, _ := s.repo.FindByID(id)
+	full, _ := s.repo.FindByID(tenantID, id)
 	if full == nil {
 		return toTicketResponse(t), http.StatusOK, nil
 	}
 	return toTicketResponse(full), http.StatusOK, nil
 }
 
-// MyTickets returns tickets assigned to the given user.
-func (s *TicketService) MyTickets(userID uint, q *dto.ListTicketsQuery) (*dto.ListTicketsResponse, int, error) {
+// MyTickets returns tickets assigned to the given user within a tenant.
+func (s *TicketService) MyTickets(tenantID uuid.UUID, userID uint, q *dto.ListTicketsQuery) (*dto.ListTicketsResponse, int, error) {
 	q.AssignedTo = &userID
 	q.UnassignedOnly = false
-	return s.List(q)
+	return s.List(tenantID, q)
 }
 
-// ListUnassigned returns tickets where assigned_to IS NULL.
-func (s *TicketService) ListUnassigned(q *dto.ListTicketsQuery) (*dto.ListTicketsResponse, int, error) {
+// ListUnassigned returns unassigned tickets within a tenant.
+func (s *TicketService) ListUnassigned(tenantID uuid.UUID, q *dto.ListTicketsQuery) (*dto.ListTicketsResponse, int, error) {
 	q.UnassignedOnly = true
 	q.AssignedTo = nil
-	return s.List(q)
+	return s.List(tenantID, q)
 }
 
 func toTicketResponse(t *models.Ticket) *dto.TicketResponse {

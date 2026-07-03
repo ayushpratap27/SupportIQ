@@ -3,11 +3,13 @@ package services
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/ayush/supportiq/internal/config"
 	"github.com/ayush/supportiq/internal/dto"
 	jwtpkg "github.com/ayush/supportiq/internal/jwt"
 	"github.com/ayush/supportiq/internal/models"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
@@ -17,6 +19,7 @@ var (
 	ErrEmailTaken         = errors.New("email already registered")
 	ErrInvalidCredentials = errors.New("invalid email or password")
 	ErrUserNotFound       = errors.New("user not found")
+	ErrTenantSlugTaken    = errors.New("company slug already in use")
 )
 
 // AuthService contains all business logic for authentication.
@@ -30,8 +33,66 @@ func NewAuthService(db *gorm.DB, cfg *config.Config) *AuthService {
 	return &AuthService{db: db, cfg: cfg}
 }
 
-// Register validates uniqueness, hashes the password, persists the user,
-// and returns a token pair.
+// RegisterWithTenant creates a new tenant and the first admin user.
+func (s *AuthService) RegisterWithTenant(req *dto.RegisterWithTenantRequest) (*dto.AuthResponse, int, error) {
+	// Derive slug from company name if not provided
+	slug := req.CompanySlug
+	if slug == "" {
+		slug = slugify(req.CompanyName)
+	}
+
+	// Check slug uniqueness
+	var existing models.Tenant
+	if err := s.db.Where("slug = ?", slug).First(&existing).Error; err == nil {
+		return nil, http.StatusConflict, ErrTenantSlugTaken
+	}
+
+	// Check email uniqueness (global for now since slugs are unique)
+	var existingUser models.User
+	if err := s.db.Where("email = ?", req.Email).First(&existingUser).Error; err == nil {
+		return nil, http.StatusConflict, ErrEmailTaken
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	// Create tenant
+	tenant := models.Tenant{
+		Name:             req.CompanyName,
+		Slug:             slug,
+		SubscriptionPlan: models.PlanFree,
+		Status:           models.TenantStatusActive,
+		Timezone:         "UTC",
+		BrandColor:       "#3B82F6",
+	}
+
+	// Create user as Admin within a transaction
+	var user models.User
+	err = s.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&tenant).Error; err != nil {
+			return err
+		}
+		user = models.User{
+			TenantID:     tenant.ID,
+			Name:         req.Name,
+			Email:        req.Email,
+			PasswordHash: string(hash),
+			Role:         models.RoleAdmin,
+			IsActive:     true,
+		}
+		return tx.Create(&user).Error
+	})
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	return s.buildAuthResponse(&user, tenant.ID)
+}
+
+// Register creates a user in an existing tenant (e.g. invited user flow).
+// Deprecated for new tenants — use RegisterWithTenant instead.
 func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, int, error) {
 	var existing models.User
 	if err := s.db.Where("email = ?", req.Email).First(&existing).Error; err == nil {
@@ -54,15 +115,13 @@ func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, int
 		return nil, http.StatusInternalServerError, err
 	}
 
-	return s.buildAuthResponse(&user)
+	return s.buildAuthResponse(&user, uuid.Nil)
 }
 
 // Login verifies credentials and returns a token pair.
 func (s *AuthService) Login(req *dto.LoginRequest) (*dto.AuthResponse, int, error) {
 	var user models.User
 	if err := s.db.Where("email = ?", req.Email).First(&user).Error; err != nil {
-		// Return the same error whether email is wrong or password is wrong
-		// to prevent user enumeration.
 		return nil, http.StatusUnauthorized, ErrInvalidCredentials
 	}
 
@@ -70,7 +129,11 @@ func (s *AuthService) Login(req *dto.LoginRequest) (*dto.AuthResponse, int, erro
 		return nil, http.StatusUnauthorized, ErrInvalidCredentials
 	}
 
-	return s.buildAuthResponse(&user)
+	if !user.IsActive {
+		return nil, http.StatusForbidden, errors.New("account is disabled")
+	}
+
+	return s.buildAuthResponse(&user, user.TenantID)
 }
 
 // GetUserByID fetches a user record by primary key and returns a safe DTO.
@@ -84,9 +147,10 @@ func (s *AuthService) GetUserByID(id uint) (*dto.UserResponse, int, error) {
 }
 
 // buildAuthResponse generates a JWT pair and assembles the AuthResponse DTO.
-func (s *AuthService) buildAuthResponse(user *models.User) (*dto.AuthResponse, int, error) {
+func (s *AuthService) buildAuthResponse(user *models.User, tenantID uuid.UUID) (*dto.AuthResponse, int, error) {
 	pair, err := jwtpkg.GenerateTokenPair(
 		user.ID,
+		tenantID,
 		user.Email,
 		string(user.Role),
 		s.cfg.JWTAccessSecret,
@@ -112,4 +176,22 @@ func toUserResponse(u *models.User) dto.UserResponse {
 		Role:     string(u.Role),
 		IsActive: u.IsActive,
 	}
+}
+
+// slugify creates a URL-safe slug from a company name.
+func slugify(name string) string {
+	slug := strings.ToLower(name)
+	slug = strings.ReplaceAll(slug, " ", "-")
+	// Keep only alphanumeric and dashes
+	var b strings.Builder
+	for _, r := range slug {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
+			b.WriteRune(r)
+		}
+	}
+	result := strings.Trim(b.String(), "-")
+	if result == "" {
+		return "company"
+	}
+	return result
 }

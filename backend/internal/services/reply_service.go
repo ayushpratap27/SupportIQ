@@ -45,27 +45,21 @@ func NewReplyService(
 }
 
 // GenerateForTicket is called automatically after AI analysis completes.
-// It runs synchronously (caller owns the goroutine context).
-func (s *ReplyService) GenerateForTicket(ticketID uuid.UUID, userID uint) {
+func (s *ReplyService) GenerateForTicket(tenantID uuid.UUID, ticketID uuid.UUID, userID uint) {
 	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	defer cancel()
-
 	log := utils.Logger.WithField("ticket_id", ticketID)
 	log.Info("Reply: Starting automatic reply generation")
-
-	if _, err := s.generate(ctx, ticketID, userID); err != nil {
+	if _, err := s.generate(ctx, tenantID, ticketID, userID); err != nil {
 		log.WithError(err).Warn("Reply: Automatic generation failed")
 	}
 }
 
-// Generate creates a new reply draft for the ticket on-demand.
-func (s *ReplyService) Generate(ctx context.Context, ticketID uuid.UUID, userID uint) (*models.AIReply, error) {
-	return s.generate(ctx, ticketID, userID)
+func (s *ReplyService) Generate(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, userID uint) (*models.AIReply, error) {
+	return s.generate(ctx, tenantID, ticketID, userID)
 }
 
-// Regenerate marks the current latest draft as REGENERATED and creates a new one.
-func (s *ReplyService) Regenerate(ctx context.Context, ticketID uuid.UUID, userID uint) (*models.AIReply, error) {
-	// Mark the latest reply as REGENERATED (best-effort — do not block generation)
+func (s *ReplyService) Regenerate(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, userID uint) (*models.AIReply, error) {
 	if latest, err := s.replyRepo.FindLatestByTicketID(ticketID); err == nil {
 		if latest.Status == models.AIReplyStatusGenerated {
 			latest.Status = models.AIReplyStatusRegenerated
@@ -73,12 +67,13 @@ func (s *ReplyService) Regenerate(ctx context.Context, ticketID uuid.UUID, userI
 		}
 	}
 
-	reply, err := s.generate(ctx, ticketID, userID)
+	reply, err := s.generate(ctx, tenantID, ticketID, userID)
 	if err != nil {
 		return nil, err
 	}
 
 	_ = s.activityRepo.Create(&models.TicketActivity{
+		TenantID:     tenantID,
 		TicketID:     ticketID,
 		UserID:       userID,
 		ActivityType: models.ActivityReplyRegenerated,
@@ -88,8 +83,7 @@ func (s *ReplyService) Regenerate(ctx context.Context, ticketID uuid.UUID, userI
 	return reply, nil
 }
 
-// Approve marks the latest GENERATED reply as APPROVED.
-func (s *ReplyService) Approve(ctx context.Context, ticketID uuid.UUID, userID uint) (*models.AIReply, error) {
+func (s *ReplyService) Approve(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, userID uint) (*models.AIReply, error) {
 	reply, err := s.replyRepo.FindLatestByTicketID(ticketID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -112,6 +106,7 @@ func (s *ReplyService) Approve(ctx context.Context, ticketID uuid.UUID, userID u
 	}
 
 	_ = s.activityRepo.Create(&models.TicketActivity{
+		TenantID:     tenantID,
 		TicketID:     ticketID,
 		UserID:       userID,
 		ActivityType: models.ActivityReplyApproved,
@@ -121,8 +116,7 @@ func (s *ReplyService) Approve(ctx context.Context, ticketID uuid.UUID, userID u
 	return reply, nil
 }
 
-// Edit saves an edited version of the reply while preserving the original.
-func (s *ReplyService) Edit(ctx context.Context, ticketID uuid.UUID, userID uint, editedReply string) (*models.AIReply, error) {
+func (s *ReplyService) Edit(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, userID uint, editedReply string) (*models.AIReply, error) {
 	reply, err := s.replyRepo.FindLatestByTicketID(ticketID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -136,12 +130,12 @@ func (s *ReplyService) Edit(ctx context.Context, ticketID uuid.UUID, userID uint
 	}
 
 	reply.EditedReply = editedReply
-
 	if err := s.replyRepo.Update(reply); err != nil {
 		return nil, err
 	}
 
 	_ = s.activityRepo.Create(&models.TicketActivity{
+		TenantID:     tenantID,
 		TicketID:     ticketID,
 		UserID:       userID,
 		ActivityType: models.ActivityReplyEdited,
@@ -151,8 +145,7 @@ func (s *ReplyService) Edit(ctx context.Context, ticketID uuid.UUID, userID uint
 	return reply, nil
 }
 
-// Reject marks the latest GENERATED reply as REJECTED.
-func (s *ReplyService) Reject(ctx context.Context, ticketID uuid.UUID, userID uint) (*models.AIReply, error) {
+func (s *ReplyService) Reject(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, userID uint) (*models.AIReply, error) {
 	reply, err := s.replyRepo.FindLatestByTicketID(ticketID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -166,12 +159,12 @@ func (s *ReplyService) Reject(ctx context.Context, ticketID uuid.UUID, userID ui
 	}
 
 	reply.Status = models.AIReplyStatusRejected
-
 	if err := s.replyRepo.Update(reply); err != nil {
 		return nil, err
 	}
 
 	_ = s.activityRepo.Create(&models.TicketActivity{
+		TenantID:     tenantID,
 		TicketID:     ticketID,
 		UserID:       userID,
 		ActivityType: models.ActivityReplyRejected,
@@ -181,12 +174,10 @@ func (s *ReplyService) Reject(ctx context.Context, ticketID uuid.UUID, userID ui
 	return reply, nil
 }
 
-// GetLatest returns the most recent reply draft for the ticket.
 func (s *ReplyService) GetLatest(ticketID uuid.UUID) (*models.AIReply, error) {
 	return s.replyRepo.FindLatestByTicketID(ticketID)
 }
 
-// GetHistory returns all reply drafts for the ticket, newest first.
 func (s *ReplyService) GetHistory(ticketID uuid.UUID) ([]dto.AIReplyResponse, error) {
 	replies, err := s.replyRepo.FindAllByTicketID(ticketID)
 	if err != nil {
@@ -201,12 +192,11 @@ func (s *ReplyService) GetHistory(ticketID uuid.UUID) ([]dto.AIReplyResponse, er
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
-// generate is the shared implementation for Generate and Regenerate.
-func (s *ReplyService) generate(ctx context.Context, ticketID uuid.UUID, userID uint) (*models.AIReply, error) {
+func (s *ReplyService) generate(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, userID uint) (*models.AIReply, error) {
 	log := utils.Logger.WithField("ticket_id", ticketID)
 
-	// 1. Load ticket
-	ticket, err := s.ticketRepo.FindByID(ticketID)
+	// 1. Load ticket (unscoped — called from worker context)
+	ticket, err := s.ticketRepo.FindByIDUnscoped(ticketID)
 	if err != nil {
 		return nil, fmt.Errorf("ticket not found: %w", err)
 	}
@@ -217,7 +207,7 @@ func (s *ReplyService) generate(ctx context.Context, ticketID uuid.UUID, userID 
 		query += " " + ticket.AICategory
 	}
 
-	docs, err := s.retriever.Retrieve(ctx, query, 5)
+	docs, err := s.retriever.Retrieve(ctx, tenantID, query, 5)
 	if err != nil {
 		log.WithError(err).Error("Reply: Knowledge base retrieval failed")
 		return nil, fmt.Errorf("knowledge base unavailable: %w", err)
@@ -264,6 +254,7 @@ func (s *ReplyService) generate(ctx context.Context, ticketID uuid.UUID, userID 
 
 	// 5. Persist reply
 	reply := &models.AIReply{
+		TenantID:       tenantID,
 		TicketID:       ticketID,
 		GeneratedReply: result.Reply,
 		Confidence:     result.Confidence,
@@ -279,6 +270,7 @@ func (s *ReplyService) generate(ctx context.Context, ticketID uuid.UUID, userID 
 
 	// 6. Log activity
 	_ = s.activityRepo.Create(&models.TicketActivity{
+		TenantID:     tenantID,
 		TicketID:     ticketID,
 		UserID:       userID,
 		ActivityType: models.ActivityReplyGenerated,

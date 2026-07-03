@@ -43,10 +43,11 @@ func (h *AIAnalysisHandler) Handle(ctx context.Context, job queue.Job) error {
 		WithField("job_type", job.Type).
 		WithField("ticket_id", ticketID)
 
-	ticket, err := h.ticketRepo.FindByID(ticketID)
+	ticket, err := h.ticketRepo.FindByIDUnscoped(ticketID)
 	if err != nil {
 		return fmt.Errorf("ticket not found: %w", err)
 	}
+	tenantID := ticket.TenantID
 
 	log.Info("AI Analysis: Starting")
 
@@ -85,6 +86,7 @@ func (h *AIAnalysisHandler) Handle(ctx context.Context, job queue.Job) error {
 
 	// Activity log
 	_ = h.activityRepo.Create(&models.TicketActivity{
+		TenantID:     tenantID,
 		TicketID:     ticketID,
 		UserID:       ticket.CreatedBy,
 		ActivityType: models.ActivityAIAnalysisCompleted,

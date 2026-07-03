@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 // JobStatus represents the lifecycle state of a background job.
 type JobStatus string
@@ -41,6 +45,7 @@ const (
 // BackgroundJob tracks every async job in PostgreSQL for monitoring and auditing.
 type BackgroundJob struct {
 	ID           uint       `gorm:"primarykey;autoIncrement"              json:"id"`
+	TenantID     uuid.UUID  `gorm:"type:uuid;not null;default:'00000000-0000-0000-0000-000000000000';index" json:"tenant_id"`
 	JobType      JobType    `gorm:"type:varchar(50);not null;index"       json:"job_type"`
 	ReferenceID  string     `gorm:"type:varchar(255);not null;index"      json:"reference_id"` // ticket UUID
 	Status       JobStatus  `gorm:"type:varchar(20);not null;default:'QUEUED';index" json:"status"`

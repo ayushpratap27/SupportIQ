@@ -11,19 +11,18 @@ import (
 )
 
 // AuthHandler exposes HTTP endpoints for authentication.
-// It is intentionally thin — all business logic lives in AuthService.
 type AuthHandler struct {
 	authService *services.AuthService
 }
 
-// NewAuthHandler constructs an AuthHandler via dependency injection.
 func NewAuthHandler(authService *services.AuthService) *AuthHandler {
 	return &AuthHandler{authService: authService}
 }
 
 // Register handles POST /api/v1/auth/register
+// Creates a new tenant + admin user.
 func (h *AuthHandler) Register(c *gin.Context) {
-	var req dto.RegisterRequest
+	var req dto.RegisterWithTenantRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.SendError(c, http.StatusBadRequest, err.Error())
 		return
@@ -34,7 +33,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	resp, statusCode, err := h.authService.Register(&req)
+	resp, statusCode, err := h.authService.RegisterWithTenant(&req)
 	if err != nil {
 		utils.SendError(c, statusCode, err.Error())
 		return
@@ -61,12 +60,11 @@ func (h *AuthHandler) Login(c *gin.Context) {
 }
 
 // Logout handles POST /api/v1/auth/logout
-// JWT is stateless — the server-side action is a no-op; the client discards its token.
 func (h *AuthHandler) Logout(c *gin.Context) {
 	utils.SendSuccess(c, http.StatusOK, "Logged out successfully", nil)
 }
 
-// Me handles GET /api/v1/auth/me (requires Authenticate middleware)
+// Me handles GET /api/v1/auth/me
 func (h *AuthHandler) Me(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists {

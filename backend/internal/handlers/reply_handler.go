@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/ayush/supportiq/internal/middleware"
 	"github.com/ayush/supportiq/internal/services"
 	"github.com/ayush/supportiq/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -56,7 +57,7 @@ func (h *ReplyHandler) GenerateReply(c *gin.Context) {
 
 	userID := c.GetUint("userID")
 
-	reply, err := h.replySvc.Generate(c.Request.Context(), ticketID, userID)
+	reply, err := h.replySvc.Generate(c.Request.Context(), middleware.GetTenantID(c), ticketID, userID)
 	if err != nil {
 		utils.SendError(c, http.StatusUnprocessableEntity, err.Error())
 		return
@@ -75,7 +76,7 @@ func (h *ReplyHandler) RegenerateReply(c *gin.Context) {
 
 	userID := c.GetUint("userID")
 
-	reply, err := h.replySvc.Regenerate(c.Request.Context(), ticketID, userID)
+	reply, err := h.replySvc.Regenerate(c.Request.Context(), middleware.GetTenantID(c), ticketID, userID)
 	if err != nil {
 		utils.SendError(c, http.StatusUnprocessableEntity, err.Error())
 		return
@@ -102,7 +103,7 @@ func (h *ReplyHandler) EditReply(c *gin.Context) {
 
 	userID := c.GetUint("userID")
 
-	reply, err := h.replySvc.Edit(c.Request.Context(), ticketID, userID, req.Reply)
+	reply, err := h.replySvc.Edit(c.Request.Context(), middleware.GetTenantID(c), ticketID, userID, req.Reply)
 	if err != nil {
 		utils.SendError(c, http.StatusBadRequest, err.Error())
 		return
@@ -121,7 +122,7 @@ func (h *ReplyHandler) ApproveReply(c *gin.Context) {
 
 	userID := c.GetUint("userID")
 
-	reply, err := h.replySvc.Approve(c.Request.Context(), ticketID, userID)
+	reply, err := h.replySvc.Approve(c.Request.Context(), middleware.GetTenantID(c), ticketID, userID)
 	if err != nil {
 		utils.SendError(c, http.StatusBadRequest, err.Error())
 		return
@@ -152,7 +153,7 @@ func (h *ReplyHandler) RejectReply(c *gin.Context) {
 
 	userID := c.GetUint("userID")
 
-	reply, err := h.replySvc.Reject(c.Request.Context(), ticketID, userID)
+	reply, err := h.replySvc.Reject(c.Request.Context(), middleware.GetTenantID(c), ticketID, userID)
 	if err != nil {
 		utils.SendError(c, http.StatusBadRequest, err.Error())
 		return

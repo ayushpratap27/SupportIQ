@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ayush/supportiq/internal/dto"
+	"github.com/ayush/supportiq/internal/middleware"
 	"github.com/ayush/supportiq/internal/models"
 	"github.com/ayush/supportiq/internal/repositories"
 	"github.com/ayush/supportiq/internal/utils"
@@ -28,7 +29,7 @@ func (h *ActivityHandler) ListByTicket(c *gin.Context) {
 		return
 	}
 
-	activities, err := h.activityRepo.ListByTicketID(ticketID)
+	activities, err := h.activityRepo.ListByTicketID(middleware.GetTenantID(c), ticketID)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, "Failed to retrieve activities")
 		return
@@ -43,7 +44,7 @@ func (h *ActivityHandler) ListByTicket(c *gin.Context) {
 
 // ListRecent handles GET /api/v1/activities (global feed for dashboard)
 func (h *ActivityHandler) ListRecent(c *gin.Context) {
-	activities, err := h.activityRepo.ListRecent(20)
+	activities, err := h.activityRepo.ListRecent(middleware.GetTenantID(c), 20)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, "Failed to retrieve activities")
 		return

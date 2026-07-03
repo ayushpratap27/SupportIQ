@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 // KnowledgeCategory represents the type of knowledge document.
 type KnowledgeCategory string
@@ -18,6 +22,7 @@ const (
 // KnowledgeBase is a company knowledge document used to ground AI replies (RAG).
 type KnowledgeBase struct {
 	ID        uint              `gorm:"primarykey;autoIncrement"   json:"id"`
+	TenantID  uuid.UUID         `gorm:"type:uuid;not null;default:'00000000-0000-0000-0000-000000000000';index" json:"tenant_id"`
 	Title     string            `gorm:"type:varchar(255);not null" json:"title"`
 	Category  KnowledgeCategory `gorm:"type:varchar(50);not null"  json:"category"`
 	Content   string            `gorm:"type:text;not null"         json:"content"`

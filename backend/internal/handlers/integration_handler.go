@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/ayush/supportiq/internal/dto"
+	"github.com/ayush/supportiq/internal/middleware"
 	"github.com/ayush/supportiq/internal/services"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -23,7 +24,7 @@ func NewIntegrationHandler(svc *services.IntegrationService) *IntegrationHandler
 // List returns all configured integrations.
 // GET /integrations
 func (h *IntegrationHandler) List(c *gin.Context) {
-	list, err := h.svc.List()
+	list, err := h.svc.List(middleware.GetTenantID(c))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -42,7 +43,7 @@ func (h *IntegrationHandler) Create(c *gin.Context) {
 
 	userIDVal, _ := c.Get("userID")
 	userID, _ := userIDVal.(uint)
-	resp, err := h.svc.Create(req, userID)
+	resp, err := h.svc.Create(middleware.GetTenantID(c), req, userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -62,7 +63,7 @@ func (h *IntegrationHandler) Update(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	resp, err := h.svc.Update(id, req)
+	resp, err := h.svc.Update(middleware.GetTenantID(c), id, req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -77,7 +78,7 @@ func (h *IntegrationHandler) Delete(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	if err := h.svc.Delete(id); err != nil {
+	if err := h.svc.Delete(middleware.GetTenantID(c), id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -91,7 +92,7 @@ func (h *IntegrationHandler) TestConnection(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	if err := h.svc.TestConnection(c.Request.Context(), id); err != nil {
+	if err := h.svc.TestConnection(c.Request.Context(), middleware.GetTenantID(c), id); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error(), "success": false})
 		return
 	}
@@ -105,7 +106,7 @@ func (h *IntegrationHandler) ListEvents(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	events, err := h.svc.ListEvents(id)
+	events, err := h.svc.ListEvents(middleware.GetTenantID(c), id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -120,7 +121,7 @@ func (h *IntegrationHandler) GetTicketIntegrations(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	items, err := h.svc.GetTicketIntegrations(ticketID)
+	items, err := h.svc.GetTicketIntegrations(middleware.GetTenantID(c), ticketID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -135,7 +136,7 @@ func (h *IntegrationHandler) CreateJiraIssue(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	resp, err := h.svc.CreateJiraIssue(c.Request.Context(), ticketID)
+	resp, err := h.svc.CreateJiraIssue(c.Request.Context(), middleware.GetTenantID(c), ticketID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -150,7 +151,7 @@ func (h *IntegrationHandler) CreateLinearIssue(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	resp, err := h.svc.CreateLinearIssue(c.Request.Context(), ticketID)
+	resp, err := h.svc.CreateLinearIssue(c.Request.Context(), middleware.GetTenantID(c), ticketID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -165,7 +166,7 @@ func (h *IntegrationHandler) CreateGitHubIssue(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	resp, err := h.svc.CreateGitHubIssue(c.Request.Context(), ticketID)
+	resp, err := h.svc.CreateGitHubIssue(c.Request.Context(), middleware.GetTenantID(c), ticketID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

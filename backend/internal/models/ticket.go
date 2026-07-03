@@ -65,6 +65,7 @@ const (
 
 // Ticket is the core support ticket entity.
 type Ticket struct {
+	TenantID      uuid.UUID      `gorm:"type:uuid;not null;default:'00000000-0000-0000-0000-000000000000';index" json:"tenant_id"`
 	ID            uuid.UUID      `gorm:"type:uuid;primarykey"                            json:"id"`
 	TicketNumber  string         `gorm:"type:varchar(20);uniqueIndex;not null"           json:"ticket_number"`
 	Subject       string         `gorm:"type:varchar(150);not null"                      json:"subject"`
@@ -105,10 +106,10 @@ func (t *Ticket) BeforeCreate(_ *gorm.DB) error {
 	return nil
 }
 
-// TicketCounter holds the single monotonically-increasing sequence value used
-// to generate TKT-XXXXXX numbers safely under concurrent writes.
-// A single row (id = 1) is seeded on startup.
+// TicketCounter holds the per-tenant monotonically-increasing sequence value
+// used to generate TKT-XXXXXX numbers safely under concurrent writes.
+// One row per tenant, created on first ticket creation.
 type TicketCounter struct {
-	ID        uint  `gorm:"primarykey"`
-	LastValue int64 `gorm:"not null;default:0"`
+	TenantID  uuid.UUID `gorm:"type:uuid;primarykey"`
+	LastValue int64     `gorm:"not null;default:0"`
 }

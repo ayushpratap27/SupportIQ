@@ -7,6 +7,7 @@ import (
 	"github.com/ayush/supportiq/internal/dto"
 	"github.com/ayush/supportiq/internal/models"
 	"github.com/ayush/supportiq/internal/repositories"
+	"github.com/google/uuid"
 )
 
 // KnowledgeService handles all business logic for knowledge base management.
@@ -18,11 +19,12 @@ func NewKnowledgeService(repo *repositories.KnowledgeRepository) *KnowledgeServi
 	return &KnowledgeService{repo: repo}
 }
 
-func (s *KnowledgeService) Create(req dto.CreateKnowledgeRequest) (*models.KnowledgeBase, error) {
+func (s *KnowledgeService) Create(tenantID uuid.UUID, req dto.CreateKnowledgeRequest) (*models.KnowledgeBase, error) {
 	if !isValidKBCategory(req.Category) {
 		return nil, fmt.Errorf("invalid category: %s", req.Category)
 	}
 	doc := &models.KnowledgeBase{
+		TenantID: tenantID,
 		Title:    req.Title,
 		Category: models.KnowledgeCategory(req.Category),
 		Content:  req.Content,
@@ -34,12 +36,12 @@ func (s *KnowledgeService) Create(req dto.CreateKnowledgeRequest) (*models.Knowl
 	return doc, nil
 }
 
-func (s *KnowledgeService) GetByID(id uint) (*models.KnowledgeBase, error) {
-	return s.repo.FindByID(id)
+func (s *KnowledgeService) GetByID(tenantID uuid.UUID, id uint) (*models.KnowledgeBase, error) {
+	return s.repo.FindByID(tenantID, id)
 }
 
-func (s *KnowledgeService) Update(id uint, req dto.UpdateKnowledgeRequest) (*models.KnowledgeBase, error) {
-	doc, err := s.repo.FindByID(id)
+func (s *KnowledgeService) Update(tenantID uuid.UUID, id uint, req dto.UpdateKnowledgeRequest) (*models.KnowledgeBase, error) {
+	doc, err := s.repo.FindByID(tenantID, id)
 	if err != nil {
 		return nil, err
 	}
@@ -66,14 +68,14 @@ func (s *KnowledgeService) Update(id uint, req dto.UpdateKnowledgeRequest) (*mod
 	return doc, nil
 }
 
-func (s *KnowledgeService) Delete(id uint) error {
-	if _, err := s.repo.FindByID(id); err != nil {
+func (s *KnowledgeService) Delete(tenantID uuid.UUID, id uint) error {
+	if _, err := s.repo.FindByID(tenantID, id); err != nil {
 		return err
 	}
-	return s.repo.Delete(id)
+	return s.repo.Delete(tenantID, id)
 }
 
-func (s *KnowledgeService) List(q dto.ListKnowledgeQuery) ([]models.KnowledgeBase, int64, dto.ListKnowledgeResponse, error) {
+func (s *KnowledgeService) List(tenantID uuid.UUID, q dto.ListKnowledgeQuery) ([]models.KnowledgeBase, int64, dto.ListKnowledgeResponse, error) {
 	page := q.Page
 	if page < 1 {
 		page = 1
@@ -83,7 +85,7 @@ func (s *KnowledgeService) List(q dto.ListKnowledgeQuery) ([]models.KnowledgeBas
 		limit = 20
 	}
 
-	docs, total, err := s.repo.List(q.Search, q.Category, q.ActiveOnly, page, limit)
+	docs, total, err := s.repo.List(tenantID, q.Search, q.Category, q.ActiveOnly, page, limit)
 	if err != nil {
 		return nil, 0, dto.ListKnowledgeResponse{}, err
 	}
@@ -103,8 +105,6 @@ func (s *KnowledgeService) List(q dto.ListKnowledgeQuery) ([]models.KnowledgeBas
 		Limit:       limit,
 	}, nil
 }
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 func toKnowledgeResponse(d models.KnowledgeBase) dto.KnowledgeResponse {
 	return dto.KnowledgeResponse{

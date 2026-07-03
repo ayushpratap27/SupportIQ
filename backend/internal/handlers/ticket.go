@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ayush/supportiq/internal/dto"
+	"github.com/ayush/supportiq/internal/middleware"
 	"github.com/ayush/supportiq/internal/services"
 	"github.com/ayush/supportiq/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -30,7 +31,7 @@ func (h *TicketHandler) Create(c *gin.Context) {
 		return
 	}
 
-	resp, statusCode, err := h.service.Create(&req, userID)
+	resp, statusCode, err := h.service.Create(middleware.GetTenantID(c), &req, userID)
 	if err != nil {
 		utils.SendError(c, statusCode, err.Error())
 		return
@@ -46,7 +47,7 @@ func (h *TicketHandler) List(c *gin.Context) {
 		return
 	}
 
-	resp, statusCode, err := h.service.List(&q)
+	resp, statusCode, err := h.service.List(middleware.GetTenantID(c), &q)
 	if err != nil {
 		utils.SendError(c, statusCode, err.Error())
 		return
@@ -62,7 +63,7 @@ func (h *TicketHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	resp, statusCode, err := h.service.GetByID(id)
+	resp, statusCode, err := h.service.GetByID(middleware.GetTenantID(c), id)
 	if err != nil {
 		utils.SendError(c, statusCode, err.Error())
 		return
@@ -86,7 +87,7 @@ func (h *TicketHandler) Update(c *gin.Context) {
 		return
 	}
 
-	resp, statusCode, err := h.service.Update(id, &req, userID)
+	resp, statusCode, err := h.service.Update(middleware.GetTenantID(c), id, &req, userID)
 	if err != nil {
 		utils.SendError(c, statusCode, err.Error())
 		return
@@ -110,7 +111,7 @@ func (h *TicketHandler) UpdateStatus(c *gin.Context) {
 		return
 	}
 
-	resp, statusCode, err := h.service.UpdateStatus(id, &req, userID)
+	resp, statusCode, err := h.service.UpdateStatus(middleware.GetTenantID(c), id, &req, userID)
 	if err != nil {
 		utils.SendError(c, statusCode, err.Error())
 		return
@@ -135,7 +136,7 @@ func (h *TicketHandler) Assign(c *gin.Context) {
 		return
 	}
 
-	resp, statusCode, err := h.service.Assign(id, &req, userID, userRole)
+	resp, statusCode, err := h.service.Assign(middleware.GetTenantID(c), id, &req, userID, userRole)
 	if err != nil {
 		utils.SendError(c, statusCode, err.Error())
 		return
@@ -153,7 +154,7 @@ func (h *TicketHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	statusCode, err := h.service.Delete(id, userRole)
+	statusCode, err := h.service.Delete(middleware.GetTenantID(c), id, userRole)
 	if err != nil {
 		utils.SendError(c, statusCode, err.Error())
 		return
@@ -172,7 +173,7 @@ func (h *TicketHandler) TakeOwnership(c *gin.Context) {
 		return
 	}
 
-	resp, statusCode, err := h.service.TakeOwnership(id, userID, userRole)
+	resp, statusCode, err := h.service.TakeOwnership(middleware.GetTenantID(c), id, userID, userRole)
 	if err != nil {
 		utils.SendError(c, statusCode, err.Error())
 		return
@@ -190,7 +191,7 @@ func (h *TicketHandler) MyTickets(c *gin.Context) {
 		return
 	}
 
-	resp, statusCode, err := h.service.MyTickets(userID, &q)
+	resp, statusCode, err := h.service.MyTickets(middleware.GetTenantID(c), userID, &q)
 	if err != nil {
 		utils.SendError(c, statusCode, err.Error())
 		return
@@ -206,7 +207,7 @@ func (h *TicketHandler) ListUnassigned(c *gin.Context) {
 		return
 	}
 
-	resp, statusCode, err := h.service.ListUnassigned(&q)
+	resp, statusCode, err := h.service.ListUnassigned(middleware.GetTenantID(c), &q)
 	if err != nil {
 		utils.SendError(c, statusCode, err.Error())
 		return

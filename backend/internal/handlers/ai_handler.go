@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/ayush/supportiq/internal/dto"
+	"github.com/ayush/supportiq/internal/middleware"
 	"github.com/ayush/supportiq/internal/repositories"
 	"github.com/ayush/supportiq/internal/services"
 	"github.com/ayush/supportiq/internal/utils"
@@ -29,7 +30,7 @@ func (h *AIHandler) GetAnalysis(c *gin.Context) {
 		return
 	}
 
-	ticket, err := h.ticketRepo.FindByID(id)
+	ticket, err := h.ticketRepo.FindByID(middleware.GetTenantID(c), id)
 	if err != nil {
 		utils.SendError(c, http.StatusNotFound, "Ticket not found")
 		return
@@ -56,7 +57,7 @@ func (h *AIHandler) RetryAnalysis(c *gin.Context) {
 		return
 	}
 
-	if _, err := h.ticketRepo.FindByID(id); err != nil {
+	if _, err := h.ticketRepo.FindByID(middleware.GetTenantID(c), id); err != nil {
 		utils.SendError(c, http.StatusNotFound, "Ticket not found")
 		return
 	}

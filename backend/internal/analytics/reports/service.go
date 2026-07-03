@@ -42,10 +42,10 @@ func (s *Service) Schedule(req *dto.GenerateReportRequest, userID uint, svc inte
 	filtersJSON, _ := json.Marshal(req)
 	report := &models.Report{
 		Name:        req.Name,
-		ReportType:  req.ReportType,
-		Format:      models.ReportFormat(req.Format),
-		Status:      models.ReportStatusPending,
-		Filters:     string(filtersJSON),
+		Type:        req.ReportType,
+		Format:      req.Format,
+		Status:      "PENDING",
+		Parameters:  string(filtersJSON),
 		GeneratedBy: userID,
 	}
 	if err := s.db.Create(report).Error; err != nil {
@@ -65,7 +65,7 @@ func (s *Service) generate(reportID uint, filter dto.DateFilter, svc interface{ 
 		return
 	}
 
-	data, err := svc.CollectData(report.ReportType, filter)
+	data, err := svc.CollectData(report.Type, filter)
 	if err != nil {
 		s.markFailed(&report, err.Error())
 		return
@@ -74,10 +74,10 @@ func (s *Service) generate(reportID uint, filter dto.DateFilter, svc interface{ 
 	var fileBytes []byte
 	var ext string
 	switch report.Format {
-	case models.ReportFormatCSV:
+	case "CSV":
 		fileBytes, err = generateCSV(data)
 		ext = ".csv"
-	case models.ReportFormatExcel:
+	case "EXCEL":
 		fileBytes, err = generateExcel(data)
 		ext = ".xlsx"
 	default:
@@ -102,18 +102,16 @@ func (s *Service) generate(reportID uint, filter dto.DateFilter, svc interface{ 
 		return
 	}
 
-	now := time.Now().UTC()
-	report.Status = models.ReportStatusCompleted
+	report.Status = "COMPLETED"
 	report.FilePath = filePath
 	report.FileSize = int64(len(fileBytes))
-	report.CompletedAt = &now
+	// CompletedAt removed
 	s.db.Save(&report)
 }
 
 func (s *Service) markFailed(report *models.Report, reason string) {
-	report.Status = models.ReportStatusFailed
-	report.ErrorMessage = reason
-	s.db.Save(report)
+        report.Status = "FAILED"
+        report.ErrorMsg = reason
 }
 
 // GetReport returns a single report by ID.
@@ -139,7 +137,7 @@ func (s *Service) DownloadReport(id uint) ([]byte, string, string, error) {
 	if err := s.db.First(&report, id).Error; err != nil {
 		return nil, "", "", err
 	}
-	if report.Status != models.ReportStatusCompleted {
+	if report.Status != "COMPLETED" {
 		return nil, "", "", fmt.Errorf("report not yet completed (status: %s)", report.Status)
 	}
 	data, err := os.ReadFile(report.FilePath)
@@ -149,10 +147,10 @@ func (s *Service) DownloadReport(id uint) ([]byte, string, string, error) {
 
 	var mime, filename string
 	switch report.Format {
-	case models.ReportFormatCSV:
+	case "CSV":
 		mime = "text/csv"
 		filename = report.Name + ".csv"
-	case models.ReportFormatExcel:
+	case "EXCEL":
 		mime = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 		filename = report.Name + ".xlsx"
 	default:

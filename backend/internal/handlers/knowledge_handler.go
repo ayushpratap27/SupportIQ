@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/ayush/supportiq/internal/dto"
+	"github.com/ayush/supportiq/internal/middleware"
 	"github.com/ayush/supportiq/internal/services"
 	"github.com/ayush/supportiq/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -27,7 +28,7 @@ func (h *KnowledgeHandler) List(c *gin.Context) {
 		return
 	}
 
-	_, _, resp, err := h.svc.List(q)
+	_, _, resp, err := h.svc.List(middleware.GetTenantID(c), q)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, "Failed to fetch knowledge base")
 		return
@@ -44,7 +45,7 @@ func (h *KnowledgeHandler) Create(c *gin.Context) {
 		return
 	}
 
-	doc, err := h.svc.Create(req)
+	doc, err := h.svc.Create(middleware.GetTenantID(c), req)
 	if err != nil {
 		utils.SendError(c, http.StatusBadRequest, err.Error())
 		return
@@ -75,7 +76,7 @@ func (h *KnowledgeHandler) Update(c *gin.Context) {
 		return
 	}
 
-	doc, err := h.svc.Update(uint(id), req)
+	doc, err := h.svc.Update(middleware.GetTenantID(c), uint(id), req)
 	if err != nil {
 		utils.SendError(c, http.StatusBadRequest, err.Error())
 		return
@@ -100,7 +101,7 @@ func (h *KnowledgeHandler) Delete(c *gin.Context) {
 		return
 	}
 
-	if err := h.svc.Delete(uint(id)); err != nil {
+	if err := h.svc.Delete(middleware.GetTenantID(c), uint(id)); err != nil {
 		utils.SendError(c, http.StatusNotFound, "Document not found")
 		return
 	}
