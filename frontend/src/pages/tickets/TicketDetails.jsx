@@ -9,9 +9,10 @@ import ActivityTimeline from '../../components/tickets/ActivityTimeline'
 import NotesPanel from '../../components/tickets/NotesPanel'
 import ConversationPanel from '../../components/tickets/ConversationPanel'
 import AIAnalysisPanel from '../../components/tickets/AIAnalysisPanel'
+import AIReplyPanel from '../../components/tickets/AIReplyPanel'
 import { formatDate } from '../../utils/format'
 
-const TABS = ['Overview', 'Conversation', 'Notes', 'Activity', 'AI Analysis']
+const TABS = ['Overview', 'Conversation', 'Notes', 'Activity', 'AI Analysis', 'AI Reply']
 
 const NEXT_STATUS = {
   OPEN: 'IN_PROGRESS',
@@ -282,6 +283,12 @@ export default function TicketDetails() {
         {activeTab === 'AI Analysis' && (
           <div className="max-w-2xl">
             <AIAnalysisPanel ticketId={id} />
+          </div>
+        )}
+
+        {activeTab === 'AI Reply' && (
+          <div className="max-w-2xl">
+            <AIReplyPanel ticketId={id} />
           </div>
         )}
       </div>

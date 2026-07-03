@@ -18,6 +18,7 @@ type AIService struct {
 	provider     provider.Provider
 	ticketRepo   *repositories.TicketRepository
 	activityRepo *repositories.ActivityRepository
+	replySvc     *ReplyService // optional; set via SetReplyService after construction
 }
 
 func NewAIService(
@@ -26,6 +27,13 @@ func NewAIService(
 	activityRepo *repositories.ActivityRepository,
 ) *AIService {
 	return &AIService{provider: p, ticketRepo: ticketRepo, activityRepo: activityRepo}
+}
+
+// SetReplyService injects the reply service so AI analysis can trigger automatic
+// reply generation on completion. Called after both services are constructed
+// to avoid circular dependency in the DI wiring.
+func (s *AIService) SetReplyService(rs *ReplyService) {
+	s.replySvc = rs
 }
 
 // AnalyzeTicket queues an async analysis for a newly created ticket.
@@ -104,4 +112,9 @@ func (s *AIService) run(ticketID uuid.UUID) {
 		WithField("priority", result.Priority).
 		WithField("confidence", result.Confidence).
 		Info("AI: Analysis completed successfully")
+
+	// Automatically trigger reply generation now that we have AI context
+	if s.replySvc != nil {
+		s.replySvc.GenerateForTicket(ticketID, ticket.CreatedBy)
+	}
 }

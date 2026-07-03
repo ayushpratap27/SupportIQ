@@ -5,9 +5,12 @@ import (
 
 	"github.com/ayush/supportiq/internal/ai/gemini"
 	"github.com/ayush/supportiq/internal/ai/provider"
+	replyprovider "github.com/ayush/supportiq/internal/ai/reply/provider"
 	"github.com/ayush/supportiq/internal/config"
 	"github.com/ayush/supportiq/internal/handlers"
+	"github.com/ayush/supportiq/internal/knowledge/retrieval"
 	"github.com/ayush/supportiq/internal/middleware"
+	"github.com/ayush/supportiq/internal/models"
 	"github.com/ayush/supportiq/internal/repositories"
 	"github.com/ayush/supportiq/internal/services"
 	"github.com/ayush/supportiq/internal/utils"
@@ -52,27 +55,42 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			activityRepo := repositories.NewActivityRepository(db)
 			noteRepo := repositories.NewNoteRepository(db)
 			commentRepo := repositories.NewCommentRepository(db)
+			knowledgeRepo := repositories.NewKnowledgeRepository(db)
+			replyRepo := repositories.NewReplyRepository(db)
 
-			// AI provider — falls back to NoopProvider when no key is configured
+			// AI analysis provider — falls back to NoopProvider when no key is configured
 			var aiProvider provider.Provider
+			var replyProvider replyprovider.ReplyProvider
 			if cfg.GeminiAPIKey != "" {
-				aiProvider = gemini.NewClient(
+				geminiClient := gemini.NewClientWithReplyConfig(
 					cfg.GeminiAPIKey,
 					cfg.GeminiModel,
 					time.Duration(cfg.AITimeout)*time.Second,
 					cfg.AIMaxRetries,
+					cfg.MaxReplyTokens,
+					cfg.ReplyTemperature,
 				)
+				aiProvider = geminiClient
+				replyProvider = geminiClient
 				utils.Logger.WithField("model", cfg.GeminiModel).Info("AI: Gemini provider initialised")
 			} else {
 				aiProvider = &provider.NoopProvider{}
-				utils.Logger.Warn("AI: GEMINI_API_KEY not set — AI analysis will be disabled")
+				replyProvider = &replyprovider.NoopReplyProvider{}
+				utils.Logger.Warn("AI: GEMINI_API_KEY not set — AI analysis and reply generation will be disabled")
 			}
+
+			// Knowledge retrieval (RAG)
+			knowledgeRetriever := retrieval.NewPostgresRetriever(knowledgeRepo)
 
 			// Services
 			aiService := services.NewAIService(aiProvider, ticketRepo, activityRepo)
+			replyService := services.NewReplyService(replyProvider, knowledgeRetriever, ticketRepo, replyRepo, activityRepo, cfg.GeminiModel)
+			aiService.SetReplyService(replyService) // wire reply generation into the analysis pipeline
+
 			ticketService := services.NewTicketService(ticketRepo, userRepo, activityRepo, aiService)
 			noteService := services.NewNoteService(noteRepo, activityRepo)
 			commentService := services.NewCommentService(commentRepo, activityRepo)
+			knowledgeService := services.NewKnowledgeService(knowledgeRepo)
 
 			// Handlers
 			ticketHandler := handlers.NewTicketHandler(ticketService)
@@ -80,6 +98,8 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			commentHandler := handlers.NewCommentHandler(commentService)
 			activityHandler := handlers.NewActivityHandler(activityRepo)
 			aiHandler := handlers.NewAIHandler(ticketRepo, aiService)
+			replyHandler := handlers.NewReplyHandler(replyService)
+			knowledgeHandler := handlers.NewKnowledgeHandler(knowledgeService)
 
 			// My tickets (flat path)
 			protected.GET("/my-tickets", ticketHandler.MyTickets)
@@ -111,6 +131,23 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 				// AI analysis
 				tickets.GET("/:id/ai-analysis", aiHandler.GetAnalysis)
 				tickets.POST("/:id/retry-ai", aiHandler.RetryAnalysis)
+
+				// AI reply workflow
+				tickets.GET("/:id/reply", replyHandler.GetReply)
+				tickets.POST("/:id/reply/generate", replyHandler.GenerateReply)
+				tickets.POST("/:id/reply/regenerate", replyHandler.RegenerateReply)
+				tickets.PATCH("/:id/reply/edit", replyHandler.EditReply)
+				tickets.POST("/:id/reply/approve", middleware.RequireRole(models.RoleAdmin, models.RoleSupportAgent), replyHandler.ApproveReply)
+				tickets.POST("/:id/reply/reject", replyHandler.RejectReply)
+			}
+
+			// Knowledge base management (admin only)
+			kb := protected.Group("/knowledge-base", middleware.RequireRole(models.RoleAdmin))
+			{
+				kb.GET("", knowledgeHandler.List)
+				kb.POST("", knowledgeHandler.Create)
+				kb.PUT("/:id", knowledgeHandler.Update)
+				kb.DELETE("/:id", knowledgeHandler.Delete)
 			}
 
 			// User utility routes

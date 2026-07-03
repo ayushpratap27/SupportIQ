@@ -1,0 +1,315 @@
+import { useState, useEffect, useRef } from 'react'
+import { replyService } from '../../services/replyService'
+
+const STATUS_COLORS = {
+  GENERATED:   'bg-blue-100 text-blue-700',
+  APPROVED:    'bg-green-100 text-green-700',
+  REJECTED:    'bg-red-100 text-red-700',
+  REGENERATED: 'bg-gray-100 text-gray-600',
+  SENT:        'bg-purple-100 text-purple-700',
+}
+
+function ConfidenceBar({ value }) {
+  const color = value >= 85 ? 'bg-green-500' : value >= 60 ? 'bg-amber-400' : 'bg-red-400'
+  return (
+    <div className="space-y-1">
+      <div className="flex justify-between text-xs text-gray-500">
+        <span>Confidence</span>
+        <span className="font-semibold">{value}%</span>
+      </div>
+      <div className="h-2 w-full rounded-full bg-gray-100">
+        <div className={`h-2 rounded-full transition-all ${color}`} style={{ width: `${value}%` }} />
+      </div>
+    </div>
+  )
+}
+
+export default function AIReplyPanel({ ticketId }) {
+  const [reply, setReply] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [editMode, setEditMode] = useState(false)
+  const [editText, setEditText] = useState('')
+  const [copied, setCopied] = useState(false)
+  const textareaRef = useRef(null)
+
+  const load = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await replyService.getReply(ticketId)
+      setReply(res.data.data)
+    } catch (err) {
+      if (err.response?.status !== 404) {
+        setError('Failed to load reply.')
+      }
+      setReply(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { load() }, [ticketId])
+
+  const handleGenerate = async () => {
+    setActionLoading(true)
+    setError(null)
+    try {
+      const res = await replyService.generateReply(ticketId)
+      setReply(res.data.data)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Reply generation failed. Make sure knowledge base articles exist.')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleRegenerate = async () => {
+    setActionLoading(true)
+    setError(null)
+    setEditMode(false)
+    try {
+      const res = await replyService.regenerateReply(ticketId)
+      setReply(res.data.data)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Regeneration failed.')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleApprove = async () => {
+    setActionLoading(true)
+    try {
+      const res = await replyService.approveReply(ticketId)
+      setReply(res.data.data)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Approval failed.')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleReject = async () => {
+    setActionLoading(true)
+    try {
+      const res = await replyService.rejectReply(ticketId)
+      setReply(res.data.data)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Rejection failed.')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleEditSave = async () => {
+    if (!editText.trim()) return
+    setActionLoading(true)
+    try {
+      const res = await replyService.editReply(ticketId, editText)
+      setReply(res.data.data)
+      setEditMode(false)
+    } catch (err) {
+      setError(err.response?.data?.message || 'Edit failed.')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  const handleCopy = () => {
+    const text = reply?.edited_reply || reply?.generated_reply || ''
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  const startEdit = () => {
+    setEditText(reply?.edited_reply || reply?.generated_reply || '')
+    setEditMode(true)
+    setTimeout(() => textareaRef.current?.focus(), 50)
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+        <span className="ml-3 text-sm text-gray-400">Loading reply…</span>
+      </div>
+    )
+  }
+
+  // No reply yet
+  if (!reply) {
+    return (
+      <div className="rounded-xl border border-dashed border-gray-200 bg-white p-10 text-center">
+        <div className="text-3xl mb-3">🤖</div>
+        <h3 className="text-sm font-semibold text-gray-700 mb-1">No AI Reply Generated</h3>
+        <p className="text-xs text-gray-400 mb-5 max-w-xs mx-auto">
+          Generate a reply grounded in your knowledge base. The agent must approve before it becomes official.
+        </p>
+        {error && (
+          <p className="mb-4 text-xs text-red-500 bg-red-50 rounded-lg px-4 py-2">{error}</p>
+        )}
+        <button
+          onClick={handleGenerate}
+          disabled={actionLoading}
+          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition"
+        >
+          {actionLoading ? (
+            <>
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              Generating…
+            </>
+          ) : '✨ Generate AI Reply'}
+        </button>
+      </div>
+    )
+  }
+
+  const displayReply = reply.edited_reply || reply.generated_reply
+  const isGenerated = reply.status === 'GENERATED'
+  const isApproved = reply.status === 'APPROVED'
+  const isRejected = reply.status === 'REJECTED'
+
+  return (
+    <div className="space-y-4">
+      {/* Header card */}
+      <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-800">AI Suggested Reply</h3>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Generated {new Date(reply.created_at).toLocaleString()} · Model: {reply.model || 'Gemini'} · Prompt {reply.prompt_version}
+            </p>
+          </div>
+          <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${STATUS_COLORS[reply.status] || 'bg-gray-100 text-gray-600'}`}>
+            {reply.status}
+          </span>
+        </div>
+
+        <ConfidenceBar value={reply.confidence} />
+
+        {isApproved && reply.approver && (
+          <p className="mt-3 text-xs text-green-600">
+            ✓ Approved by <strong>{reply.approver.name}</strong> on {new Date(reply.approved_at).toLocaleString()}
+          </p>
+        )}
+      </div>
+
+      {/* Reply content */}
+      <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+            {reply.edited_reply ? 'Edited Reply' : 'Generated Reply'}
+          </h3>
+          <button
+            onClick={handleCopy}
+            className="text-xs text-gray-400 hover:text-gray-600 transition"
+          >
+            {copied ? '✓ Copied' : '📋 Copy'}
+          </button>
+        </div>
+
+        {editMode ? (
+          <div className="space-y-3">
+            <textarea
+              ref={textareaRef}
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              rows={8}
+              className="w-full rounded-lg border border-blue-300 p-3 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-400 resize-y"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleEditSave}
+                disabled={actionLoading || !editText.trim()}
+                className="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition"
+              >
+                {actionLoading ? 'Saving…' : 'Save Changes'}
+              </button>
+              <button
+                onClick={() => { setEditMode(false); setError(null) }}
+                className="rounded-lg border border-gray-200 px-4 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-gray-800 whitespace-pre-wrap leading-relaxed">{displayReply}</p>
+        )}
+
+        {reply.edited_reply && !editMode && (
+          <div className="mt-4 border-t border-gray-50 pt-4">
+            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Original Generated Reply</p>
+            <p className="text-xs text-gray-500 whitespace-pre-wrap leading-relaxed">{reply.generated_reply}</p>
+          </div>
+        )}
+      </div>
+
+      {/* Error banner */}
+      {error && (
+        <div className="rounded-lg bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
+          {error}
+        </div>
+      )}
+
+      {/* Action buttons */}
+      {!editMode && (
+        <div className="flex flex-wrap gap-2">
+          {isGenerated && (
+            <>
+              <button
+                onClick={handleApprove}
+                disabled={actionLoading}
+                className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition"
+              >
+                ✓ Approve
+              </button>
+              <button
+                onClick={startEdit}
+                disabled={actionLoading}
+                className="rounded-lg border border-blue-200 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-50 transition"
+              >
+                ✏️ Edit
+              </button>
+              <button
+                onClick={handleReject}
+                disabled={actionLoading}
+                className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-50 disabled:opacity-50 transition"
+              >
+                ✗ Reject
+              </button>
+            </>
+          )}
+          <button
+            onClick={handleRegenerate}
+            disabled={actionLoading}
+            className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition"
+          >
+            {actionLoading ? (
+              <span className="flex items-center gap-2">
+                <div className="h-3 w-3 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
+                Working…
+              </span>
+            ) : '🔄 Regenerate'}
+          </button>
+        </div>
+      )}
+
+      {isApproved && (
+        <div className="rounded-xl bg-green-50 border border-green-100 px-5 py-4 text-sm text-green-700">
+          <strong>Reply Approved.</strong> This reply has been approved and is ready to send to the customer.
+        </div>
+      )}
+
+      {isRejected && (
+        <div className="rounded-xl bg-red-50 border border-red-100 px-5 py-4 text-sm text-red-600">
+          <strong>Reply Rejected.</strong> Use Regenerate to create a new reply draft.
+        </div>
+      )}
+    </div>
+  )
+}

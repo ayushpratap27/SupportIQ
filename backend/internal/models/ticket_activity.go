@@ -17,9 +17,16 @@ const (
 	ActivityCategoryChanged   = "CATEGORY_CHANGED"
 	ActivityCommentAdded      = "COMMENT_ADDED"
 	ActivityInternalNoteAdded = "INTERNAL_NOTE_ADDED"
-	ActivityTicketClosed      = "TICKET_CLOSED"
-	ActivityTicketReopened    = "TICKET_REOPENED"
+	ActivityTicketClosed        = "TICKET_CLOSED"
+	ActivityTicketReopened      = "TICKET_REOPENED"
 	ActivityAIAnalysisCompleted = "AI_ANALYSIS_COMPLETED"
+
+	// AI reply workflow activity types
+	ActivityReplyGenerated   = "AI_REPLY_GENERATED"
+	ActivityReplyApproved    = "AI_REPLY_APPROVED"
+	ActivityReplyRejected    = "AI_REPLY_REJECTED"
+	ActivityReplyEdited      = "AI_REPLY_EDITED"
+	ActivityReplyRegenerated = "AI_REPLY_REGENERATED"
 )
 
 // TicketActivity is an immutable audit-log row. Never edited after creation.

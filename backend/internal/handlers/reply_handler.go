@@ -1,0 +1,144 @@
+package handlers
+
+import (
+	"net/http"
+
+	"github.com/ayush/supportiq/internal/services"
+	"github.com/ayush/supportiq/internal/utils"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
+
+// ReplyHandler serves the AI reply workflow endpoints.
+type ReplyHandler struct {
+	replySvc *services.ReplyService
+}
+
+func NewReplyHandler(replySvc *services.ReplyService) *ReplyHandler {
+	return &ReplyHandler{replySvc: replySvc}
+}
+
+// GetReply handles GET /api/v1/tickets/:id/reply
+func (h *ReplyHandler) GetReply(c *gin.Context) {
+	ticketID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, "Invalid ticket ID")
+		return
+	}
+
+	reply, err := h.replySvc.GetLatest(ticketID)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			utils.SendSuccess(c, http.StatusOK, "No reply generated yet", nil)
+			return
+		}
+		utils.SendError(c, http.StatusInternalServerError, "Failed to fetch reply")
+		return
+	}
+
+	utils.SendSuccess(c, http.StatusOK, "Reply retrieved", services.ToReplyResponse(reply))
+}
+
+// GenerateReply handles POST /api/v1/tickets/:id/reply/generate
+func (h *ReplyHandler) GenerateReply(c *gin.Context) {
+	ticketID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, "Invalid ticket ID")
+		return
+	}
+
+	userID := c.GetUint("userID")
+
+	reply, err := h.replySvc.Generate(c.Request.Context(), ticketID, userID)
+	if err != nil {
+		utils.SendError(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+
+	utils.SendSuccess(c, http.StatusCreated, "Reply generated", services.ToReplyResponse(reply))
+}
+
+// RegenerateReply handles POST /api/v1/tickets/:id/reply/regenerate
+func (h *ReplyHandler) RegenerateReply(c *gin.Context) {
+	ticketID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, "Invalid ticket ID")
+		return
+	}
+
+	userID := c.GetUint("userID")
+
+	reply, err := h.replySvc.Regenerate(c.Request.Context(), ticketID, userID)
+	if err != nil {
+		utils.SendError(c, http.StatusUnprocessableEntity, err.Error())
+		return
+	}
+
+	utils.SendSuccess(c, http.StatusCreated, "Reply regenerated", services.ToReplyResponse(reply))
+}
+
+// EditReply handles PATCH /api/v1/tickets/:id/reply/edit
+func (h *ReplyHandler) EditReply(c *gin.Context) {
+	ticketID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, "Invalid ticket ID")
+		return
+	}
+
+	var req struct {
+		Reply string `json:"reply" binding:"required,min=10"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	userID := c.GetUint("userID")
+
+	reply, err := h.replySvc.Edit(c.Request.Context(), ticketID, userID, req.Reply)
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.SendSuccess(c, http.StatusOK, "Reply updated", services.ToReplyResponse(reply))
+}
+
+// ApproveReply handles POST /api/v1/tickets/:id/reply/approve
+func (h *ReplyHandler) ApproveReply(c *gin.Context) {
+	ticketID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, "Invalid ticket ID")
+		return
+	}
+
+	userID := c.GetUint("userID")
+
+	reply, err := h.replySvc.Approve(c.Request.Context(), ticketID, userID)
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.SendSuccess(c, http.StatusOK, "Reply approved", services.ToReplyResponse(reply))
+}
+
+// RejectReply handles POST /api/v1/tickets/:id/reply/reject
+func (h *ReplyHandler) RejectReply(c *gin.Context) {
+	ticketID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, "Invalid ticket ID")
+		return
+	}
+
+	userID := c.GetUint("userID")
+
+	reply, err := h.replySvc.Reject(c.Request.Context(), ticketID, userID)
+	if err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.SendSuccess(c, http.StatusOK, "Reply rejected", services.ToReplyResponse(reply))
+}

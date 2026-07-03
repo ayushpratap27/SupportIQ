@@ -17,10 +17,12 @@ type Config struct {
 	JWTRefreshSecret string
 
 	// AI configuration
-	GeminiAPIKey string
-	GeminiModel  string
-	AITimeout    int // seconds
-	AIMaxRetries int
+	GeminiAPIKey    string
+	GeminiModel     string
+	AITimeout       int // seconds
+	AIMaxRetries    int
+	MaxReplyTokens  int
+	ReplyTemperature float64
 }
 
 // Load reads environment variables (from .env in development) and returns a Config.
@@ -65,6 +67,24 @@ func Load() (*Config, error) {
 	}
 	if cfg.AIMaxRetries == 0 {
 		cfg.AIMaxRetries = 2
+	}
+
+	if v := getEnv("MAX_REPLY_TOKENS", ""); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			cfg.MaxReplyTokens = n
+		}
+	}
+	if cfg.MaxReplyTokens == 0 {
+		cfg.MaxReplyTokens = 1024
+	}
+
+	if v := getEnv("REPLY_TEMPERATURE", ""); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil && f >= 0 && f <= 1 {
+			cfg.ReplyTemperature = f
+		}
+	}
+	if cfg.ReplyTemperature == 0 {
+		cfg.ReplyTemperature = 0.3
 	}
 
 	return cfg, nil

@@ -11,6 +11,7 @@ import TicketDetails from '../pages/tickets/TicketDetails'
 import EditTicket from '../pages/tickets/EditTicket'
 import MyTickets from '../pages/tickets/MyTickets'
 import UnassignedTickets from '../pages/tickets/UnassignedTickets'
+import KnowledgeBase from '../pages/KnowledgeBase'
 
 function AppRoutes() {
   return (
@@ -29,6 +30,7 @@ function AppRoutes() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/my-tickets" element={<MyTickets />} />
         <Route path="/tickets/unassigned" element={<UnassignedTickets />} />
+        <Route path="/knowledge-base" element={<KnowledgeBase />} />
         <Route path="/tickets" element={<TicketList />} />
         <Route path="/tickets/new" element={<CreateTicket />} />
         <Route path="/tickets/:id" element={<TicketDetails />} />
