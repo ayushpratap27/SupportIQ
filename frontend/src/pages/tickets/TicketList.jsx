@@ -70,17 +70,15 @@ function TicketList() {
           </Link>
         </div>
         {/* Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 mb-4 flex flex-wrap gap-3 items-center">
-          <form onSubmit={handleSearchSubmit} className="flex gap-2 flex-1 min-w-[200px]">
+        <div className="flex flex-wrap gap-3 items-center mb-4">
+          <form onSubmit={handleSearchSubmit} className="flex gap-2">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search tickets…"
-              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 w-56"
             />
-            <button type="submit" className="px-3 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-sm hover:bg-gray-200 transition">
-              Search
-            </button>
+            <button type="submit" className="rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700 transition">Search</button>
           </form>
 
           <select
@@ -101,19 +99,14 @@ function TicketList() {
             {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
           </select>
 
-          <button
-            onClick={() => { setSearch(''); setStatusFilter(''); setPriorityFilter(''); setPage(1) }}
-            className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-200 transition"
-          >
-            Clear
-          </button>
-
-          <button
-            onClick={fetchTickets}
-            className="px-3 py-2 text-sm text-blue-600 hover:text-blue-700 font-medium transition"
-          >
-            ↻ Refresh
-          </button>
+          {(search || statusFilter || priorityFilter) && (
+            <button
+              onClick={() => { setSearch(''); setStatusFilter(''); setPriorityFilter(''); setPage(1) }}
+              className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 underline"
+            >
+              Clear
+            </button>
+          )}
         </div>
 
         {/* Table */}
