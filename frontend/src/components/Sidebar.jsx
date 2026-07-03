@@ -61,9 +61,9 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="w-60 shrink-0 flex flex-col bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
+    <aside className="w-60 shrink-0 flex flex-col bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
       {/* Logo */}
-      <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+      <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
         <Link to="/dashboard">
           <span className="font-bold text-gray-900 dark:text-white text-sm">
             AI Support Assistant
@@ -121,7 +121,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-gray-100 dark:border-gray-800 p-3 space-y-1">
+      <div className="border-t border-gray-100 dark:border-gray-700 p-3 space-y-1">
         <div className="flex items-center justify-between px-3 py-2">
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate">
