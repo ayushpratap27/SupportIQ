@@ -23,6 +23,12 @@ const (
 	JobTypeRegenerateReply JobType = "REGENERATE_REPLY"
 	JobTypeRetryAI         JobType = "RETRY_AI"
 	JobTypeRetryReply      JobType = "RETRY_REPLY"
+
+	// Email job types
+	JobTypeInboundEmail  JobType = "INBOUND_EMAIL"
+	JobTypeOutboundEmail JobType = "OUTBOUND_EMAIL"
+	JobTypeEmailRetry    JobType = "EMAIL_RETRY"
+	JobTypeMailboxSync   JobType = "MAILBOX_SYNC"
 )
 
 // BackgroundJob tracks every async job in PostgreSQL for monitoring and auditing.

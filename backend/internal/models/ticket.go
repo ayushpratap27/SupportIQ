@@ -32,7 +32,8 @@ const (
 )
 
 const (
-	TicketSourceWeb TicketSource = "WEB"
+	TicketSourceWeb   TicketSource = "WEB"
+	TicketSourceEmail TicketSource = "EMAIL"
 )
 
 // validStatusTransitions defines the strictly linear one-way workflow.

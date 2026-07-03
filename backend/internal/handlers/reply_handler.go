@@ -13,10 +13,16 @@ import (
 // ReplyHandler serves the AI reply workflow endpoints.
 type ReplyHandler struct {
 	replySvc *services.ReplyService
+	emailSvc *services.EmailService // optional — queues outbound email on approval
 }
 
 func NewReplyHandler(replySvc *services.ReplyService) *ReplyHandler {
 	return &ReplyHandler{replySvc: replySvc}
+}
+
+// SetEmailService injects the email service after construction.
+func (h *ReplyHandler) SetEmailService(svc *services.EmailService) {
+	h.emailSvc = svc
 }
 
 // GetReply handles GET /api/v1/tickets/:id/reply
@@ -119,6 +125,18 @@ func (h *ReplyHandler) ApproveReply(c *gin.Context) {
 	if err != nil {
 		utils.SendError(c, http.StatusBadRequest, err.Error())
 		return
+	}
+
+	// Queue outbound email automatically when email service is available
+	if h.emailSvc != nil {
+		// Prefer edited reply if present, otherwise use the generated reply
+		replyText := reply.EditedReply
+		if replyText == "" {
+			replyText = reply.GeneratedReply
+		}
+		if qErr := h.emailSvc.QueueReplyForTicket(c.Request.Context(), ticketID, replyText, userID); qErr != nil {
+			utils.Logger.WithError(qErr).Warn("ApproveReply: failed to queue outbound email")
+		}
 	}
 
 	utils.SendSuccess(c, http.StatusOK, "Reply approved", services.ToReplyResponse(reply))

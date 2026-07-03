@@ -10,6 +10,9 @@ import (
 	"github.com/ayush/supportiq/internal/ai/provider"
 	replyprovider "github.com/ayush/supportiq/internal/ai/reply/provider"
 	"github.com/ayush/supportiq/internal/config"
+	emailattachments "github.com/ayush/supportiq/internal/email/attachments"
+	emailworkers "github.com/ayush/supportiq/internal/email/workers"
+	"github.com/ayush/supportiq/internal/email/threading"
 	"github.com/ayush/supportiq/internal/handlers"
 	"github.com/ayush/supportiq/internal/knowledge/retrieval"
 	jwtpkg "github.com/ayush/supportiq/internal/jwt"
@@ -109,6 +112,10 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			replyRepo     := repositories.NewReplyRepository(db)
 			jobRepo       := repositories.NewJobRepository(db)
 
+			// Email repositories
+			emailAccountRepo  := repositories.NewEmailAccountRepository(db)
+			emailMessageRepo  := repositories.NewEmailMessageRepository(db)
+
 			// AI providers
 			var aiProvider provider.Provider
 			var replyProvider replyprovider.ReplyProvider
@@ -130,18 +137,36 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 				utils.Logger.Warn("AI: GEMINI_API_KEY not set — AI features will be disabled")
 			}
 
-			// Knowledge retrieval (RAG) + Services
+			// Knowledge retrieval (RAG) + core services
 			knowledgeRetriever := retrieval.NewPostgresRetriever(knowledgeRepo)
 			aiService     := services.NewAIService(aiProvider, ticketRepo, activityRepo)
 			replyService  := services.NewReplyService(replyProvider, knowledgeRetriever, ticketRepo, replyRepo, activityRepo, cfg.GeminiModel)
 			jobService    := services.NewJobService(jobRepo, jobQueue)
-			aiService.SetReplyService(replyService) // goroutine fallback chain
+			aiService.SetReplyService(replyService)
 
 			ticketService   := services.NewTicketService(ticketRepo, userRepo, activityRepo, aiService)
-			ticketService.SetJobService(jobService)  // prefer queue over goroutine
+			ticketService.SetJobService(jobService)
 			noteService     := services.NewNoteService(noteRepo, activityRepo)
 			commentService  := services.NewCommentService(commentRepo, activityRepo)
 			knowledgeService := services.NewKnowledgeService(knowledgeRepo)
+
+			// Email services
+			emailAccountSvc := services.NewEmailAccountService(emailAccountRepo, cfg.JWTAccessSecret)
+			threadDetector  := threading.NewDetector(emailMessageRepo)
+			attachStorage   := emailattachments.NewLocalStorage(cfg.AttachmentPath)
+			emailSvc := services.NewEmailService(
+				emailAccountRepo, emailMessageRepo,
+				ticketRepo, activityRepo,
+				emailAccountSvc, threadDetector,
+				attachStorage, aiService, db,
+			)
+			emailSvc.SetJobService(jobService)
+
+			// Start email background workers (context-less goroutines, stop on process exit)
+			workerCtx := context.Background()
+			pollInterval := time.Duration(cfg.EmailPollInterval) * time.Second
+			go emailworkers.StartInboundWorker(workerCtx, emailAccountRepo, emailSvc, emailAccountSvc, pollInterval)
+			go emailworkers.StartOutboundWorker(workerCtx, emailSvc, pollInterval, cfg.MaxEmailRetries)
 
 			// Handlers
 			ticketHandler    := handlers.NewTicketHandler(ticketService)
@@ -150,8 +175,10 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			activityHandler  := handlers.NewActivityHandler(activityRepo)
 			aiHandler        := handlers.NewAIHandler(ticketRepo, aiService)
 			replyHandler     := handlers.NewReplyHandler(replyService)
+			replyHandler.SetEmailService(emailSvc) // wire email on approval
 			knowledgeHandler := handlers.NewKnowledgeHandler(knowledgeService)
 			jobHandler       := handlers.NewJobHandler(jobService)
+			emailHandler     := handlers.NewEmailHandler(emailAccountSvc, emailSvc)
 
 			_ = redisQ // suppress unused warning if queue unavailable
 
@@ -188,6 +215,10 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 					middleware.RequireRole(models.RoleAdmin, models.RoleSupportAgent),
 					replyHandler.ApproveReply)
 				tickets.POST("/:id/reply/reject", replyHandler.RejectReply)
+
+				// Email thread for this ticket
+				tickets.GET("/:id/emails",      emailHandler.GetTicketEmails)
+				tickets.POST("/:id/send-email", emailHandler.SendEmail)
 			}
 
 			// Knowledge base (admin only)
@@ -206,6 +237,18 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 				jobs.GET("/statistics",     jobHandler.Statistics)
 				jobs.GET("/:id",            jobHandler.GetByID)
 				jobs.POST("/:id/retry",     jobHandler.Retry)
+			}
+
+			// Email account management + monitor (admin only)
+			emailGroup := protected.Group("/email", middleware.RequireRole(models.RoleAdmin))
+			{
+				emailGroup.GET("/accounts",           emailHandler.ListAccounts)
+				emailGroup.POST("/accounts",          emailHandler.CreateAccount)
+				emailGroup.PUT("/accounts/:id",       emailHandler.UpdateAccount)
+				emailGroup.DELETE("/accounts/:id",    emailHandler.DeleteAccount)
+				emailGroup.POST("/accounts/:id/test", emailHandler.TestConnection)
+				emailGroup.GET("/monitor",            emailHandler.Monitor)
+				emailGroup.POST("/sync",              emailHandler.Sync)
 			}
 
 			// Users

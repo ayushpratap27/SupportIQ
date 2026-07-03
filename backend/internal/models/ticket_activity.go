@@ -27,6 +27,14 @@ const (
 	ActivityReplyRejected    = "AI_REPLY_REJECTED"
 	ActivityReplyEdited      = "AI_REPLY_EDITED"
 	ActivityReplyRegenerated = "AI_REPLY_REGENERATED"
+
+	// Email activity types
+	ActivityEmailReceived    = "EMAIL_RECEIVED"
+	ActivityEmailQueued      = "EMAIL_QUEUED"
+	ActivityEmailSent        = "EMAIL_SENT"
+	ActivityEmailFailed      = "EMAIL_FAILED"
+	ActivityEmailDelivered   = "EMAIL_DELIVERED"
+	ActivityAttachmentAdded  = "ATTACHMENT_ADDED"
 )
 
 // TicketActivity is an immutable audit-log row. Never edited after creation.

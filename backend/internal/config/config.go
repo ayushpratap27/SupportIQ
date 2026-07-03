@@ -31,6 +31,11 @@ type Config struct {
 	MaxRetries      int
 	RetryDelay      int // base seconds for exponential backoff
 	WebSocketOrigin string
+
+	// Email configuration
+	EmailPollInterval int    // seconds between IMAP polls (default 60)
+	MaxEmailRetries   int    // max SMTP retry attempts (default 3)
+	AttachmentPath    string // local attachment storage directory
 }
 
 // Load reads environment variables (from .env in development) and returns a Config.
@@ -125,6 +130,26 @@ func Load() (*Config, error) {
 	if cfg.RetryDelay == 0 {
 		cfg.RetryDelay = 5
 	}
+
+	if v := getEnv("EMAIL_POLL_INTERVAL", ""); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			cfg.EmailPollInterval = n
+		}
+	}
+	if cfg.EmailPollInterval == 0 {
+		cfg.EmailPollInterval = 60
+	}
+
+	if v := getEnv("MAX_EMAIL_RETRIES", ""); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
+			cfg.MaxEmailRetries = n
+		}
+	}
+	if cfg.MaxEmailRetries == 0 {
+		cfg.MaxEmailRetries = 3
+	}
+
+	cfg.AttachmentPath = getEnv("ATTACHMENT_PATH", "./storage/attachments")
 
 	return cfg, nil
 }

@@ -86,6 +86,8 @@ export default function Dashboard() {
             <>
               <Link to="/knowledge-base" className="text-sm text-emerald-600 font-medium hover:underline">Knowledge Base</Link>
               <Link to="/jobs" className="text-sm text-violet-600 font-medium hover:underline">Job Monitor</Link>
+              <Link to="/email/accounts" className="text-sm text-orange-600 font-medium hover:underline">Email Accounts</Link>
+              <Link to="/email/monitor" className="text-sm text-cyan-600 font-medium hover:underline">Email Monitor</Link>
             </>
           )}
           <button onClick={handleLogout} className="text-sm text-red-500 hover:text-red-600 font-medium transition">Logout</button>
