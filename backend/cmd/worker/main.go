@@ -49,11 +49,11 @@ func main() {
 	defer redisQ.Close()
 
 	// ─── Repositories ────────────────────────────────────────────────────────
-	ticketRepo := repositories.NewTicketRepository(db)
-	activityRepo := repositories.NewActivityRepository(db)
+	ticketRepo    := repositories.NewTicketRepository(db)
+	activityRepo  := repositories.NewActivityRepository(db)
 	knowledgeRepo := repositories.NewKnowledgeRepository(db)
-	replyRepo := repositories.NewReplyRepository(db)
-	jobRepo := repositories.NewJobRepository(db)
+	replyRepo     := repositories.NewReplyRepository(db)
+	jobRepo       := repositories.NewJobRepository(db)
 
 	// ─── AI providers ────────────────────────────────────────────────────────
 	var aiProv provider.Provider
@@ -68,11 +68,11 @@ func main() {
 			cfg.MaxReplyTokens,
 			cfg.ReplyTemperature,
 		)
-		aiProv = geminiClient
+		aiProv    = geminiClient
 		replyProv = geminiClient
 		utils.Logger.WithField("model", cfg.GeminiModel).Info("Worker: Gemini provider initialised")
 	} else {
-		aiProv = &provider.NoopProvider{}
+		aiProv    = &provider.NoopProvider{}
 		replyProv = &replyprovider.NoopReplyProvider{}
 		utils.Logger.Warn("Worker: GEMINI_API_KEY not set — AI jobs will fail immediately")
 	}
@@ -82,16 +82,16 @@ func main() {
 	replySvc := services.NewReplyService(replyProv, knowledgeRetriever, ticketRepo, replyRepo, activityRepo, cfg.GeminiModel)
 
 	// ─── Job handlers ────────────────────────────────────────────────────────
-	aiHandler := workerhandlers.NewAIAnalysisHandler(ticketRepo, activityRepo, aiProv)
+	aiHandler    := workerhandlers.NewAIAnalysisHandler(ticketRepo, activityRepo, aiProv)
 	replyHandler := workerhandlers.NewGenerateReplyHandler(replySvc)
 
 	// ─── Processor ───────────────────────────────────────────────────────────
 	proc := processor.New(redisQ, redisQ, jobRepo, cfg.WorkerCount, cfg.MaxRetries, cfg.RetryDelay)
-	proc.RegisterHandler(string(models.JobTypeAIAnalysis), aiHandler)
-	proc.RegisterHandler(string(models.JobTypeGenerateReply), replyHandler)
+	proc.RegisterHandler(string(models.JobTypeAIAnalysis),      aiHandler)
+	proc.RegisterHandler(string(models.JobTypeGenerateReply),   replyHandler)
 	proc.RegisterHandler(string(models.JobTypeRegenerateReply), replyHandler)
-	proc.RegisterHandler(string(models.JobTypeRetryAI), aiHandler)
-	proc.RegisterHandler(string(models.JobTypeRetryReply), replyHandler)
+	proc.RegisterHandler(string(models.JobTypeRetryAI),         aiHandler)
+	proc.RegisterHandler(string(models.JobTypeRetryReply),      replyHandler)
 
 	// ─── Graceful shutdown ───────────────────────────────────────────────────
 	ctx, cancel := context.WithCancel(context.Background())

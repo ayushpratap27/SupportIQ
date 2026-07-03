@@ -110,9 +110,9 @@ func Load() (*Config, error) {
 		cfg.ReplyTemperature = 0.3
 	}
 
-	cfg.RedisURL = getEnv("REDIS_URL", "")
+	cfg.RedisURL        = getEnv("REDIS_URL", "")
 	cfg.WebSocketOrigin = getEnv("WEBSOCKET_ORIGIN", "http://localhost:5173")
-	cfg.QueueName = getEnv("QUEUE_NAME", "ai_jobs")
+	cfg.QueueName       = getEnv("QUEUE_NAME", "ai_jobs")
 
 	if v := getEnv("WORKER_COUNT", ""); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
