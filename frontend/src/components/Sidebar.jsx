@@ -67,7 +67,7 @@ export default function Sidebar() {
       <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-700">
         <Link to="/dashboard">
           <span className="font-bold text-gray-900 dark:text-white text-sm">
-            AI Support Assistant
+            SupportIQ
           </span>
         </Link>
       </div>

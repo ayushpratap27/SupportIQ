@@ -35,7 +35,7 @@ function Home() {
     <div className="flex flex-col items-center justify-center min-h-screen gap-8 bg-gray-50 dark:bg-gray-900">
       <div className="absolute top-4 right-4"><DarkModeToggle /></div>
       <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
-        AI Support Assistant
+        SupportIQ
       </h1>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md px-8 py-5 flex items-center gap-3">
