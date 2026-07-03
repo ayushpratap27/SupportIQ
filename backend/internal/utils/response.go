@@ -1,6 +1,9 @@
 package utils
 
 import (
+	"net/http"
+	"strings"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,4 +35,21 @@ func SendError(c *gin.Context, statusCode int, message string) {
 		Status:  "error",
 		Message: message,
 	})
+}
+
+// SendInternalError logs the underlying error and returns a generic 500 to the
+// client so internal details (DB schema, stack traces) are never exposed.
+func SendInternalError(c *gin.Context, err error) {
+	Logger.WithError(err).Error("internal server error")
+	c.JSON(http.StatusInternalServerError, errorResponse{
+		Status:  "error",
+		Message: "internal server error",
+	})
+}
+
+// SafeFilename strips characters that can break Content-Disposition headers
+// (quotes, backslashes, newlines) to prevent header injection.
+func SafeFilename(name string) string {
+	r := strings.NewReplacer(`"`, "", `\`, "", "\n", "", "\r", "")
+	return r.Replace(name)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/ayush/supportiq/internal/ai/gemini"
@@ -33,7 +34,7 @@ import (
 )
 
 // SetupRouter wires together all middleware and route handlers and returns the engine.
-func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
+func SetupRouter(db *gorm.DB, cfg *config.Config, serverCtx context.Context) *gin.Engine {
 	router := gin.New()
 
 	// Global middleware
@@ -65,7 +66,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			jobQueue = rq
 			utils.Logger.Info("Routes: Redis queue connected")
 			// Subscribe to worker events and forward to WebSocket clients
-			go subscribeToWorkerEvents(redisQ, wsHub)
+			go subscribeToWorkerEvents(serverCtx, redisQ, wsHub)
 		}
 	} else {
 		utils.Logger.Warn("Routes: REDIS_URL not set — job queue disabled, falling back to goroutines")
@@ -91,14 +92,21 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			auth.GET("/me", middleware.Authenticate(db, cfg), authHandler.Me)
 		}
 
-		// WebSocket endpoint — authenticated via JWT query param
-		api.GET("/ws", func(c *gin.Context) {
-			token := c.Query("token")
-			if token == "" {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "token required"})
-				return
-			}
-			claims, err := jwtpkg.ValidateToken(token, cfg.JWTAccessSecret)
+// WebSocket endpoint — authenticated via Authorization: Bearer <token> header.
+			// Fallback to ?token= query param for browser clients that cannot set headers.
+			api.GET("/ws", func(c *gin.Context) {
+				// Prefer Authorization header, fall back to query param
+				tokenStr := ""
+				if auth := c.GetHeader("Authorization"); strings.HasPrefix(auth, "Bearer ") {
+					tokenStr = strings.TrimPrefix(auth, "Bearer ")
+				} else {
+					tokenStr = c.Query("token")
+				}
+				if tokenStr == "" {
+					c.JSON(http.StatusUnauthorized, gin.H{"error": "token required"})
+					return
+				}
+				claims, err := jwtpkg.ValidateToken(tokenStr, cfg.JWTAccessSecret)
 			if err != nil {
 				c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 				return
@@ -164,7 +172,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 					slaSvc     := services.NewSLAService(slaRepo, ticketRepo, activityRepo, wsHub)
 					slaHandler := handlers.NewSLAHandler(slaSvc)
 					ticketService.SetSLAService(slaSvc)
-					go slaSvc.StartMonitor(context.Background(), time.Minute)
+					go slaSvc.StartMonitor(serverCtx, time.Minute)
 
 				noteService     := services.NewNoteService(noteRepo, activityRepo)
 			commentService  := services.NewCommentService(commentRepo, activityRepo)
@@ -184,8 +192,8 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			)
 			emailSvc.SetJobService(jobService)
 
-			// Start email background workers (context-less goroutines, stop on process exit)
-			workerCtx := context.Background()
+			// Start email background workers — stop when server shuts down.
+			workerCtx := serverCtx
 			pollInterval := time.Duration(cfg.EmailPollInterval) * time.Second
 			go emailworkers.StartInboundWorker(workerCtx, emailAccountRepo, emailSvc, emailAccountSvc, pollInterval)
 			go emailworkers.StartOutboundWorker(workerCtx, emailSvc, pollInterval, cfg.MaxEmailRetries)
@@ -292,7 +300,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			// Start analytics scheduler
 			aggInterval := time.Duration(cfg.AggregationInterval) * time.Second
 			analyticsScheduler := analytics.NewScheduler(analyticsAggregator, analyticsSvc, wsHub, aggInterval)
-			go analyticsScheduler.Start(context.Background())
+			go analyticsScheduler.Start(serverCtx)
 
 			analyticsGroup := protected.Group("/analytics")
 			{
@@ -324,7 +332,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 
 			// Start integration background worker
 				integrationWorker := integrationspkg.NewWorker(integrationRepo, activityRepo, ticketRepo, tenantRepo, integrationRegistry, cfg.JWTAccessSecret)
-			go integrationWorker.Start(context.Background())
+			go integrationWorker.Start(serverCtx)
 
 			intGroup := protected.Group("/integrations", middleware.RequireRole(models.RoleAdmin))
 			{
@@ -377,8 +385,8 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	return router
 }
 
-func subscribeToWorkerEvents(rq *redisqueue.Client, hub *appws.Hub) {
-	sub := rq.Subscribe(context.Background())
+func subscribeToWorkerEvents(ctx context.Context, rq *redisqueue.Client, hub *appws.Hub) {
+	sub := rq.Subscribe(ctx)
 	defer sub.Close()
 
 	ch := sub.Channel()

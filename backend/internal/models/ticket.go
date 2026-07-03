@@ -36,18 +36,27 @@ const (
 	TicketSourceEmail TicketSource = "EMAIL"
 )
 
-// validStatusTransitions defines the strictly linear one-way workflow.
-// CLOSED is a terminal state — no outgoing transitions.
-var validStatusTransitions = map[TicketStatus]TicketStatus{
-	TicketStatusOpen:       TicketStatusInProgress,
-	TicketStatusInProgress: TicketStatusResolved,
-	TicketStatusResolved:   TicketStatusClosed,
+// validStatusTransitions defines the allowed state machine transitions.
+// RESOLVED tickets may be reopened (→ OPEN). CLOSED is terminal.
+var validStatusTransitions = map[TicketStatus][]TicketStatus{
+	TicketStatusOpen:       {TicketStatusInProgress},
+	TicketStatusInProgress: {TicketStatusResolved},
+	TicketStatusResolved:   {TicketStatusClosed, TicketStatusOpen},
+	TicketStatusClosed:     {},
 }
 
 // IsValidStatusTransition returns true only if the from → to transition is permitted.
 func IsValidStatusTransition(from, to TicketStatus) bool {
-	next, ok := validStatusTransitions[from]
-	return ok && next == to
+	allowed, ok := validStatusTransitions[from]
+	if !ok {
+		return false
+	}
+	for _, s := range allowed {
+		if s == to {
+			return true
+		}
+	}
+	return false
 }
 
 // FormatTicketNumber formats an integer into the TKT-XXXXXX display format.
@@ -65,12 +74,12 @@ const (
 
 // Ticket is the core support ticket entity.
 type Ticket struct {
-	TenantID      uuid.UUID      `gorm:"type:uuid;not null;default:'00000000-0000-0000-0000-000000000000';index" json:"tenant_id"`
+	TenantID      uuid.UUID      `gorm:"type:uuid;not null;default:'00000000-0000-0000-0000-000000000000';index:idx_ticket_tenant_status;index:idx_ticket_tenant_created" json:"tenant_id"`
 	ID            uuid.UUID      `gorm:"type:uuid;primarykey"                            json:"id"`
 	TicketNumber  string         `gorm:"type:varchar(20);uniqueIndex;not null"           json:"ticket_number"`
 	Subject       string         `gorm:"type:varchar(150);not null"                      json:"subject"`
 	Description   string         `gorm:"type:text;not null"                              json:"description"`
-	Status        TicketStatus   `gorm:"type:varchar(20);not null;default:'OPEN'"        json:"status"`
+	Status        TicketStatus   `gorm:"type:varchar(20);not null;default:'OPEN';index:idx_ticket_tenant_status"  json:"status"`
 	Priority      TicketPriority `gorm:"type:varchar(20);not null;default:'MEDIUM'"      json:"priority"`
 	Category      TicketCategory `gorm:"type:varchar(50);not null;default:'GENERAL'"     json:"category"`
 	Source        TicketSource   `gorm:"type:varchar(20);not null;default:'WEB'"         json:"source"`
@@ -78,7 +87,7 @@ type Ticket struct {
 	CreatedBy     uint           `gorm:"not null;index"                                  json:"created_by"`
 	CustomerName  string         `gorm:"type:varchar(100);not null"                      json:"customer_name"`
 	CustomerEmail string         `gorm:"type:varchar(255);not null"                      json:"customer_email"`
-	CreatedAt     time.Time      `json:"created_at"`
+	CreatedAt     time.Time      `gorm:"index:idx_ticket_tenant_created"                 json:"created_at"`
 	UpdatedAt     time.Time      `json:"updated_at"`
 	DeletedAt     gorm.DeletedAt `gorm:"index"                                           json:"-"`
 

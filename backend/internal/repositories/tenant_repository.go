@@ -57,6 +57,12 @@ func (r *TenantRepository) Update(t *models.Tenant) error {
 }
 
 func (r *TenantRepository) Delete(id uuid.UUID) error {
+	// Deactivate all users in this tenant so they cannot log in.
+	if err := r.db.Model(&models.User{}).
+		Where("tenant_id = ?", id).
+		Update("is_active", false).Error; err != nil {
+		return err
+	}
 	// Soft-delete: mark status as DELETED
 	return r.db.Model(&models.Tenant{}).Where("id = ?", id).
 		Update("status", models.TenantStatusDeleted).Error

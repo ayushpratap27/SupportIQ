@@ -14,6 +14,7 @@ import (
 type Scheduler struct {
 	aggregator *Aggregator
 	service    *Service
+	tenantRepo TenantLister
 	wsHub      *appws.Hub
 	interval   time.Duration
 }
@@ -23,6 +24,7 @@ func NewScheduler(agg *Aggregator, svc *Service, hub *appws.Hub, interval time.D
 	return &Scheduler{
 		aggregator: agg,
 		service:    svc,
+		tenantRepo: agg.tenantRepo,
 		wsHub:      hub,
 		interval:   interval,
 	}
@@ -71,5 +73,15 @@ func (s *Scheduler) broadcastRefresh() {
 	if err != nil {
 		return
 	}
+	// Broadcast only to users of each active tenant.
+	if s.tenantRepo != nil {
+		if tenantIDs, err := s.tenantRepo.AllActiveTenantIDs(); err == nil {
+			for _, tid := range tenantIDs {
+				s.wsHub.BroadcastToTenantRaw(tid, data)
+			}
+			return
+		}
+	}
+	// Fallback: global broadcast (single-tenant or tenant list unavailable).
 	s.wsHub.BroadcastRaw(data)
 }

@@ -33,8 +33,13 @@ func main() {
 		utils.Logger.Fatalf("Failed to connect to database: %v", err)
 	}
 
+	// Create a context that is cancelled when the process receives a shutdown signal.
+	// Background goroutines (SLA monitor, analytics scheduler, email workers) use this
+	// context so they stop cleanly instead of leaking after SIGTERM.
+	serverCtx, stopServer := context.WithCancel(context.Background())
+
 	// Build router with all routes and middleware
-	router := routes.SetupRouter(db, cfg)
+	router := routes.SetupRouter(db, cfg, serverCtx)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
@@ -58,6 +63,9 @@ func main() {
 	<-quit
 
 	utils.Logger.Info("Shutdown signal received, draining connections...")
+
+	// Cancel the server context so all background goroutines exit.
+	stopServer()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

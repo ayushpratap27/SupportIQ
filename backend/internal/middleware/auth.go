@@ -72,8 +72,13 @@ func Authenticate(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
+		if tenant.Status == models.TenantStatusDeleted {
+			utils.SendError(c, http.StatusForbidden, "Tenant account no longer exists")
+			c.Abort()
+			return
+		}
+
 		c.Set("tenantID", tenantID)
-		c.Set("tenant", &tenant)
 		c.Next()
 	}
 }

@@ -32,7 +32,7 @@ func NewAnalyticsHandler(svc *analytics.Service, reportSvc *reports.Service, col
 func (h *AnalyticsHandler) Overview(c *gin.Context) {
 	resp, err := h.svc.GetOverview(middleware.GetTenantID(c))
 	if err != nil {
-		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		utils.SendInternalError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": resp})
@@ -45,7 +45,7 @@ func (h *AnalyticsHandler) TicketStats(c *gin.Context) {
 	f := h.parseFilter(c)
 	resp, err := h.svc.GetTicketStats(middleware.GetTenantID(c), f)
 	if err != nil {
-		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		utils.SendInternalError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": resp})
@@ -67,7 +67,7 @@ func (h *AnalyticsHandler) AgentStats(c *gin.Context) {
 		}
 		resp, err := h.svc.GetPersonalAgentStats(middleware.GetTenantID(c), uid)
 		if err != nil {
-			utils.SendError(c, http.StatusInternalServerError, err.Error())
+			utils.SendInternalError(c, err)
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"data": resp})
@@ -76,7 +76,7 @@ func (h *AnalyticsHandler) AgentStats(c *gin.Context) {
 
 	resp, err := h.svc.GetAgentStats(middleware.GetTenantID(c))
 	if err != nil {
-		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		utils.SendInternalError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": resp})
@@ -89,7 +89,7 @@ func (h *AnalyticsHandler) AIStats(c *gin.Context) {
 	f := h.parseFilter(c)
 	resp, err := h.svc.GetAIStats(middleware.GetTenantID(c), f)
 	if err != nil {
-		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		utils.SendInternalError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": resp})
@@ -101,7 +101,7 @@ func (h *AnalyticsHandler) AIStats(c *gin.Context) {
 func (h *AnalyticsHandler) QueueStats(c *gin.Context) {
 	resp, err := h.svc.GetQueueStats(middleware.GetTenantID(c))
 	if err != nil {
-		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		utils.SendInternalError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": resp})
@@ -114,7 +114,7 @@ func (h *AnalyticsHandler) EmailStats(c *gin.Context) {
 	f := h.parseFilter(c)
 	resp, err := h.svc.GetEmailStats(middleware.GetTenantID(c), f)
 	if err != nil {
-		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		utils.SendInternalError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": resp})
@@ -127,7 +127,7 @@ func (h *AnalyticsHandler) Trends(c *gin.Context) {
 	f := h.parseFilter(c)
 	resp, err := h.svc.GetTrends(middleware.GetTenantID(c), f)
 	if err != nil {
-		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		utils.SendInternalError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": resp})
@@ -157,7 +157,7 @@ func (h *AnalyticsHandler) GenerateReport(c *gin.Context) {
 
 	report, err := h.reportSvc.Schedule(&req, tenantID, uid, h.collector)
 	if err != nil {
-		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		utils.SendInternalError(c, err)
 		return
 	}
 	c.JSON(http.StatusCreated, gin.H{"data": toReportResponse(report)})
@@ -176,7 +176,7 @@ func (h *AnalyticsHandler) ListReports(c *gin.Context) {
 
 	reports, err := h.reportSvc.ListReports(middleware.GetTenantID(c), generatedBy)
 	if err != nil {
-		utils.SendError(c, http.StatusInternalServerError, err.Error())
+		utils.SendInternalError(c, err)
 		return
 	}
 
@@ -216,7 +216,7 @@ func (h *AnalyticsHandler) DownloadReport(c *gin.Context) {
 		return
 	}
 
-	c.Header("Content-Disposition", `attachment; filename="`+filename+`"`)
+	c.Header("Content-Disposition", `attachment; filename="`+utils.SafeFilename(filename)+`"`)
 	c.Header("Content-Type", mime)
 	c.Data(http.StatusOK, mime, data)
 }

@@ -91,33 +91,6 @@ func (s *AuthService) RegisterWithTenant(req *dto.RegisterWithTenantRequest) (*d
 	return s.buildAuthResponse(&user, tenant.ID)
 }
 
-// Register creates a user in an existing tenant (e.g. invited user flow).
-// Deprecated for new tenants — use RegisterWithTenant instead.
-func (s *AuthService) Register(req *dto.RegisterRequest) (*dto.AuthResponse, int, error) {
-	var existing models.User
-	if err := s.db.Where("email = ?", req.Email).First(&existing).Error; err == nil {
-		return nil, http.StatusConflict, ErrEmailTaken
-	}
-
-	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, http.StatusInternalServerError, err
-	}
-
-	user := models.User{
-		Name:         req.Name,
-		Email:        req.Email,
-		PasswordHash: string(hash),
-		Role:         models.RoleSupportAgent,
-		IsActive:     true,
-	}
-	if err := s.db.Create(&user).Error; err != nil {
-		return nil, http.StatusInternalServerError, err
-	}
-
-	return s.buildAuthResponse(&user, uuid.Nil)
-}
-
 // Login verifies credentials and returns a token pair.
 func (s *AuthService) Login(req *dto.LoginRequest) (*dto.AuthResponse, int, error) {
 	var user models.User

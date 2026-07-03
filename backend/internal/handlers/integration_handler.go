@@ -7,6 +7,7 @@ import (
 	"github.com/ayush/supportiq/internal/dto"
 	"github.com/ayush/supportiq/internal/middleware"
 	"github.com/ayush/supportiq/internal/services"
+	"github.com/ayush/supportiq/internal/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -26,7 +27,7 @@ func NewIntegrationHandler(svc *services.IntegrationService) *IntegrationHandler
 func (h *IntegrationHandler) List(c *gin.Context) {
 	list, err := h.svc.List(middleware.GetTenantID(c))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		utils.SendInternalError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"integrations": list})
@@ -79,7 +80,7 @@ func (h *IntegrationHandler) Delete(c *gin.Context) {
 		return
 	}
 	if err := h.svc.Delete(middleware.GetTenantID(c), id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		utils.SendInternalError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Integration deleted"})
@@ -123,7 +124,7 @@ func (h *IntegrationHandler) GetTicketIntegrations(c *gin.Context) {
 	}
 	items, err := h.svc.GetTicketIntegrations(middleware.GetTenantID(c), ticketID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		utils.SendInternalError(c, err)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"integrations": items})

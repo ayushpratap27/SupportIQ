@@ -138,6 +138,22 @@ func (h *Hub) BroadcastRaw(data []byte) {
 	}
 }
 
+// BroadcastToTenantRaw sends pre-encoded JSON bytes only to clients in the given tenant.
+func (h *Hub) BroadcastToTenantRaw(tenantID uuid.UUID, data []byte) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	for client := range h.clients {
+		if client.tenantID != tenantID {
+			continue
+		}
+		select {
+		case client.send <- data:
+		default:
+			go func(c *Client) { h.unregister <- c }(client)
+		}
+	}
+}
+
 // ConnectedCount returns the number of currently connected WebSocket clients.
 func (h *Hub) ConnectedCount() int {
 	h.mu.RLock()
