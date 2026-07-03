@@ -1,0 +1,30 @@
+# ─── Environment & Secrets ────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.env
+
+# ─── Go ───────────────────────────────────────────────────────────────────────
+backend/bin/
+backend/*.exe
+backend/*.test
+backend/vendor/
+
+# Go build cache
+/tmp/
+
+# ─── Node / Frontend ──────────────────────────────────────────────────────────
+frontend/node_modules/
+frontend/dist/
+frontend/.cache/
+
+# ─── OS & Editor ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/settings.json
+*.swp
+*.swo
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+*.log

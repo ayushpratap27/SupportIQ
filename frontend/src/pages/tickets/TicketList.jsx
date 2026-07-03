@@ -1,0 +1,198 @@
+import { useState, useEffect, useCallback } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { ticketService } from '../../services/ticketService'
+import StatusBadge from '../../components/tickets/StatusBadge'
+import PriorityBadge from '../../components/tickets/PriorityBadge'
+import Toast, { useToast } from '../../components/Toast'
+import { formatDate } from '../../utils/format'
+
+const STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']
+const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT']
+
+function TicketList() {
+  const navigate = useNavigate()
+  const { toast, showToast } = useToast()
+
+  const [tickets, setTickets] = useState([])
+  const [meta, setMeta] = useState({ total_count: 0, current_page: 1, total_pages: 1 })
+  const [loading, setLoading] = useState(true)
+
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState('')
+  const [page, setPage] = useState(1)
+  const limit = 20
+
+  const fetchTickets = useCallback(async () => {
+    setLoading(true)
+    try {
+      const res = await ticketService.getTickets({
+        page,
+        limit,
+        search: search || undefined,
+        status: statusFilter || undefined,
+        priority: priorityFilter || undefined,
+      })
+      const data = res.data.data
+      setTickets(data.items ?? [])
+      setMeta(data)
+    } catch {
+      showToast('Failed to load tickets', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }, [page, search, statusFilter, priorityFilter]) // eslint-disable-line
+
+  useEffect(() => { fetchTickets() }, [fetchTickets])
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault()
+    setPage(1)
+    fetchTickets()
+  }
+
+  const handleFilterChange = (setter) => (e) => {
+    setter(e.target.value)
+    setPage(1)
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Toast toast={toast} />
+
+      {/* Header */}
+      <header className="bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          <Link to="/dashboard" className="text-sm text-gray-500 hover:text-gray-700">← Dashboard</Link>
+          <h1 className="font-bold text-gray-800">Tickets</h1>
+        </div>
+        <Link
+          to="/tickets/new"
+          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
+        >
+          + New Ticket
+        </Link>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-6 py-6">
+        {/* Filters */}
+        <div className="bg-white rounded-xl border border-gray-100 p-4 mb-4 flex flex-wrap gap-3 items-center">
+          <form onSubmit={handleSearchSubmit} className="flex gap-2 flex-1 min-w-[200px]">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search tickets…"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button type="submit" className="px-3 py-2 bg-gray-100 rounded-lg text-sm hover:bg-gray-200 transition">
+              Search
+            </button>
+          </form>
+
+          <select
+            value={statusFilter}
+            onChange={handleFilterChange(setStatusFilter)}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Statuses</option>
+            {STATUSES.map((s) => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+          </select>
+
+          <select
+            value={priorityFilter}
+            onChange={handleFilterChange(setPriorityFilter)}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">All Priorities</option>
+            {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
+          </select>
+
+          <button
+            onClick={() => { setSearch(''); setStatusFilter(''); setPriorityFilter(''); setPage(1) }}
+            className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 transition"
+          >
+            Clear
+          </button>
+
+          <button
+            onClick={fetchTickets}
+            className="px-3 py-2 text-sm text-blue-600 hover:text-blue-700 font-medium transition"
+          >
+            ↻ Refresh
+          </button>
+        </div>
+
+        {/* Table */}
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+          {loading ? (
+            <div className="py-16 text-center text-sm text-gray-400 animate-pulse">Loading tickets…</div>
+          ) : tickets.length === 0 ? (
+            <div className="py-16 text-center text-sm text-gray-400">No tickets found.</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                    <th className="px-4 py-3">Ticket #</th>
+                    <th className="px-4 py-3">Subject</th>
+                    <th className="px-4 py-3">Customer</th>
+                    <th className="px-4 py-3">Priority</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Assigned To</th>
+                    <th className="px-4 py-3">Created</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {tickets.map((t) => (
+                    <tr
+                      key={t.id}
+                      onClick={() => navigate(`/tickets/${t.id}`)}
+                      className="hover:bg-gray-50 cursor-pointer transition"
+                    >
+                      <td className="px-4 py-3 font-mono text-xs text-blue-600 font-medium">{t.ticket_number}</td>
+                      <td className="px-4 py-3 max-w-[200px] truncate text-gray-800 font-medium">{t.subject}</td>
+                      <td className="px-4 py-3 text-gray-600">
+                        <div>{t.customer_name}</div>
+                        <div className="text-xs text-gray-400">{t.customer_email}</div>
+                      </td>
+                      <td className="px-4 py-3"><PriorityBadge priority={t.priority} /></td>
+                      <td className="px-4 py-3"><StatusBadge status={t.status} /></td>
+                      <td className="px-4 py-3 text-gray-500 text-xs">{t.assignee?.name ?? '—'}</td>
+                      <td className="px-4 py-3 text-gray-400 text-xs">{formatDate(t.created_at)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Pagination */}
+        {meta.total_pages > 1 && (
+          <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
+            <span>{meta.total_count} total tickets</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              >
+                ← Prev
+              </button>
+              <span className="px-2">Page {page} of {meta.total_pages}</span>
+              <button
+                onClick={() => setPage((p) => Math.min(meta.total_pages, p + 1))}
+                disabled={page === meta.total_pages}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}
+
+export default TicketList

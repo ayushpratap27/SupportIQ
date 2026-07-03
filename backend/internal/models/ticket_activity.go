@@ -1,0 +1,37 @@
+package models
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+// Activity type constants used for audit trail logging.
+const (
+	ActivityCreateTicket      = "CREATE_TICKET"
+	ActivityUpdateTicket      = "UPDATE_TICKET"
+	ActivityAssignTicket      = "ASSIGN_TICKET"
+	ActivityTakeOwnership     = "TAKE_OWNERSHIP"
+	ActivityStatusChanged     = "STATUS_CHANGED"
+	ActivityPriorityChanged   = "PRIORITY_CHANGED"
+	ActivityCategoryChanged   = "CATEGORY_CHANGED"
+	ActivityCommentAdded      = "COMMENT_ADDED"
+	ActivityInternalNoteAdded = "INTERNAL_NOTE_ADDED"
+	ActivityTicketClosed      = "TICKET_CLOSED"
+	ActivityTicketReopened    = "TICKET_REOPENED"
+	ActivityAIAnalysisCompleted = "AI_ANALYSIS_COMPLETED"
+)
+
+// TicketActivity is an immutable audit-log row. Never edited after creation.
+type TicketActivity struct {
+	ID           uint      `gorm:"primarykey;autoIncrement"  json:"id"`
+	TicketID     uuid.UUID `gorm:"type:uuid;not null;index"  json:"ticket_id"`
+	UserID       uint      `gorm:"not null"                  json:"user_id"`
+	ActivityType string    `gorm:"type:varchar(50);not null" json:"activity_type"`
+	OldValue     string    `gorm:"type:varchar(255)"         json:"old_value,omitempty"`
+	NewValue     string    `gorm:"type:varchar(255)"         json:"new_value,omitempty"`
+	Description  string    `gorm:"type:text"                 json:"description"`
+	CreatedAt    time.Time `json:"created_at"`
+
+	User *User `gorm:"foreignKey:UserID" json:"user,omitempty"`
+}
