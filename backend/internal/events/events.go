@@ -4,12 +4,17 @@ import "time"
 
 // Event type constants — these are the WebSocket event names sent to the frontend.
 const (
-	TicketAICompleted   = "ticket.ai.completed"
+	TicketAICompleted    = "ticket.ai.completed"
 	TicketReplyGenerated = "ticket.reply.generated"
-	TicketReplyFailed   = "ticket.reply.failed"
-	TicketUpdated       = "ticket.updated"
-	JobCompleted        = "job.completed"
-	JobFailed           = "job.failed"
+	TicketReplyFailed    = "ticket.reply.failed"
+	TicketUpdated        = "ticket.updated"
+	JobCompleted         = "job.completed"
+	JobFailed            = "job.failed"
+
+	// SLA events
+	SLAUpdated  = "sla.updated"
+	SLAAtRisk   = "sla.at_risk"
+	SLABreached = "sla.breached"
 )
 
 // Channel is the Redis pub/sub channel used for worker → API server events.

@@ -15,6 +15,11 @@ func NewActivityRepository(db *gorm.DB) *ActivityRepository {
 	return &ActivityRepository{db: db}
 }
 
+// DB exposes the underlying connection for direct queries.
+func (r *ActivityRepository) DB() *gorm.DB {
+	return r.db
+}
+
 func (r *ActivityRepository) Create(activity *models.TicketActivity) error {
 	return r.db.Create(activity).Error
 }

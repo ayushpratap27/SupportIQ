@@ -92,6 +92,36 @@ func (r *TicketRepository) UpdateAIFields(t *models.Ticket) error {
 		Updates(t).Error
 }
 
+// UpdateSLAFields persists only the SLA-related columns.
+func (r *TicketRepository) UpdateSLAFields(t *models.Ticket) error {
+	return r.db.Model(t).
+		Select("SLAPolicyID", "FirstResponseDueAt", "ResolutionDueAt",
+			"FirstResponseCompletedAt", "ResolvedAt", "SLAStatus").
+		Updates(map[string]interface{}{
+			"sla_policy_id":               t.SLAPolicyID,
+			"first_response_due_at":        t.FirstResponseDueAt,
+			"resolution_due_at":            t.ResolutionDueAt,
+			"first_response_completed_at":  t.FirstResponseCompletedAt,
+			"resolved_at":                  t.ResolvedAt,
+			"sla_status":                   t.SLAStatus,
+		}).Error
+}
+
+// FindAllOpenWithSLA returns all open/in-progress tickets that have an SLA assigned
+// and are not yet in a terminal SLA state. Used by the cross-tenant SLA monitor.
+func (r *TicketRepository) FindAllOpenWithSLA() ([]models.Ticket, error) {
+	var tickets []models.Ticket
+	err := r.db.
+		Where("status IN ?", []string{"OPEN", "IN_PROGRESS"}).
+		Where("sla_policy_id IS NOT NULL").
+		Where("sla_status NOT IN ?", []string{
+			string(models.SLAStatusBreached),
+			string(models.SLAStatusCompleted),
+		}).
+		Find(&tickets).Error
+	return tickets, err
+}
+
 // List returns a filtered, paginated slice of tickets for a tenant.
 func (r *TicketRepository) List(tenantID uuid.UUID, q *dto.ListTicketsQuery) ([]models.Ticket, int64, error) {
 	base := r.scoped(tenantID).Model(&models.Ticket{}).
@@ -113,6 +143,9 @@ func (r *TicketRepository) List(tenantID uuid.UUID, q *dto.ListTicketsQuery) ([]
 	}
 	if q.Category != "" {
 		base = base.Where("category = ?", q.Category)
+	}
+	if q.SLAStatus != "" {
+		base = base.Where("sla_status = ?", q.SLAStatus)
 	}
 	if q.UnassignedOnly {
 		base = base.Where("assigned_to IS NULL")

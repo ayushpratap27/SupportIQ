@@ -93,6 +93,14 @@ type Ticket struct {
 	AIProcessingStatus string     `gorm:"type:varchar(20);default:'PENDING'" json:"ai_processing_status"`
 	ProcessedAt        *time.Time `                                           json:"processed_at,omitempty"`
 
+	// SLA fields — populated asynchronously after creation when a matching policy exists
+	SLAPolicyID              *uint      `gorm:"index"                        json:"sla_policy_id,omitempty"`
+	FirstResponseDueAt       *time.Time `                                     json:"first_response_due_at,omitempty"`
+	ResolutionDueAt          *time.Time `                                     json:"resolution_due_at,omitempty"`
+	FirstResponseCompletedAt *time.Time `                                     json:"first_response_completed_at,omitempty"`
+	ResolvedAt               *time.Time `                                     json:"resolved_at,omitempty"`
+	SLAStatus                string     `gorm:"type:varchar(20)"             json:"sla_status,omitempty"`
+
 	// Associations — populated by Preload in the repository layer
 	Creator  *User `gorm:"foreignKey:CreatedBy"  json:"creator,omitempty"`
 	Assignee *User `gorm:"foreignKey:AssignedTo" json:"assignee,omitempty"`

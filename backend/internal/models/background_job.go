@@ -34,6 +34,9 @@ const (
 	JobTypeEmailRetry    JobType = "EMAIL_RETRY"
 	JobTypeMailboxSync   JobType = "MAILBOX_SYNC"
 
+	// SLA job type
+	JobTypeSLAMonitor JobType = "SLA_MONITOR"
+
 	// Integration job types
 	JobTypeIntegrationEvent JobType = "INTEGRATION_EVENT"
 	JobTypeJiraSync         JobType = "JIRA_SYNC"

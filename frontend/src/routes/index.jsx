@@ -23,6 +23,8 @@ import Reports from '../pages/analytics/Reports'
 import Integrations from '../pages/Integrations'
 import TenantSettings from '../pages/TenantSettings'
 import SuperAdminDashboard from '../pages/superadmin/SuperAdminDashboard'
+import SLAManagement from '../pages/SLAManagement'
+import SLADashboard from '../pages/SLADashboard'
 
 function AppRoutes() {
   return (
@@ -54,6 +56,8 @@ function AppRoutes() {
         <Route path="/integrations" element={<Integrations />} />
         <Route path="/settings" element={<TenantSettings />} />
         <Route path="/admin" element={<SuperAdminDashboard />} />
+        <Route path="/sla" element={<SLADashboard />} />
+        <Route path="/sla-management" element={<SLAManagement />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

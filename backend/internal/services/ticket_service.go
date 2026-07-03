@@ -29,6 +29,7 @@ type TicketService struct {
 	activityRepo *repositories.ActivityRepository
 	aiService    *AIService
 	jobSvc       *JobService
+	slaSvc       *SLAService
 }
 
 func NewTicketService(
@@ -42,6 +43,10 @@ func NewTicketService(
 
 func (s *TicketService) SetJobService(js *JobService) {
 	s.jobSvc = js
+}
+
+func (s *TicketService) SetSLAService(sla *SLAService) {
+	s.slaSvc = sla
 }
 
 // logActivity is fire-and-forget; errors are silently suppressed.
@@ -86,6 +91,11 @@ func (s *TicketService) Create(tenantID uuid.UUID, req *dto.CreateTicketRequest,
 	}
 
 	s.logActivity(tenantID, created.ID, createdBy, models.ActivityCreateTicket, "", "", "Ticket created")
+
+	// Assign SLA deadlines asynchronously (no-op if no policy configured)
+	if s.slaSvc != nil {
+		s.slaSvc.AssignSLAToTicket(tenantID, &created)
+	}
 
 	if s.jobSvc != nil && s.jobSvc.IsQueueAvailable() {
 		_ = s.jobSvc.EnqueueAIAnalysis(created.ID, createdBy)
@@ -225,6 +235,16 @@ func (s *TicketService) UpdateStatus(tenantID uuid.UUID, id uuid.UUID, req *dto.
 		return nil, http.StatusInternalServerError, err
 	}
 
+	// SLA hooks
+	if s.slaSvc != nil {
+		switch newStatus {
+		case models.TicketStatusInProgress:
+			s.slaSvc.MarkFirstResponse(tenantID, t)
+		case models.TicketStatusResolved:
+			s.slaSvc.MarkResolved(tenantID, t)
+		}
+	}
+
 	actType := models.ActivityStatusChanged
 	if newStatus == models.TicketStatusClosed {
 		actType = models.ActivityTicketClosed
@@ -358,6 +378,13 @@ func toTicketResponse(t *models.Ticket) *dto.TicketResponse {
 		AITags:             t.AITags,
 		AIProcessingStatus: t.AIProcessingStatus,
 		ProcessedAt:        t.ProcessedAt,
+		// SLA fields
+		SLAPolicyID:              t.SLAPolicyID,
+		FirstResponseDueAt:       t.FirstResponseDueAt,
+		ResolutionDueAt:          t.ResolutionDueAt,
+		FirstResponseCompletedAt: t.FirstResponseCompletedAt,
+		ResolvedAt:               t.ResolvedAt,
+		SLAStatus:                t.SLAStatus,
 	}
 
 	if t.Creator != nil {

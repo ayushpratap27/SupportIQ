@@ -150,7 +150,14 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 
 			ticketService   := services.NewTicketService(ticketRepo, userRepo, activityRepo, aiService)
 			ticketService.SetJobService(jobService)
-			noteService     := services.NewNoteService(noteRepo, activityRepo)
+					// SLA
+					slaRepo    := repositories.NewSLARepository(db)
+					slaSvc     := services.NewSLAService(slaRepo, ticketRepo, activityRepo, wsHub)
+					slaHandler := handlers.NewSLAHandler(slaSvc)
+					ticketService.SetSLAService(slaSvc)
+					go slaSvc.StartMonitor(context.Background(), time.Minute)
+
+				noteService     := services.NewNoteService(noteRepo, activityRepo)
 			commentService  := services.NewCommentService(commentRepo, activityRepo)
 			knowledgeService := services.NewKnowledgeService(knowledgeRepo)
 
@@ -195,6 +202,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 				tickets.GET("/unassigned", ticketHandler.ListUnassigned)
 				tickets.POST("",   ticketHandler.Create)
 				tickets.GET("",    ticketHandler.List)
+				tickets.GET("/sla", slaHandler.GetDashboard) // must be before /:id
 				tickets.GET("/:id",  ticketHandler.GetByID)
 				tickets.PUT("/:id",  ticketHandler.Update)
 				tickets.PATCH("/:id/status",         ticketHandler.UpdateStatus)
@@ -323,7 +331,17 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			tickets.POST("/:id/create-linear",      integrationHandler.CreateLinearIssue)
 			tickets.POST("/:id/create-github-issue", integrationHandler.CreateGitHubIssue)
 
-						// Tenant Settings (current tenant admin)
+					// SLA Policies (Admin only — manage policy CRUD)
+					slaGroup := protected.Group("/sla-policies", middleware.RequireRole(models.RoleAdmin))
+					{
+						slaGroup.GET("",       slaHandler.ListPolicies)
+						slaGroup.POST("",      slaHandler.CreatePolicy)
+						slaGroup.GET("/:id",   slaHandler.GetPolicy)
+						slaGroup.PUT("/:id",   slaHandler.UpdatePolicy)
+						slaGroup.DELETE("/:id", slaHandler.DeletePolicy)
+					}
+
+					// Tenant Settings (current tenant admin)
 						tenantSvc     := services.NewTenantService(tenantRepo)
 						tenantHandler := handlers.NewTenantHandler(tenantSvc)
 						settingsGroup := protected.Group("/settings")

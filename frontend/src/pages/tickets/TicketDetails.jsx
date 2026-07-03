@@ -12,6 +12,7 @@ import ConversationPanel from '../../components/tickets/ConversationPanel'
 import AIAnalysisPanel from '../../components/tickets/AIAnalysisPanel'
 import AIReplyPanel from '../../components/tickets/AIReplyPanel'
 import EmailConversationPanel from '../../components/tickets/EmailConversationPanel'
+import SLACountdown from '../../components/SLACountdown'
 import { formatDate } from '../../utils/format'
 
 const TABS = ['Overview', 'Conversation', 'Notes', 'Activity', 'AI Analysis', 'AI Reply', 'Email']
@@ -64,8 +65,7 @@ export default function TicketDetails() {
     const REFRESH_EVENTS = [
       'ticket.ai.completed',
       'ticket.reply.generated',
-      'ticket.updated',
-    ]
+      'ticket.updated',      'sla.updated',    ]
     const unsubs = REFRESH_EVENTS.map((eventType) =>
       wsService.on(eventType, (event) => {
         if (event.ticket_id === id) load()
@@ -276,7 +276,14 @@ export default function TicketDetails() {
                   </select>
                 </div>
               )}
-            </div>
+              {/* SLA countdown widget */}
+              {ticket.resolution_due_at && (
+                <SLACountdown
+                  resolutionDueAt={ticket.resolution_due_at}
+                  firstResponseDueAt={ticket.first_response_due_at}
+                  slaStatus={ticket.sla_status}
+                />
+              )}            </div>
           </div>
         )}
 

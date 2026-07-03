@@ -28,6 +28,13 @@ const (
 	ActivityReplyEdited      = "AI_REPLY_EDITED"
 	ActivityReplyRegenerated = "AI_REPLY_REGENERATED"
 
+	// SLA activity types
+	ActivitySLAAssigned  = "SLA_ASSIGNED"
+	ActivitySLAAtRisk    = "SLA_AT_RISK"
+	ActivitySLAEscalated = "SLA_ESCALATED"
+	ActivitySLABreached  = "SLA_BREACHED"
+	ActivitySLACompleted = "SLA_COMPLETED"
+
 	// Email activity types
 	ActivityEmailReceived    = "EMAIL_RECEIVED"
 	ActivityEmailQueued      = "EMAIL_QUEUED"
