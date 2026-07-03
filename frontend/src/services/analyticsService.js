@@ -1,6 +1,6 @@
 import api from './api'
 
-const BASE = '/analytics'
+const BASE = '/api/v1/analytics'
 
 export const analyticsService = {
   // Overview

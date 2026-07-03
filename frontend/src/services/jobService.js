@@ -2,19 +2,19 @@ import api from './api';
 
 const jobService = {
   list(params = {}) {
-    return api.get('/jobs', { params });
+    return api.get('/api/v1/jobs', { params });
   },
 
   getById(id) {
-    return api.get(`/jobs/${id}`);
+    return api.get(`/api/v1/jobs/${id}`);
   },
 
   retry(id) {
-    return api.post(`/jobs/${id}/retry`);
+    return api.post(`/api/v1/jobs/${id}/retry`);
   },
 
   statistics() {
-    return api.get('/jobs/statistics');
+    return api.get('/api/v1/jobs/statistics');
   },
 };
 

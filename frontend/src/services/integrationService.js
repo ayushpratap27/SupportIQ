@@ -1,6 +1,6 @@
 import api from './api';
 
-const BASE = '/integrations';
+const BASE = '/api/v1/integrations';
 
 export const integrationService = {
   list: () => api.get(BASE),
@@ -15,13 +15,13 @@ export const integrationService = {
 
   listEvents: (id) => api.get(`${BASE}/${id}/events`),
 
-  getTicketIntegrations: (ticketId) => api.get(`/tickets/${ticketId}/integrations`),
+  getTicketIntegrations: (ticketId) => api.get(`/api/v1/tickets/${ticketId}/integrations`),
 
-  createJira: (ticketId) => api.post(`/tickets/${ticketId}/create-jira`),
+  createJira: (ticketId) => api.post(`/api/v1/tickets/${ticketId}/create-jira`),
 
-  createLinear: (ticketId) => api.post(`/tickets/${ticketId}/create-linear`),
+  createLinear: (ticketId) => api.post(`/api/v1/tickets/${ticketId}/create-linear`),
 
-  createGitHub: (ticketId) => api.post(`/tickets/${ticketId}/create-github-issue`),
+  createGitHub: (ticketId) => api.post(`/api/v1/tickets/${ticketId}/create-github-issue`),
 };
 
 export default integrationService;
