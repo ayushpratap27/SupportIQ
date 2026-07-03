@@ -107,9 +107,7 @@ function CreateTicket() {
                 value={form.subject}
                 onChange={handleChange}
                 placeholder="Brief description of the issue"
-                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 transition ${
-                  errors.subject ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'
-                }`}
+                className={inputCls(errors.subject)}
               />
               {errors.subject && <p className="mt-1 text-xs text-red-500">{errors.subject}</p>}
             </div>
@@ -126,11 +124,6 @@ function CreateTicket() {
                 rows={5}
                 placeholder="Detailed description of the issue — more detail helps AI give better analysis"
                 className={`${inputCls(errors.description)} resize-none`}
-                rows={4}
-                placeholder="Detailed description of the issue"
-                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 transition resize-none ${
-                  errors.description ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'
-                }`}
               />
               {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description}</p>}
             </div>
@@ -175,10 +168,6 @@ function CreateTicket() {
                   name="customerName"
                   value={form.customerName}
                   onChange={handleChange}
-                  placeholder="Rahul"
-                  className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 transition ${
-                    errors.customerName ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'
-                  }`}
                   placeholder="Rahul Sharma"
                   className={inputCls(errors.customerName)}
                 />
@@ -194,9 +183,6 @@ function CreateTicket() {
                   value={form.customerEmail}
                   onChange={handleChange}
                   placeholder="rahul@example.com"
-                  className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 transition ${
-                    errors.customerEmail ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'
-                  }`}
                   className={inputCls(errors.customerEmail)}
                 />
                 {errors.customerEmail && <p className="mt-1 text-xs text-red-500">{errors.customerEmail}</p>}
