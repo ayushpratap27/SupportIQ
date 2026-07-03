@@ -134,7 +134,7 @@ function TicketList() {
                     <tr
                       key={t.id}
                       onClick={() => navigate(`/tickets/${t.id}`)}
-                      className="hover:bg-gray-50 dark:bg-gray-900 cursor-pointer transition"
+                      className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition"
                     >
                       <td className="px-4 py-3 font-mono text-xs text-blue-600 font-medium">{t.ticket_number}</td>
                       <td className="px-4 py-3 max-w-[200px] truncate text-gray-800 dark:text-gray-100 font-medium">{t.subject}</td>

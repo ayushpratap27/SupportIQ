@@ -68,10 +68,10 @@ export default function QueueMonitoring() {
   }))
 
   return (
-    <div className="p-6">
+    <div className="max-w-6xl mx-auto px-6 py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Queue Monitoring</h1>
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Queue Monitoring</h1>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Auto-refreshes every 15 seconds</p>
         </div>
         <button
@@ -99,7 +99,7 @@ export default function QueueMonitoring() {
           </div>
 
           {/* Avg queue time */}
-          <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5 flex items-center gap-8">
+          <div className="mb-6 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 flex items-center gap-8">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 dark:text-gray-500">Avg Queue Wait</p>
               <p className="mt-1 text-4xl font-bold text-blue-700">
@@ -118,7 +118,7 @@ export default function QueueMonitoring() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Status distribution */}
-            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+            <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
               <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Job Status Distribution</h2>
               {pieData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={240}>
@@ -139,7 +139,7 @@ export default function QueueMonitoring() {
             </div>
 
             {/* Jobs by type */}
-            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+            <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
               <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Jobs by Type</h2>
               {jobTypeData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={240}>

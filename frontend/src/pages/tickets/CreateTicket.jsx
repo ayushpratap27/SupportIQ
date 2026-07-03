@@ -71,7 +71,7 @@ function CreateTicket() {
                 value={form.subject}
                 onChange={handleChange}
                 placeholder="Brief description of the issue"
-                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition ${
+                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 transition ${
                   errors.subject ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'
                 }`}
               />
@@ -87,7 +87,7 @@ function CreateTicket() {
                 onChange={handleChange}
                 rows={4}
                 placeholder="Detailed description of the issue"
-                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition resize-none ${
+                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 transition resize-none ${
                   errors.description ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'
                 }`}
               />
@@ -103,7 +103,7 @@ function CreateTicket() {
                   value={form.customerName}
                   onChange={handleChange}
                   placeholder="Rahul"
-                  className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition ${
+                  className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 transition ${
                     errors.customerName ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'
                   }`}
                 />
@@ -119,7 +119,7 @@ function CreateTicket() {
                   value={form.customerEmail}
                   onChange={handleChange}
                   placeholder="rahul@example.com"
-                  className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition ${
+                  className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400 transition ${
                     errors.customerEmail ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'
                   }`}
                 />

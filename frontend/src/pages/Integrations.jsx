@@ -131,7 +131,7 @@ export default function Integrations() {
   if (error)   return <div className="p-8 text-red-500">{error}</div>;
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="max-w-6xl mx-auto px-6 py-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Enterprise Integrations</h1>
@@ -277,7 +277,7 @@ export default function Integrations() {
                 <button
                   type="button"
                   onClick={() => setModal(null)}
-                  className="flex-1 px-4 py-2 border rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:bg-gray-900"
+                  className="flex-1 px-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800"
                 >
                   Cancel
                 </button>

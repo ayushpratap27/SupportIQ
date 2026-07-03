@@ -88,7 +88,7 @@ export default function JobMonitor() {
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="max-w-6xl mx-auto px-6 py-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Job Monitor</h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">Background processing queue status</p>
@@ -154,7 +154,7 @@ export default function JobMonitor() {
               </tr>
             ) : (
               paged.map((job) => (
-                <tr key={job.id} className="hover:bg-gray-50 dark:bg-gray-900">
+                <tr key={job.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                   <td className="px-4 py-3 font-mono text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">#{job.id}</td>
                   <td className="px-4 py-3 text-gray-700 dark:text-gray-200">
                     {JOB_TYPE_LABELS[job.job_type] || job.job_type}

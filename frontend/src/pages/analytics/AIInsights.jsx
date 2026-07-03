@@ -15,9 +15,9 @@ const COLORS = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#06B6D4'
 
 function Metric({ label, value, sub, highlight }) {
   return (
-    <div className={`rounded-xl border p-4 ${highlight ? 'bg-purple-50 border-purple-200' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600'}`}>
+    <div className={`rounded-xl border p-4 ${highlight ? 'bg-blue-900/20 border-blue-700/50 dark:bg-blue-900/20 dark:border-blue-700/50' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700'}`}>
       <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 dark:text-gray-500">{label}</p>
-      <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{value ?? '—'}</p>
+      <p className="mt-2 text-3xl font-bold text-gray-800 dark:text-gray-100">{value ?? '—'}</p>
       {sub && <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{sub}</p>}
     </div>
   )
@@ -61,9 +61,9 @@ export default function AIInsights() {
   const sentData = (data?.top_sentiments ?? []).map(c => ({ name: c.label, count: Number(c.count) }))
 
   return (
-    <div className="p-6">
+    <div className="max-w-6xl mx-auto px-6 py-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">AI Insights</h1>
+        <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">AI Insights</h1>
         <select
           value={period}
           onChange={e => setPeriod(e.target.value)}
@@ -95,7 +95,7 @@ export default function AIInsights() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* Approval rate donut */}
-            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+            <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
               <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Reply Outcome Distribution</h2>
               {rateData.some(r => r.value > 0) ? (
                 <ResponsiveContainer width="100%" height={220}>
@@ -114,7 +114,7 @@ export default function AIInsights() {
             </div>
 
             {/* Confidence + approval trend */}
-            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+            <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
               <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Confidence & Approval Trend</h2>
               {dailyTrend.length > 0 ? (
                 <ResponsiveContainer width="100%" height={220}>
@@ -133,7 +133,7 @@ export default function AIInsights() {
           </div>
 
           {/* Daily activity */}
-          <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5 mb-6">
+          <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 mb-6">
             <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Daily AI Activity</h2>
             {dailyTrend.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
@@ -152,7 +152,7 @@ export default function AIInsights() {
 
           {/* Top categories and sentiments */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+            <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
               <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Top AI Categories</h2>
               {catData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
@@ -167,7 +167,7 @@ export default function AIInsights() {
               ) : <p className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">No category data</p>}
             </div>
 
-            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+            <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
               <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Sentiment Distribution</h2>
               {sentData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>

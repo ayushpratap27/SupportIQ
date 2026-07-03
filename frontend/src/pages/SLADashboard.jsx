@@ -17,7 +17,7 @@ function StatCard({ label, value, sub, color = 'text-gray-900 dark:text-white' }
 
 function TicketRow({ ticket }) {
   return (
-    <tr className="hover:bg-gray-50 dark:bg-gray-900 transition-colors">
+    <tr className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
       <td className="px-4 py-3">
         <Link to={`/tickets/${ticket.ticket_id}`} className="text-blue-600 hover:underline text-sm font-medium">
           {ticket.ticket_number}
@@ -78,7 +78,7 @@ export default function SLADashboard() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-8 space-y-8">
+    <div className="max-w-6xl mx-auto px-6 py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">SLA Dashboard</h1>

@@ -31,8 +31,8 @@ export default function SuperAdminDashboard() {
   if (error) return <div className="p-8 text-red-600">{error}</div>
 
   return (
-    <div className="max-w-6xl mx-auto p-8">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">SuperAdmin Dashboard</h1>
+    <div className="max-w-6xl mx-auto px-6 py-6 space-y-6">
+      <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">SuperAdmin Dashboard</h1>
 
       {overview && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -68,8 +68,8 @@ export default function SuperAdminDashboard() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {tenants.map((t) => (
-                <tr key={t.id} className="hover:bg-gray-50 dark:bg-gray-900">
-                  <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{t.name}</td>
+                <tr key={t.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <td className="px-6 py-4 font-medium text-gray-800 dark:text-gray-100">{t.name}</td>
                   <td className="px-6 py-4 text-gray-500 dark:text-gray-400 dark:text-gray-500">{t.domain || '—'}</td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${

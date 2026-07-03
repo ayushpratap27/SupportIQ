@@ -117,11 +117,11 @@ export default function Reports() {
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Reports</h1>
+    <div className="max-w-6xl mx-auto px-6 py-6">
+      <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-6">Reports</h1>
 
       {/* Generator form */}
-      <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5 mb-6">
+      <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 mb-6">
         <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-4">Generate New Report</h2>
         <form onSubmit={handleGenerate}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -179,7 +179,7 @@ export default function Reports() {
       </div>
 
       {/* Reports table */}
-      <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 overflow-hidden">
+      <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-hidden">
         <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-gray-700">
           <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Report History</h2>
           <button onClick={loadReports} className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 dark:text-gray-600">↻ Refresh</button>
@@ -206,8 +206,8 @@ export default function Reports() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {reports.map(r => (
-                  <tr key={r.id} className="hover:bg-gray-50 dark:bg-gray-900 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{r.name}</td>
+                  <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-100">{r.name}</td>
                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400 dark:text-gray-500 capitalize">{r.report_type}</td>
                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400 dark:text-gray-500">{r.format}</td>
                     <td className="px-4 py-3">
