@@ -77,9 +77,9 @@ export default function Sidebar() {
         <NavItem to="/dashboard" exact label="Dashboard" icon={ICONS.home} />
 
         <SectionLabel>Tickets</SectionLabel>
-        <NavItem to="/tickets/unassigned" label="Unassigned" icon={ICONS.inbox} />
-        <NavItem to="/my-tickets" label="My Tickets" icon={ICONS.user} />
-        <NavItem to="/tickets" label="All Tickets" icon={ICONS.tickets} />
+        <NavItem to="/tickets/unassigned" exact label="Unassigned" icon={ICONS.inbox} />
+        <NavItem to="/my-tickets" exact label="My Tickets" icon={ICONS.user} />
+        <NavItem to="/tickets" exact label="All Tickets" icon={ICONS.tickets} />
 
         {isAdmin && (
           <>
