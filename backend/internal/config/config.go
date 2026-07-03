@@ -17,12 +17,20 @@ type Config struct {
 	JWTRefreshSecret string
 
 	// AI configuration
-	GeminiAPIKey    string
-	GeminiModel     string
-	AITimeout       int // seconds
-	AIMaxRetries    int
-	MaxReplyTokens  int
+	GeminiAPIKey     string
+	GeminiModel      string
+	AITimeout        int // seconds
+	AIMaxRetries     int
+	MaxReplyTokens   int
 	ReplyTemperature float64
+
+	// Queue / Worker configuration
+	RedisURL        string
+	WorkerCount     int
+	QueueName       string
+	MaxRetries      int
+	RetryDelay      int // base seconds for exponential backoff
+	WebSocketOrigin string
 }
 
 // Load reads environment variables (from .env in development) and returns a Config.
@@ -85,6 +93,37 @@ func Load() (*Config, error) {
 	}
 	if cfg.ReplyTemperature == 0 {
 		cfg.ReplyTemperature = 0.3
+	}
+
+	cfg.RedisURL        = getEnv("REDIS_URL", "")
+	cfg.WebSocketOrigin = getEnv("WEBSOCKET_ORIGIN", "http://localhost:5173")
+	cfg.QueueName       = getEnv("QUEUE_NAME", "ai_jobs")
+
+	if v := getEnv("WORKER_COUNT", ""); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			cfg.WorkerCount = n
+		}
+	}
+	if cfg.WorkerCount == 0 {
+		cfg.WorkerCount = 3
+	}
+
+	if v := getEnv("MAX_RETRIES", ""); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n >= 0 {
+			cfg.MaxRetries = n
+		}
+	}
+	if cfg.MaxRetries == 0 {
+		cfg.MaxRetries = 3
+	}
+
+	if v := getEnv("RETRY_DELAY", ""); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			cfg.RetryDelay = n
+		}
+	}
+	if cfg.RetryDelay == 0 {
+		cfg.RetryDelay = 5
 	}
 
 	return cfg, nil

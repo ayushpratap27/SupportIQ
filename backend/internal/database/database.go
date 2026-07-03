@@ -40,6 +40,7 @@ func Connect(cfg *config.Config) (*gorm.DB, error) {
 		&models.TicketComment{},
 		&models.KnowledgeBase{},
 		&models.AIReply{},
+		&models.BackgroundJob{},
 	); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}

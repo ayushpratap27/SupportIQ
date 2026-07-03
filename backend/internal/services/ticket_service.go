@@ -27,7 +27,8 @@ type TicketService struct {
 	repo         *repositories.TicketRepository
 	userRepo     *repositories.UserRepository
 	activityRepo *repositories.ActivityRepository
-	aiService    *AIService
+	aiService    *AIService  // goroutine-based fallback when no queue
+	jobSvc       *JobService // Redis-backed queue (preferred when available)
 }
 
 func NewTicketService(
@@ -37,6 +38,12 @@ func NewTicketService(
 	aiService *AIService,
 ) *TicketService {
 	return &TicketService{repo: repo, userRepo: userRepo, activityRepo: activityRepo, aiService: aiService}
+}
+
+// SetJobService injects the job service for Redis-backed async processing.
+// Must be called after both TicketService and JobService are constructed.
+func (s *TicketService) SetJobService(js *JobService) {
+	s.jobSvc = js
 }
 
 // logActivity is fire-and-forget; errors are silently suppressed so they never
@@ -81,8 +88,12 @@ func (s *TicketService) Create(req *dto.CreateTicketRequest, createdBy uint) (*d
 
 	s.logActivity(created.ID, createdBy, models.ActivityCreateTicket, "", "", "Ticket created")
 
-	// Trigger async AI analysis — never blocks ticket creation
-	s.aiService.AnalyzeTicket(created.ID)
+	// Trigger AI analysis — use Redis queue if available, otherwise fall back to goroutine
+	if s.jobSvc != nil && s.jobSvc.IsQueueAvailable() {
+		_ = s.jobSvc.EnqueueAIAnalysis(created.ID, createdBy)
+	} else {
+		s.aiService.AnalyzeTicket(created.ID)
+	}
 
 	full, err := s.repo.FindByID(created.ID)
 	if err != nil {
@@ -186,7 +197,11 @@ func (s *TicketService) Update(id uuid.UUID, req *dto.UpdateTicketRequest, userI
 
 	// Re-trigger AI analysis when the ticket content changes
 	if req.Subject != "" || req.Description != "" {
-		s.aiService.AnalyzeTicket(id)
+		if s.jobSvc != nil && s.jobSvc.IsQueueAvailable() {
+			_ = s.jobSvc.EnqueueAIAnalysis(id, userID)
+		} else {
+			s.aiService.AnalyzeTicket(id)
+		}
 	}
 
 	return toTicketResponse(t), http.StatusOK, nil

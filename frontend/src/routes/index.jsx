@@ -12,32 +12,30 @@ import EditTicket from '../pages/tickets/EditTicket'
 import MyTickets from '../pages/tickets/MyTickets'
 import UnassignedTickets from '../pages/tickets/UnassignedTickets'
 import KnowledgeBase from '../pages/KnowledgeBase'
+import JobMonitor from '../pages/JobMonitor'
 
 function AppRoutes() {
   return (
     <Routes>
-      {/* Public routes wrapped in the shared page shell */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
       </Route>
 
-      {/* Auth pages — manage their own full-screen layout */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      {/* Protected routes — redirect to /login if unauthenticated */}
       <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/my-tickets" element={<MyTickets />} />
         <Route path="/tickets/unassigned" element={<UnassignedTickets />} />
         <Route path="/knowledge-base" element={<KnowledgeBase />} />
+        <Route path="/jobs" element={<JobMonitor />} />
         <Route path="/tickets" element={<TicketList />} />
         <Route path="/tickets/new" element={<CreateTicket />} />
         <Route path="/tickets/:id" element={<TicketDetails />} />
         <Route path="/tickets/:id/edit" element={<EditTicket />} />
       </Route>
 
-      {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

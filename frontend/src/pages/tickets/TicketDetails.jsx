@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { ticketService } from '../../services/ticketService'
 import { useToast } from '../../components/Toast'
+import { useWebSocket } from '../../contexts/WebSocketContext'
 import StatusBadge from '../../components/tickets/StatusBadge'
 import PriorityBadge from '../../components/tickets/PriorityBadge'
 import ActivityTimeline from '../../components/tickets/ActivityTimeline'
@@ -31,6 +32,7 @@ export default function TicketDetails() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { toast, showToast } = useToast()
+  const { wsService } = useWebSocket()
 
   const [ticket, setTicket] = useState(null)
   const [agents, setAgents] = useState([])
@@ -55,6 +57,21 @@ export default function TicketDetails() {
   }
 
   useEffect(() => { load() }, [id])
+
+  // Auto-refresh when the worker completes AI analysis or reply generation for this ticket
+  useEffect(() => {
+    const REFRESH_EVENTS = [
+      'ticket.ai.completed',
+      'ticket.reply.generated',
+      'ticket.updated',
+    ]
+    const unsubs = REFRESH_EVENTS.map((eventType) =>
+      wsService.on(eventType, (event) => {
+        if (event.ticket_id === id) load()
+      })
+    )
+    return () => unsubs.forEach((unsub) => unsub())
+  }, [id, wsService])
 
   const handleStatusUpdate = async () => {
     const next = NEXT_STATUS[ticket.status]

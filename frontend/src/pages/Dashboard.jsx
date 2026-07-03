@@ -83,7 +83,10 @@ export default function Dashboard() {
           <Link to="/my-tickets" className="text-sm text-purple-600 font-medium hover:underline">My Tickets</Link>
           <Link to="/tickets" className="text-sm text-blue-600 font-medium hover:underline">All Tickets</Link>
           {user?.role === 'Admin' && (
-            <Link to="/knowledge-base" className="text-sm text-emerald-600 font-medium hover:underline">Knowledge Base</Link>
+            <>
+              <Link to="/knowledge-base" className="text-sm text-emerald-600 font-medium hover:underline">Knowledge Base</Link>
+              <Link to="/jobs" className="text-sm text-violet-600 font-medium hover:underline">Job Monitor</Link>
+            </>
           )}
           <button onClick={handleLogout} className="text-sm text-red-500 hover:text-red-600 font-medium transition">Logout</button>
         </div>
