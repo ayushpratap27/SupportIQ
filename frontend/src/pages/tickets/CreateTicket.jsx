@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { ticketService } from '../../services/ticketService'
 import Toast, { useToast } from '../../components/Toast'
+import DarkModeToggle from '../../components/DarkModeToggle'
 
 function CreateTicket() {
   const navigate = useNavigate()
@@ -58,27 +59,28 @@ function CreateTicket() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Toast toast={toast} />
 
-      <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center gap-4">
-        <Link to="/tickets" className="text-sm text-gray-500 hover:text-gray-700">← Tickets</Link>
-        <h1 className="font-bold text-gray-800">New Ticket</h1>
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-6 py-4 flex items-center gap-4">
+        <Link to="/tickets" className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-200">← Tickets</Link>
+        <h1 className="font-bold text-gray-800 dark:text-gray-100">New Ticket</h1>
+        <DarkModeToggle />
       </header>
 
       <main className="max-w-2xl mx-auto px-6 py-8">
-        <div className="bg-white rounded-2xl border border-gray-100 p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Subject */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Subject <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">Subject <span className="text-red-500">*</span></label>
               <input
                 name="subject"
                 value={form.subject}
                 onChange={handleChange}
                 placeholder="Brief description of the issue"
-                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
-                  errors.subject ? 'border-red-400' : 'border-gray-300'
+                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition ${
+                  errors.subject ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'
                 }`}
               />
               {errors.subject && <p className="mt-1 text-xs text-red-500">{errors.subject}</p>}
@@ -86,15 +88,15 @@ function CreateTicket() {
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Description <span className="text-red-500">*</span></label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">Description <span className="text-red-500">*</span></label>
               <textarea
                 name="description"
                 value={form.description}
                 onChange={handleChange}
                 rows={4}
                 placeholder="Detailed description of the issue"
-                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition resize-none ${
-                  errors.description ? 'border-red-400' : 'border-gray-300'
+                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition resize-none ${
+                  errors.description ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'
                 }`}
               />
               {errors.description && <p className="mt-1 text-xs text-red-500">{errors.description}</p>}
@@ -103,14 +105,14 @@ function CreateTicket() {
             <div className="grid grid-cols-2 gap-4">
               {/* Customer Name */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer Name <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">Customer Name <span className="text-red-500">*</span></label>
                 <input
                   name="customerName"
                   value={form.customerName}
                   onChange={handleChange}
                   placeholder="Rahul"
-                  className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
-                    errors.customerName ? 'border-red-400' : 'border-gray-300'
+                  className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition ${
+                    errors.customerName ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'
                   }`}
                 />
                 {errors.customerName && <p className="mt-1 text-xs text-red-500">{errors.customerName}</p>}
@@ -118,15 +120,15 @@ function CreateTicket() {
 
               {/* Customer Email */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Customer Email <span className="text-red-500">*</span></label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">Customer Email <span className="text-red-500">*</span></label>
                 <input
                   name="customerEmail"
                   type="email"
                   value={form.customerEmail}
                   onChange={handleChange}
                   placeholder="rahul@example.com"
-                  className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
-                    errors.customerEmail ? 'border-red-400' : 'border-gray-300'
+                  className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition ${
+                    errors.customerEmail ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'
                   }`}
                 />
                 {errors.customerEmail && <p className="mt-1 text-xs text-red-500">{errors.customerEmail}</p>}
@@ -143,7 +145,7 @@ function CreateTicket() {
               </button>
               <Link
                 to="/tickets"
-                className="px-5 py-2.5 border border-gray-300 text-gray-600 font-medium rounded-lg hover:bg-gray-50 transition text-sm text-center"
+                className="px-5 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 dark:text-gray-600 font-medium rounded-lg hover:bg-gray-50 dark:bg-gray-900 transition text-sm text-center"
               >
                 Cancel
               </Link>

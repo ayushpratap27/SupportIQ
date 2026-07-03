@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
+import DarkModeToggle from '../components/DarkModeToggle'
 
 function Register() {
   const { user, loading, register } = useAuth()
@@ -13,8 +14,8 @@ function Register() {
   // Show a spinner while auth state is being restored on first load
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-sm text-gray-400 animate-pulse">Loading...</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-sm text-gray-400 dark:text-gray-500 animate-pulse">Loading...</p>
       </div>
     )
   }
@@ -61,14 +62,15 @@ function Register() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4">
+      <div className="absolute top-4 right-4"><DarkModeToggle /></div>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">AI Support Assistant</h1>
-          <p className="text-sm text-gray-500 mt-1">Create your account</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">AI Support Assistant</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">Create your account</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8">
           {apiError && (
             <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
               {apiError}
@@ -77,7 +79,7 @@ function Register() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">
                 Company name
               </label>
               <input
@@ -88,8 +90,8 @@ function Register() {
                 required
                 autoComplete="organization"
                 placeholder="Acme Corp"
-                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
-                  errors.company_name ? 'border-red-400' : 'border-gray-300'
+                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition ${
+                  errors.company_name ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'
                 }`}
               />
               {errors.company_name && (
@@ -98,7 +100,7 @@ function Register() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">
                 Full name
               </label>
               <input
@@ -109,8 +111,8 @@ function Register() {
                 required
                 autoComplete="name"
                 placeholder="Ayush"
-                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
-                  errors.name ? 'border-red-400' : 'border-gray-300'
+                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition ${
+                  errors.name ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'
                 }`}
               />
               {errors.name && (
@@ -119,7 +121,7 @@ function Register() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">
                 Email address
               </label>
               <input
@@ -130,8 +132,8 @@ function Register() {
                 required
                 autoComplete="email"
                 placeholder="you@example.com"
-                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
-                  errors.email ? 'border-red-400' : 'border-gray-300'
+                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition ${
+                  errors.email ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'
                 }`}
               />
               {errors.email && (
@@ -140,7 +142,7 @@ function Register() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">
                 Password
               </label>
               <input
@@ -151,8 +153,8 @@ function Register() {
                 required
                 autoComplete="new-password"
                 placeholder="Min. 8 chars, uppercase, digit & symbol"
-                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition ${
-                  errors.password ? 'border-red-400' : 'border-gray-300'
+                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition ${
+                  errors.password ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'
                 }`}
               />
               {errors.password && (
@@ -169,7 +171,7 @@ function Register() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-gray-500">
+          <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
             Already have an account?{' '}
             <Link to="/login" className="text-blue-600 font-medium hover:underline">
               Sign in

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { integrationService } from '../services/integrationService';
+import DarkModeToggle from '../components/DarkModeToggle'
 
 const PROVIDER_META = {
   slack:       { label: 'Slack',            icon: '💬', fields: [{ key: 'webhook_url', label: 'Webhook URL', required: true }] },
@@ -42,7 +43,7 @@ const PROVIDER_META = {
 const STATUS_COLORS = {
   ACTIVE:   'bg-green-100 text-green-800',
   ERROR:    'bg-red-100 text-red-800',
-  INACTIVE: 'bg-gray-100 text-gray-700',
+  INACTIVE: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200',
 };
 
 export default function Integrations() {
@@ -127,15 +128,15 @@ export default function Integrations() {
 
   const providerFields = PROVIDER_META[form.provider]?.fields || [];
 
-  if (loading) return <div className="p-8 text-gray-500">Loading integrations…</div>;
+  if (loading) return <div className="p-8 text-gray-500 dark:text-gray-400 dark:text-gray-500">Loading integrations…</div>;
   if (error)   return <div className="p-8 text-red-500">{error}</div>;
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Enterprise Integrations</h1>
-          <p className="text-gray-500 text-sm mt-1">Connect SupportIQ to your external tools and services.</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Enterprise Integrations</h1>
+          <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-sm mt-1">Connect SupportIQ to your external tools and services.</p>
         </div>
         <button
           onClick={openCreate}
@@ -146,7 +147,7 @@ export default function Integrations() {
       </div>
 
       {integrations.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 border-2 border-dashed rounded-xl">
+        <div className="text-center py-16 text-gray-400 dark:text-gray-500 border-2 border-dashed rounded-xl">
           <p className="text-4xl mb-3">🔌</p>
           <p className="font-medium">No integrations yet</p>
           <p className="text-sm">Click "Add Integration" to connect your first service.</p>
@@ -154,16 +155,16 @@ export default function Integrations() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
           {integrations.map((intg) => (
-            <div key={intg.id} className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+            <div key={intg.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl p-5 shadow-sm">
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{PROVIDER_META[intg.provider]?.icon || '🔗'}</span>
                   <div>
-                    <h3 className="font-semibold text-gray-900">{intg.name}</h3>
-                    <p className="text-xs text-gray-500">{PROVIDER_META[intg.provider]?.label || intg.provider}</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">{intg.name}</h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">{PROVIDER_META[intg.provider]?.label || intg.provider}</p>
                   </div>
                 </div>
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[intg.status] || 'bg-gray-100'}`}>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[intg.status] || 'bg-gray-100 dark:bg-gray-800'}`}>
                   {intg.status}
                 </span>
               </div>
@@ -182,7 +183,7 @@ export default function Integrations() {
                 <button
                   onClick={() => handleTest(intg.id)}
                   disabled={testingId === intg.id}
-                  className="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition disabled:opacity-50"
+                  className="text-xs px-3 py-1.5 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 rounded-lg transition disabled:opacity-50"
                 >
                   {testingId === intg.id ? 'Testing…' : 'Test'}
                 </button>
@@ -198,7 +199,7 @@ export default function Integrations() {
                 >
                   Delete
                 </button>
-                <div className="ml-auto flex items-center gap-1.5 text-xs text-gray-500">
+                <div className="ml-auto flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
                   {intg.last_sync_at && <span>Last sync: {new Date(intg.last_sync_at).toLocaleDateString()}</span>}
                   <span className={`w-2 h-2 rounded-full ${intg.enabled ? 'bg-green-400' : 'bg-gray-300'}`} />
                   <span>{intg.enabled ? 'Enabled' : 'Disabled'}</span>
@@ -212,16 +213,16 @@ export default function Integrations() {
       {/* Create / Edit Modal */}
       {modal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b">
-              <h2 className="text-lg font-bold text-gray-900">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                 {modal.mode === 'create' ? 'Add Integration' : `Edit: ${modal.data.name}`}
               </h2>
             </div>
             <form onSubmit={handleSave} className="p-6 space-y-4">
               {modal.mode === 'create' && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Provider</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Provider</label>
                   <select
                     value={form.provider}
                     onChange={(e) => setForm((f) => ({ ...f, provider: e.target.value, config: {} }))}
@@ -235,7 +236,7 @@ export default function Integrations() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Name</label>
                 <input
                   required
                   type="text"
@@ -248,7 +249,7 @@ export default function Integrations() {
 
               {providerFields.map((field) => (
                 <div key={field.key}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                     {field.label}{field.required && <span className="text-red-500 ml-0.5">*</span>}
                   </label>
                   <input
@@ -270,14 +271,14 @@ export default function Integrations() {
                   onChange={(e) => setForm((f) => ({ ...f, enabled: e.target.checked }))}
                   className="rounded"
                 />
-                <label htmlFor="enabled" className="text-sm text-gray-700">Enable this integration</label>
+                <label htmlFor="enabled" className="text-sm text-gray-700 dark:text-gray-200">Enable this integration</label>
               </div>
 
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setModal(null)}
-                  className="flex-1 px-4 py-2 border rounded-lg text-sm text-gray-700 hover:bg-gray-50"
+                  className="flex-1 px-4 py-2 border rounded-lg text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:bg-gray-900"
                 >
                   Cancel
                 </button>

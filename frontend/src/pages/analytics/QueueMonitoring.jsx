@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import analyticsService from '../../services/analyticsService'
 import useWebSocket from '../../hooks/useWebSocket'
+import DarkModeToggle from '../../components/DarkModeToggle'
 
 const STATUS_COLORS = {
   QUEUED: '#F59E0B',
@@ -68,11 +69,11 @@ export default function QueueMonitoring() {
   }))
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Queue Monitoring</h1>
-          <p className="text-xs text-gray-400 mt-0.5">Auto-refreshes every 15 seconds</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Queue Monitoring</h1>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Auto-refreshes every 15 seconds</p>
         </div>
         <button
           onClick={load}
@@ -99,13 +100,13 @@ export default function QueueMonitoring() {
           </div>
 
           {/* Avg queue time */}
-          <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 flex items-center gap-8">
+          <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5 flex items-center gap-8">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Avg Queue Wait</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 dark:text-gray-500">Avg Queue Wait</p>
               <p className="mt-1 text-4xl font-bold text-blue-700">
                 {data?.avg_queue_seconds != null ? `${data.avg_queue_seconds}s` : '—'}
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">last 24 hours</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">last 24 hours</p>
             </div>
 
             {(data?.total_failed > 0 || data?.total_dead > 0) && (
@@ -118,8 +119,8 @@ export default function QueueMonitoring() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Status distribution */}
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <h2 className="mb-4 text-sm font-semibold text-gray-700">Job Status Distribution</h2>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+              <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Job Status Distribution</h2>
               {pieData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={240}>
                   <PieChart>
@@ -135,12 +136,12 @@ export default function QueueMonitoring() {
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
-              ) : <p className="py-16 text-center text-sm text-gray-400">No jobs found</p>}
+              ) : <p className="py-16 text-center text-sm text-gray-400 dark:text-gray-500">No jobs found</p>}
             </div>
 
             {/* Jobs by type */}
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <h2 className="mb-4 text-sm font-semibold text-gray-700">Jobs by Type</h2>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+              <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Jobs by Type</h2>
               {jobTypeData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={240}>
                   <BarChart data={jobTypeData} layout="vertical">
@@ -151,7 +152,7 @@ export default function QueueMonitoring() {
                     <Bar dataKey="count" name="Jobs" fill="#3B82F6" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-              ) : <p className="py-16 text-center text-sm text-gray-400">No job type data</p>}
+              ) : <p className="py-16 text-center text-sm text-gray-400 dark:text-gray-500">No job type data</p>}
             </div>
           </div>
         </>

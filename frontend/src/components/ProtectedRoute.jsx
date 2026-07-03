@@ -8,12 +8,11 @@ function ProtectedRoute() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-sm text-gray-400 animate-pulse">Loading...</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-sm text-gray-400 dark:text-gray-500 animate-pulse">Loading...</p>
       </div>
     )
   }
-
   return user ? <Outlet /> : <Navigate to="/login" replace />
 }
 

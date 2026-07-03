@@ -18,7 +18,7 @@ const ICON_MAP = {
 
 const COLOR_MAP = {
   CREATE_TICKET: 'bg-blue-100 text-blue-700',
-  UPDATE_TICKET: 'bg-gray-100 text-gray-600',
+  UPDATE_TICKET: 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 dark:text-gray-600',
   ASSIGN_TICKET: 'bg-purple-100 text-purple-700',
   TAKE_OWNERSHIP: 'bg-indigo-100 text-indigo-700',
   STATUS_CHANGED: 'bg-amber-100 text-amber-700',
@@ -26,7 +26,7 @@ const COLOR_MAP = {
   CATEGORY_CHANGED: 'bg-teal-100 text-teal-700',
   COMMENT_ADDED: 'bg-green-100 text-green-700',
   INTERNAL_NOTE_ADDED: 'bg-yellow-100 text-yellow-700',
-  TICKET_CLOSED: 'bg-gray-100 text-gray-500',
+  TICKET_CLOSED: 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 dark:text-gray-500',
   TICKET_REOPENED: 'bg-blue-100 text-blue-600',
 }
 
@@ -43,32 +43,32 @@ export default function ActivityTimeline({ ticketId }) {
   }, [ticketId])
 
   if (loading) {
-    return <p className="p-4 text-sm text-gray-400 animate-pulse">Loading timeline…</p>
+    return <p className="p-4 text-sm text-gray-400 dark:text-gray-500 animate-pulse">Loading timeline…</p>
   }
 
   if (activities.length === 0) {
-    return <p className="p-4 text-sm text-gray-400">No activity recorded yet.</p>
+    return <p className="p-4 text-sm text-gray-400 dark:text-gray-500">No activity recorded yet.</p>
   }
 
   return (
     <div className="p-4">
-      <ol className="relative border-l border-gray-200 ml-3 space-y-6">
+      <ol className="relative border-l border-gray-200 dark:border-gray-600 ml-3 space-y-6">
         {activities.map((a) => (
           <li key={a.id} className="ml-6">
             {/* Dot */}
             <span
               className={`absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full ring-4 ring-white text-xs ${
-                COLOR_MAP[a.activity_type] || 'bg-gray-100 text-gray-600'
+                COLOR_MAP[a.activity_type] || 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 dark:text-gray-600'
               }`}
             >
               {ICON_MAP[a.activity_type] || '●'}
             </span>
 
-            <div className="rounded-lg border border-gray-100 bg-white p-3 shadow-sm">
-              <p className="text-sm font-medium text-gray-800">{a.description}</p>
+            <div className="rounded-lg border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-3 shadow-sm">
+              <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{a.description}</p>
 
               {(a.old_value || a.new_value) && (
-                <div className="mt-1 flex items-center gap-2 text-xs text-gray-500">
+                <div className="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
                   {a.old_value && (
                     <span className="rounded bg-red-50 px-1.5 py-0.5 text-red-600">
                       {a.old_value}
@@ -83,7 +83,7 @@ export default function ActivityTimeline({ ticketId }) {
                 </div>
               )}
 
-              <p className="mt-1.5 text-xs text-gray-400">
+              <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
                 {a.user?.name || 'System'} · {formatDate(a.created_at)}
               </p>
             </div>

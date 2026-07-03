@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { healthService } from '../services/api'
+import DarkModeToggle from '../components/DarkModeToggle'
 
 // Possible values: 'loading' | 'online' | 'offline'
 const STATUS = {
@@ -31,17 +32,18 @@ function Home() {
   if (!authLoading && user) return <Navigate to="/dashboard" replace />
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-8">
-      <h1 className="text-4xl font-bold text-gray-800 tracking-tight">
+    <div className="flex flex-col items-center justify-center min-h-screen gap-8 bg-gray-50 dark:bg-gray-900">
+      <div className="absolute top-4 right-4"><DarkModeToggle /></div>
+      <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-100 tracking-tight">
         AI Support Assistant
       </h1>
 
-      <div className="bg-white rounded-xl shadow-md px-8 py-5 flex items-center gap-3">
-        <span className="text-base font-medium text-gray-500">Backend Status</span>
-        <span className="text-gray-300">|</span>
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md px-8 py-5 flex items-center gap-3">
+        <span className="text-base font-medium text-gray-500 dark:text-gray-400 dark:text-gray-500">Backend Status</span>
+        <span className="text-gray-300 dark:text-gray-600">|</span>
 
         {backendStatus === STATUS.LOADING && (
-          <span className="text-gray-400 text-sm animate-pulse">Checking...</span>
+          <span className="text-gray-400 dark:text-gray-500 text-sm animate-pulse">Checking...</span>
         )}
 
         {backendStatus === STATUS.ONLINE && (
@@ -62,7 +64,7 @@ function Home() {
         </Link>
         <Link
           to="/register"
-          className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg shadow border border-blue-600 hover:bg-blue-50 transition"
+          className="px-6 py-3 bg-white dark:bg-gray-800 text-blue-600 font-semibold rounded-lg shadow border border-blue-600 hover:bg-blue-50 transition"
         >
           Register
         </Link>

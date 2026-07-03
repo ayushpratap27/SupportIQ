@@ -40,19 +40,19 @@ export default function ConversationPanel({ ticketId }) {
       {/* Comments list */}
       <div className="space-y-3">
         {loading ? (
-          <p className="text-sm text-gray-400 animate-pulse">Loading conversation…</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 animate-pulse">Loading conversation…</p>
         ) : comments.length === 0 ? (
-          <p className="text-sm text-gray-400">No comments yet. Start the conversation.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">No comments yet. Start the conversation.</p>
         ) : (
           comments.map((c) => (
-            <div key={c.id} className="rounded-lg border border-gray-100 bg-white p-4 shadow-sm">
+            <div key={c.id} className="rounded-lg border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
                   {c.user?.name || 'Unknown'}
                 </span>
-                <span className="text-xs text-gray-400">{formatDate(c.created_at)}</span>
+                <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(c.created_at)}</span>
               </div>
-              <p className="text-sm text-gray-800 whitespace-pre-wrap">{c.message}</p>
+              <p className="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap">{c.message}</p>
             </div>
           ))
         )}
@@ -60,7 +60,7 @@ export default function ConversationPanel({ ticketId }) {
 
       {/* Reply form */}
       <form onSubmit={handleSubmit} className="space-y-2">
-        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">
           Add Comment
         </label>
         <textarea
@@ -68,7 +68,7 @@ export default function ConversationPanel({ ticketId }) {
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Write a comment…"
           rows={4}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
+          className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400"
         />
         {error && <p className="text-xs text-red-500">{error}</p>}
         <button

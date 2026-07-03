@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import analyticsService from '../../services/analyticsService'
+import DarkModeToggle from '../../components/DarkModeToggle'
 
 const PERIOD_OPTIONS = [
   { label: 'Today', value: 'today' },
@@ -29,7 +30,7 @@ const STATUS_COLORS = {
 
 function StatusBadge({ status }) {
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[status] ?? 'bg-gray-100 text-gray-600'}`}>
+    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[status] ?? 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 dark:text-gray-600'}`}>
       {status}
     </span>
   )
@@ -117,50 +118,50 @@ export default function Reports() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Reports</h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Reports</h1>
 
       {/* Generator form */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-700 mb-4">Generate New Report</h2>
+      <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5 mb-6">
+        <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-4">Generate New Report</h2>
         <form onSubmit={handleGenerate}>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="lg:col-span-2">
-              <label className="block text-xs font-medium text-gray-600 mb-1">Report Name</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 dark:text-gray-600 mb-1">Report Name</label>
               <input
                 type="text"
                 value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                 placeholder="e.g. Q3 Ticket Report"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Report Type</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 dark:text-gray-600 mb-1">Report Type</label>
               <select
                 value={form.report_type}
                 onChange={e => setForm(f => ({ ...f, report_type: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {REPORT_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Period</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 dark:text-gray-600 mb-1">Period</label>
               <select
                 value={form.period}
                 onChange={e => setForm(f => ({ ...f, period: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {PERIOD_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Format</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 dark:text-gray-600 mb-1">Format</label>
               <select
                 value={form.format}
                 onChange={e => setForm(f => ({ ...f, format: e.target.value }))}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {FORMAT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
@@ -179,22 +180,22 @@ export default function Reports() {
       </div>
 
       {/* Reports table */}
-      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-          <h2 className="text-sm font-semibold text-gray-700">Report History</h2>
-          <button onClick={loadReports} className="text-xs text-gray-400 hover:text-gray-600">↻ Refresh</button>
+      <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-gray-700">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Report History</h2>
+          <button onClick={loadReports} className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 dark:text-gray-600">↻ Refresh</button>
         </div>
         {loading ? (
           <div className="flex h-40 items-center justify-center">
             <div className="h-6 w-6 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
           </div>
         ) : reports.length === 0 ? (
-          <div className="py-16 text-center text-sm text-gray-400">No reports generated yet.</div>
+          <div className="py-16 text-center text-sm text-gray-400 dark:text-gray-500">No reports generated yet.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50 text-xs text-gray-500">
+                <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
                   <th className="px-4 py-3 text-left font-medium">Name</th>
                   <th className="px-4 py-3 text-left font-medium">Type</th>
                   <th className="px-4 py-3 text-left font-medium">Format</th>
@@ -206,18 +207,18 @@ export default function Reports() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {reports.map(r => (
-                  <tr key={r.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-gray-900">{r.name}</td>
-                    <td className="px-4 py-3 text-gray-500 capitalize">{r.report_type}</td>
-                    <td className="px-4 py-3 text-gray-500">{r.format}</td>
+                  <tr key={r.id} className="hover:bg-gray-50 dark:bg-gray-900 transition-colors">
+                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">{r.name}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400 dark:text-gray-500 capitalize">{r.report_type}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400 dark:text-gray-500">{r.format}</td>
                     <td className="px-4 py-3">
                       <StatusBadge status={r.status} />
                       {r.status === 'PENDING' && (
                         <span className="ml-2 inline-block h-3 w-3 animate-pulse rounded-full bg-yellow-400" />
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-500">{formatSize(r.file_size)}</td>
-                    <td className="px-4 py-3 text-right text-gray-400 text-xs">
+                    <td className="px-4 py-3 text-right text-gray-500 dark:text-gray-400 dark:text-gray-500">{formatSize(r.file_size)}</td>
+                    <td className="px-4 py-3 text-right text-gray-400 dark:text-gray-500 text-xs">
                       {new Date(r.created_at).toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-right">
@@ -231,7 +232,7 @@ export default function Reports() {
                       ) : r.status === 'FAILED' ? (
                         <span className="text-xs text-red-500" title={r.error_message}>Failed</span>
                       ) : (
-                        <span className="text-xs text-gray-400">Processing…</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">Processing…</span>
                       )}
                     </td>
                   </tr>

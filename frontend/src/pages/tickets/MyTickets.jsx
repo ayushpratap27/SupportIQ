@@ -4,6 +4,7 @@ import { ticketService } from '../../services/ticketService'
 import StatusBadge from '../../components/tickets/StatusBadge'
 import PriorityBadge from '../../components/tickets/PriorityBadge'
 import { formatDate } from '../../utils/format'
+import DarkModeToggle from '../../components/DarkModeToggle'
 
 export default function MyTickets() {
   const navigate = useNavigate()
@@ -48,14 +49,15 @@ export default function MyTickets() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
-          <Link to="/dashboard" className="text-sm text-gray-400 hover:text-gray-600">← Dashboard</Link>
-          <span className="text-gray-300">/</span>
-          <h1 className="text-sm font-semibold text-gray-700">My Tickets</h1>
+          <Link to="/dashboard" className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 dark:text-gray-600">← Dashboard</Link>
+          <span className="text-gray-300 dark:text-gray-600">/</span>
+          <h1 className="text-sm font-semibold text-gray-700 dark:text-gray-200">My Tickets</h1>
         </div>
-        <span className="text-xs text-gray-400">{total} ticket{total !== 1 ? 's' : ''}</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500">{total} ticket{total !== 1 ? 's' : ''}</span>
+        <DarkModeToggle />
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-6 space-y-4">
@@ -66,7 +68,7 @@ export default function MyTickets() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search tickets…"
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 w-56"
+              className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 w-56"
             />
             <button type="submit" className="rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700 transition">Search</button>
           </form>
@@ -74,7 +76,7 @@ export default function MyTickets() {
           <select
             value={status}
             onChange={(e) => { setStatus(e.target.value); setPage(1) }}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none"
+            className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none"
           >
             <option value="">All Statuses</option>
             {['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'].map((s) => (
@@ -85,7 +87,7 @@ export default function MyTickets() {
           <select
             value={priority}
             onChange={(e) => { setPriority(e.target.value); setPage(1) }}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none"
+            className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none"
           >
             <option value="">All Priorities</option>
             {['LOW', 'MEDIUM', 'HIGH', 'URGENT'].map((p) => (
@@ -94,24 +96,24 @@ export default function MyTickets() {
           </select>
 
           {(search || status || priority) && (
-            <button onClick={clearFilters} className="text-sm text-gray-400 hover:text-gray-600 underline">
+            <button onClick={clearFilters} className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 dark:text-gray-600 underline">
               Clear
             </button>
           )}
         </div>
 
         {/* Table */}
-        <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
           {loading ? (
-            <p className="p-6 text-sm text-gray-400 animate-pulse text-center">Loading…</p>
+            <p className="p-6 text-sm text-gray-400 dark:text-gray-500 animate-pulse text-center">Loading…</p>
           ) : tickets.length === 0 ? (
-            <p className="p-6 text-sm text-gray-400 text-center">No tickets found.</p>
+            <p className="p-6 text-sm text-gray-400 dark:text-gray-500 text-center">No tickets found.</p>
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
+              <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-100 dark:border-gray-700">
                 <tr>
                   {['Ticket #', 'Subject', 'Customer', 'Priority', 'Status', 'Updated'].map((h) => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -120,14 +122,14 @@ export default function MyTickets() {
                   <tr
                     key={t.id}
                     onClick={() => navigate(`/tickets/${t.id}`)}
-                    className="hover:bg-gray-50 cursor-pointer transition"
+                    className="hover:bg-gray-50 dark:bg-gray-900 cursor-pointer transition"
                   >
                     <td className="px-4 py-3 font-mono text-xs text-blue-600">{t.ticket_number}</td>
-                    <td className="px-4 py-3 font-medium text-gray-800 max-w-xs truncate">{t.subject}</td>
-                    <td className="px-4 py-3 text-gray-500">{t.customer_name}</td>
+                    <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-100 max-w-xs truncate">{t.subject}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400 dark:text-gray-500">{t.customer_name}</td>
                     <td className="px-4 py-3"><PriorityBadge priority={t.priority} /></td>
                     <td className="px-4 py-3"><StatusBadge status={t.status} /></td>
-                    <td className="px-4 py-3 text-gray-400 text-xs">{formatDate(t.updated_at)}</td>
+                    <td className="px-4 py-3 text-gray-400 dark:text-gray-500 text-xs">{formatDate(t.updated_at)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -141,15 +143,15 @@ export default function MyTickets() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition"
+              className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-900 disabled:opacity-40 transition"
             >
               ← Prev
             </button>
-            <span className="text-sm text-gray-400">Page {page} of {totalPages}</span>
+            <span className="text-sm text-gray-400 dark:text-gray-500">Page {page} of {totalPages}</span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition"
+              className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-900 disabled:opacity-40 transition"
             >
               Next →
             </button>

@@ -4,32 +4,33 @@ import { slaService } from '../services/slaService'
 import { useWebSocket } from '../contexts/WebSocketContext'
 import SLABadge from '../components/SLABadge'
 import SLACountdown from '../components/SLACountdown'
+import DarkModeToggle from '../components/DarkModeToggle'
 
-function StatCard({ label, value, sub, color = 'text-gray-900' }) {
+function StatCard({ label, value, sub, color = 'text-gray-900 dark:text-white' }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 text-center">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-5 text-center">
       <p className={`text-3xl font-bold ${color}`}>{value ?? '—'}</p>
-      <p className="text-xs text-gray-500 mt-1 font-medium">{label}</p>
-      {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+      <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1 font-medium">{label}</p>
+      {sub && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{sub}</p>}
     </div>
   )
 }
 
 function TicketRow({ ticket }) {
   return (
-    <tr className="hover:bg-gray-50 transition-colors">
+    <tr className="hover:bg-gray-50 dark:bg-gray-900 transition-colors">
       <td className="px-4 py-3">
         <Link to={`/tickets/${ticket.ticket_id}`} className="text-blue-600 hover:underline text-sm font-medium">
           {ticket.ticket_number}
         </Link>
       </td>
-      <td className="px-4 py-3 text-sm text-gray-700 max-w-xs truncate">{ticket.subject}</td>
+      <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-200 max-w-xs truncate">{ticket.subject}</td>
       <td className="px-4 py-3">
         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
           ticket.priority === 'URGENT' ? 'bg-red-100 text-red-700'
           : ticket.priority === 'HIGH' ? 'bg-orange-100 text-orange-700'
           : ticket.priority === 'MEDIUM' ? 'bg-yellow-100 text-yellow-700'
-          : 'bg-gray-100 text-gray-600'
+          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 dark:text-gray-600'
         }`}>{ticket.priority}</span>
       </td>
       <td className="px-4 py-3"><SLABadge status={ticket.sla_status} /></td>
@@ -40,7 +41,7 @@ function TicketRow({ ticket }) {
           compact
         />
       </td>
-      <td className="px-4 py-3 text-xs text-gray-400">
+      <td className="px-4 py-3 text-xs text-gray-400 dark:text-gray-500">
         {ticket.percent_elapsed != null ? `${Math.round(ticket.percent_elapsed)}%` : '—'}
       </td>
     </tr>
@@ -68,7 +69,7 @@ export default function SLADashboard() {
     return () => unsub()
   }, [wsService])
 
-  if (loading) return <div className="p-8 text-gray-400">Loading SLA dashboard…</div>
+  if (loading) return <div className="p-8 text-gray-400 dark:text-gray-500">Loading SLA dashboard…</div>
   if (error) return <div className="p-8 text-red-600">{error}</div>
 
   const fmtMin = (min) => {
@@ -81,8 +82,8 @@ export default function SLADashboard() {
     <div className="max-w-6xl mx-auto p-8 space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">SLA Dashboard</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Real-time SLA compliance overview</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">SLA Dashboard</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-0.5">Real-time SLA compliance overview</p>
         </div>
         <Link to="/sla-management"
           className="text-sm text-blue-600 font-medium hover:underline">
@@ -101,7 +102,7 @@ export default function SLADashboard() {
         <StatCard
           label="Breached"
           value={data?.breached_count}
-          color={data?.breached_count > 0 ? 'text-red-600' : 'text-gray-900'}
+          color={data?.breached_count > 0 ? 'text-red-600' : 'text-gray-900 dark:text-white'}
         />
         <StatCard label="Completed On Time" value={data?.completed_on_time} color="text-green-600" />
       </div>
@@ -119,7 +120,7 @@ export default function SLADashboard() {
 
       {/* Breached tickets */}
       <section>
-        <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
           <span className="w-2 h-2 bg-red-500 rounded-full inline-block" />
           Breached Tickets
           {data?.breached?.length > 0 && (
@@ -133,7 +134,7 @@ export default function SLADashboard() {
 
       {/* Near breach tickets */}
       <section>
-        <h2 className="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3 flex items-center gap-2">
           <span className="w-2 h-2 bg-yellow-400 rounded-full inline-block" />
           Near Breach (within 2h)
           {data?.near_breach?.length > 0 && (
@@ -151,15 +152,15 @@ export default function SLADashboard() {
 function TicketTable({ tickets, emptyMsg }) {
   if (tickets.length === 0) {
     return (
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-6 text-center text-gray-400 text-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-6 text-center text-gray-400 dark:text-gray-500 text-sm">
         {emptyMsg}
       </div>
     )
   }
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm overflow-hidden">
       <table className="w-full text-sm">
-        <thead className="bg-gray-50 text-xs text-gray-500 uppercase">
+        <thead className="bg-gray-50 dark:bg-gray-900 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase">
           <tr>
             <th className="px-4 py-3 text-left">Ticket</th>
             <th className="px-4 py-3 text-left">Subject</th>

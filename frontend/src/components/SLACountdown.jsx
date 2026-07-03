@@ -64,15 +64,15 @@ export default function SLACountdown({ resolutionDueAt, firstResponseDueAt, slaS
   }
 
   return (
-    <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm space-y-3">
+    <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wide">SLA Status</h3>
+        <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">SLA Status</h3>
         <SLABadge status={slaStatus} />
       </div>
 
       <div className="space-y-2 text-sm">
         <div className="flex justify-between items-center">
-          <span className="text-gray-500">Resolution due</span>
+          <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Resolution due</span>
           <span className={`font-mono font-semibold tabular-nums ${resColor}`}>
             {isBreached ? '⚠ OVERDUE ' : ''}{formatDuration(secondsLeft)}
           </span>
@@ -80,8 +80,8 @@ export default function SLACountdown({ resolutionDueAt, firstResponseDueAt, slaS
 
         {frSecondsLeft !== null && (
           <div className="flex justify-between items-center">
-            <span className="text-gray-500">First response</span>
-            <span className={`font-mono text-xs tabular-nums ${frSecondsLeft < 0 ? 'text-red-500' : 'text-gray-600'}`}>
+            <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500">First response</span>
+            <span className={`font-mono text-xs tabular-nums ${frSecondsLeft < 0 ? 'text-red-500' : 'text-gray-600 dark:text-gray-300 dark:text-gray-600'}`}>
               {frSecondsLeft < 0 ? '⚠ ' : ''}{formatDuration(frSecondsLeft)}
             </span>
           </div>
@@ -100,13 +100,13 @@ export default function SLACountdown({ resolutionDueAt, firstResponseDueAt, slaS
           : 50
         const barColor = isBreached ? 'bg-red-500' : isAtRisk ? 'bg-yellow-400' : 'bg-green-500'
         return (
-          <div className="w-full bg-gray-100 rounded-full h-1.5">
+          <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5">
             <div className={`h-1.5 rounded-full transition-all ${barColor}`} style={{ width: `${Math.min(pct, 100)}%` }} />
           </div>
         )
       })()}
 
-      <p className="text-xs text-gray-400">
+      <p className="text-xs text-gray-400 dark:text-gray-500">
         Due: {new Date(resolutionDueAt).toLocaleString()}
       </p>
     </div>

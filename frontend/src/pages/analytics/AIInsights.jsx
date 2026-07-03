@@ -4,6 +4,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
 import analyticsService from '../../services/analyticsService'
+import DarkModeToggle from '../../components/DarkModeToggle'
 
 const PERIOD_OPTIONS = [
   { label: 'Today', value: 'today' },
@@ -15,10 +16,10 @@ const COLORS = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#06B6D4'
 
 function Metric({ label, value, sub, highlight }) {
   return (
-    <div className={`rounded-xl border p-4 ${highlight ? 'bg-purple-50 border-purple-200' : 'bg-white border-gray-200'}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</p>
-      <p className="mt-2 text-3xl font-bold text-gray-900">{value ?? '—'}</p>
-      {sub && <p className="mt-1 text-xs text-gray-400">{sub}</p>}
+    <div className={`rounded-xl border p-4 ${highlight ? 'bg-purple-50 border-purple-200' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600'}`}>
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 dark:text-gray-500">{label}</p>
+      <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">{value ?? '—'}</p>
+      {sub && <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">{sub}</p>}
     </div>
   )
 }
@@ -61,13 +62,13 @@ export default function AIInsights() {
   const sentData = (data?.top_sentiments ?? []).map(c => ({ name: c.label, count: Number(c.count) }))
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">AI Insights</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">AI Insights</h1>
         <select
           value={period}
           onChange={e => setPeriod(e.target.value)}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           {PERIOD_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
@@ -95,8 +96,8 @@ export default function AIInsights() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* Approval rate donut */}
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <h2 className="mb-4 text-sm font-semibold text-gray-700">Reply Outcome Distribution</h2>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+              <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Reply Outcome Distribution</h2>
               {rateData.some(r => r.value > 0) ? (
                 <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
@@ -110,12 +111,12 @@ export default function AIInsights() {
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
-              ) : <p className="py-16 text-center text-sm text-gray-400">No AI reply data for this period</p>}
+              ) : <p className="py-16 text-center text-sm text-gray-400 dark:text-gray-500">No AI reply data for this period</p>}
             </div>
 
             {/* Confidence + approval trend */}
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <h2 className="mb-4 text-sm font-semibold text-gray-700">Confidence & Approval Trend</h2>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+              <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Confidence & Approval Trend</h2>
               {dailyTrend.length > 0 ? (
                 <ResponsiveContainer width="100%" height={220}>
                   <LineChart data={dailyTrend}>
@@ -128,13 +129,13 @@ export default function AIInsights() {
                     <Line type="monotone" dataKey="approval" name="Approval %" stroke="#10B981" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
-              ) : <p className="py-16 text-center text-sm text-gray-400">No trend data yet</p>}
+              ) : <p className="py-16 text-center text-sm text-gray-400 dark:text-gray-500">No trend data yet</p>}
             </div>
           </div>
 
           {/* Daily activity */}
-          <div className="rounded-xl border border-gray-200 bg-white p-5 mb-6">
-            <h2 className="mb-4 text-sm font-semibold text-gray-700">Daily AI Activity</h2>
+          <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5 mb-6">
+            <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Daily AI Activity</h2>
             {dailyTrend.length > 0 ? (
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={dailyTrend}>
@@ -147,13 +148,13 @@ export default function AIInsights() {
                   <Bar dataKey="replies" name="Replies" fill="#3B82F6" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            ) : <p className="py-8 text-center text-sm text-gray-400">No data — aggregation not yet run</p>}
+            ) : <p className="py-8 text-center text-sm text-gray-400 dark:text-gray-500">No data — aggregation not yet run</p>}
           </div>
 
           {/* Top categories and sentiments */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <h2 className="mb-4 text-sm font-semibold text-gray-700">Top AI Categories</h2>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+              <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Top AI Categories</h2>
               {catData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={catData} layout="vertical">
@@ -164,11 +165,11 @@ export default function AIInsights() {
                     <Bar dataKey="count" fill="#8B5CF6" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-              ) : <p className="py-12 text-center text-sm text-gray-400">No category data</p>}
+              ) : <p className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">No category data</p>}
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <h2 className="mb-4 text-sm font-semibold text-gray-700">Sentiment Distribution</h2>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+              <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Sentiment Distribution</h2>
               {sentData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
@@ -181,7 +182,7 @@ export default function AIInsights() {
                     <Legend />
                   </PieChart>
                 </ResponsiveContainer>
-              ) : <p className="py-12 text-center text-sm text-gray-400">No sentiment data</p>}
+              ) : <p className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">No sentiment data</p>}
             </div>
           </div>
         </>

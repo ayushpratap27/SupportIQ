@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { tenantService } from '../services/tenantService'
+import DarkModeToggle from '../components/DarkModeToggle'
 
 export default function TenantSettings() {
   const [form, setForm] = useState({ name: '', domain: '', plan: '' })
@@ -39,11 +40,11 @@ export default function TenantSettings() {
     }
   }
 
-  if (loading) return <div className="p-8 text-gray-500">Loading…</div>
+  if (loading) return <div className="p-8 text-gray-500 dark:text-gray-400 dark:text-gray-500">Loading…</div>
 
   return (
     <div className="max-w-2xl mx-auto p-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Tenant Settings</h1>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Tenant Settings</h1>
 
       {message && (
         <div className="mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
@@ -56,38 +57,38 @@ export default function TenantSettings() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-5">
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 space-y-5">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Company name</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">Company name</label>
           <input
             type="text"
             name="name"
             value={form.name}
             onChange={handleChange}
             required
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Domain</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">Domain</label>
           <input
             type="text"
             name="domain"
             value={form.domain}
             onChange={handleChange}
             placeholder="acme.com"
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Subscription plan</label>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">Subscription plan</label>
           <select
             name="plan"
             value={form.plan}
             onChange={handleChange}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="free">Free</option>
             <option value="starter">Starter</option>

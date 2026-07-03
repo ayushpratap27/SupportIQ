@@ -5,6 +5,7 @@ import { authService } from '../services/authService'
 import { ticketService } from '../services/ticketService'
 import { activityService } from '../services/activityService'
 import { formatDate } from '../utils/format'
+import DarkModeToggle from '../components/DarkModeToggle'
 
 const ACTIVITY_ICON = {
   CREATE_TICKET: '🎫',
@@ -75,11 +76,10 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 px-6 py-4 flex justify-between items-center">
-        <span className="font-bold text-gray-800">AI Support Assistant</span>
-        <div className="flex items-center gap-4">
-          <Link to="/tickets/unassigned" className="text-sm text-indigo-600 font-medium hover:underline">Unassigned</Link>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-6 py-4 flex justify-between items-center">
+        <span className="font-bold text-gray-800 dark:text-gray-100">AI Support Assistant</span>
+        <div className="flex items-center gap-4">          <Link to="/tickets/unassigned" className="text-sm text-indigo-600 font-medium hover:underline">Unassigned</Link>
           <Link to="/my-tickets" className="text-sm text-purple-600 font-medium hover:underline">My Tickets</Link>
           <Link to="/tickets" className="text-sm text-blue-600 font-medium hover:underline">All Tickets</Link>
           {user?.role === 'Admin' && (
@@ -92,7 +92,7 @@ export default function Dashboard() {
               <Link to="/analytics/ai" className="text-sm text-purple-600 font-medium hover:underline">AI Insights</Link>
               <Link to="/analytics/agents" className="text-sm text-green-700 font-medium hover:underline">Agent Performance</Link>
               <Link to="/analytics/queues" className="text-sm text-yellow-700 font-medium hover:underline">Queue Monitor</Link>
-              <Link to="/analytics/reports" className="text-sm text-gray-700 font-medium hover:underline">Reports</Link>
+              <Link to="/analytics/reports" className="text-sm text-gray-700 dark:text-gray-200 font-medium hover:underline">Reports</Link>
               <Link to="/integrations" className="text-sm text-indigo-700 font-medium hover:underline">Integrations</Link>
             </>
           )}
@@ -100,13 +100,14 @@ export default function Dashboard() {
             <Link to="/analytics/agents" className="text-sm text-green-700 font-medium hover:underline">My Performance</Link>
           )}
           <button onClick={handleLogout} className="text-sm text-red-500 hover:text-red-600 font-medium transition">Logout</button>
+          <DarkModeToggle />
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
         {/* Stat cards */}
         <div>
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Overview</h2>
+          <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">Overview</h2>
           <div className="grid grid-cols-7 gap-3">
             <StatCard label="Total"       value={stats.total}      color="bg-blue-50   text-blue-700   border-blue-100"   to="/tickets" />
             <StatCard label="My Tickets"  value={stats.myTickets}  color="bg-purple-50 text-purple-700 border-purple-100" to="/my-tickets" />
@@ -114,24 +115,24 @@ export default function Dashboard() {
             <StatCard label="Unassigned"  value={stats.unassigned} color="bg-red-50    text-red-600    border-red-100"    to="/tickets/unassigned" />
             <StatCard label="In Progress" value={stats.inProgress} color="bg-violet-50 text-violet-700 border-violet-100" />
             <StatCard label="Resolved"    value={stats.resolved}   color="bg-green-50  text-green-700  border-green-100"  />
-            <StatCard label="Closed"      value={stats.closed}     color="bg-gray-50   text-gray-600   border-gray-100"   />
+            <StatCard label="Closed"      value={stats.closed}     color="bg-gray-50 dark:bg-gray-900   text-gray-600 dark:text-gray-300 dark:text-gray-600   border-gray-100 dark:border-gray-700"   />
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-6">
           {/* Recent Activity */}
-          <div className="col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-sm font-bold text-gray-900 mb-4">Recent Activity</h2>
+          <div className="col-span-2 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Recent Activity</h2>
             {recentActivity.length === 0 ? (
-              <p className="text-sm text-gray-400">No activity yet.</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">No activity yet.</p>
             ) : (
               <ul className="space-y-3">
                 {recentActivity.slice(0, 10).map((a) => (
                   <li key={a.id} className="flex items-start gap-3">
                     <span className="text-base">{ACTIVITY_ICON[a.activity_type] || '•'}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-800 truncate">{a.description}</p>
-                      <p className="text-xs text-gray-400">{a.user?.name} · {formatDate(a.created_at)}</p>
+                      <p className="text-sm text-gray-800 dark:text-gray-100 truncate">{a.description}</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500">{a.user?.name} · {formatDate(a.created_at)}</p>
                     </div>
                   </li>
                 ))}
@@ -142,19 +143,19 @@ export default function Dashboard() {
           {/* Right column */}
           <div className="space-y-4">
             {/* User info */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-              <h2 className="text-sm font-bold text-gray-900 mb-4">Account</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+              <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Account</h2>
               <dl className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <dt className="w-14 text-xs text-gray-400 shrink-0">Name</dt>
-                  <dd className="text-sm font-medium text-gray-800 truncate">{user?.name}</dd>
+                  <dt className="w-14 text-xs text-gray-400 dark:text-gray-500 shrink-0">Name</dt>
+                  <dd className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{user?.name}</dd>
                 </div>
                 <div className="flex items-center gap-3">
-                  <dt className="w-14 text-xs text-gray-400 shrink-0">Role</dt>
+                  <dt className="w-14 text-xs text-gray-400 dark:text-gray-500 shrink-0">Role</dt>
                   <dd><span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">{user?.role}</span></dd>
                 </div>
                 <div className="flex items-center gap-3">
-                  <dt className="w-14 text-xs text-gray-400 shrink-0">Status</dt>
+                  <dt className="w-14 text-xs text-gray-400 dark:text-gray-500 shrink-0">Status</dt>
                   <dd className="text-xs text-green-600 font-medium flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />Active
                   </dd>
@@ -164,17 +165,17 @@ export default function Dashboard() {
 
             {/* Recent assigned to me */}
             {recentMine.length > 0 && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-                <h2 className="text-sm font-bold text-gray-900 mb-4">My Recent Tickets</h2>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-4">My Recent Tickets</h2>
                 <ul className="space-y-2">
                   {recentMine.slice(0, 5).map((t) => (
                     <li key={t.id}>
                       <Link
                         to={`/tickets/${t.id}`}
-                        className="flex items-center justify-between hover:bg-gray-50 rounded-lg p-1 -mx-1 transition"
+                        className="flex items-center justify-between hover:bg-gray-50 dark:bg-gray-900 rounded-lg p-1 -mx-1 transition"
                       >
                         <span className="font-mono text-xs text-blue-600">{t.ticket_number}</span>
-                        <span className="text-xs text-gray-500 truncate max-w-[120px] ml-2">{t.subject}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 truncate max-w-[120px] ml-2">{t.subject}</span>
                       </Link>
                     </li>
                   ))}

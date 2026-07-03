@@ -40,12 +40,12 @@ export default function RealtimeToast() {
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className="flex items-center gap-3 bg-white border border-gray-200 rounded-lg shadow-lg px-4 py-3 min-w-[280px] animate-slide-in"
+          className="flex items-center gap-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg px-4 py-3 min-w-[280px] animate-slide-in"
         >
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-800">{toast.label}</p>
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{toast.label}</p>
             {toast.data.ticket_id && (
-              <p className="text-xs text-gray-500 mt-0.5">
+              <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-0.5">
                 Ticket: {toast.data.ticket_id.slice(0, 8)}…
               </p>
             )}
@@ -54,7 +54,7 @@ export default function RealtimeToast() {
             onClick={() =>
               setToasts((prev) => prev.filter((t) => t.id !== toast.id))
             }
-            className="text-gray-400 hover:text-gray-600 text-lg leading-none"
+            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 dark:text-gray-600 text-lg leading-none"
           >
             ×
           </button>

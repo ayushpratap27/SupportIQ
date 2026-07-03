@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { slaService } from '../services/slaService'
 import SLABadge from '../components/SLABadge'
+import DarkModeToggle from '../components/DarkModeToggle'
 
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT']
 
@@ -101,14 +102,14 @@ export default function SLAManagement() {
 
   return (
     <div className="max-w-5xl mx-auto p-8">
-      <h1 className="text-2xl font-bold text-gray-900 mb-1">SLA Management</h1>
-      <p className="text-sm text-gray-500 mb-8">Define response and resolution time targets per ticket priority.</p>
+      <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">SLA Management</h1>
+      <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-8">Define response and resolution time targets per ticket priority.</p>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Policy form */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-sm font-semibold text-gray-700 mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-4">
               {editId ? 'Edit Policy' : 'New Policy'}
             </h2>
 
@@ -117,44 +118,44 @@ export default function SLAManagement() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Name</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 dark:text-gray-600 mb-1">Name</label>
                 <input
                   name="name" value={form.name} onChange={handleChange} required
                   placeholder="e.g. High Priority SLA"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Priority</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 dark:text-gray-600 mb-1">Priority</label>
                 <select name="priority" value={form.priority} onChange={handleChange}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                   {PRIORITIES.map((p) => <option key={p}>{p}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">First Response (minutes)</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 dark:text-gray-600 mb-1">First Response (minutes)</label>
                 <input
                   type="number" name="first_response_minutes" value={form.first_response_minutes}
                   onChange={handleChange} min={1} required
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Resolution (minutes)</label>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 dark:text-gray-600 mb-1">Resolution (minutes)</label>
                 <input
                   type="number" name="resolution_minutes" value={form.resolution_minutes}
                   onChange={handleChange} min={1} required
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="checkbox" name="is_default" checked={form.is_default} onChange={handleChange}
                   className="w-4 h-4 text-blue-600 rounded" />
-                <span className="text-sm text-gray-600">Default policy</span>
+                <span className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-600">Default policy</span>
               </label>
 
               <div className="flex gap-2">
@@ -164,7 +165,7 @@ export default function SLAManagement() {
                 </button>
                 {editId && (
                   <button type="button" onClick={handleCancel}
-                    className="px-4 py-2 border border-gray-200 text-sm text-gray-600 rounded-lg hover:bg-gray-50">
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 dark:text-gray-600 rounded-lg hover:bg-gray-50 dark:bg-gray-900">
                     Cancel
                   </button>
                 )}
@@ -176,28 +177,28 @@ export default function SLAManagement() {
         {/* Policy list */}
         <div className="lg:col-span-2">
           {loading ? (
-            <p className="text-gray-400 text-sm p-4">Loading…</p>
+            <p className="text-gray-400 dark:text-gray-500 text-sm p-4">Loading…</p>
           ) : policies.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center text-gray-400 text-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8 text-center text-gray-400 dark:text-gray-500 text-sm">
               No SLA policies yet. Create one to get started.
             </div>
           ) : (
             <div className="space-y-3">
               {policies.map((p) => (
-                <div key={p.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center justify-between">
+                <div key={p.id} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm p-4 flex items-center justify-between">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-gray-900 text-sm">{p.name}</span>
+                      <span className="font-medium text-gray-900 dark:text-white text-sm">{p.name}</span>
                       {p.is_default && (
                         <span className="text-xs bg-blue-50 text-blue-600 font-medium px-2 py-0.5 rounded-full">Default</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-500">
-                      <span className="capitalize font-medium text-gray-700">{p.priority}</span>
+                    <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
+                      <span className="capitalize font-medium text-gray-700 dark:text-gray-200">{p.priority}</span>
                       <span>·</span>
-                      <span>First response: <strong className="text-gray-700">{fmtMinutes(p.first_response_minutes)}</strong></span>
+                      <span>First response: <strong className="text-gray-700 dark:text-gray-200">{fmtMinutes(p.first_response_minutes)}</strong></span>
                       <span>·</span>
-                      <span>Resolution: <strong className="text-gray-700">{fmtMinutes(p.resolution_minutes)}</strong></span>
+                      <span>Resolution: <strong className="text-gray-700 dark:text-gray-200">{fmtMinutes(p.resolution_minutes)}</strong></span>
                     </div>
                   </div>
                   <div className="flex gap-2">

@@ -40,17 +40,17 @@ export default function NotesPanel({ ticketId }) {
       {/* Notes list */}
       <div className="space-y-3">
         {loading ? (
-          <p className="text-sm text-gray-400 animate-pulse">Loading notes…</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 animate-pulse">Loading notes…</p>
         ) : notes.length === 0 ? (
-          <p className="text-sm text-gray-400">No internal notes yet.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">No internal notes yet.</p>
         ) : (
           notes.map((n) => (
             <div
               key={n.id}
               className="rounded-lg border border-yellow-200 bg-yellow-50 p-4"
             >
-              <p className="text-sm text-gray-800 whitespace-pre-wrap">{n.note}</p>
-              <p className="mt-2 text-xs text-gray-400">
+              <p className="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap">{n.note}</p>
+              <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
                 {n.user?.name || 'Unknown'} · {formatDate(n.created_at)}
               </p>
             </div>
@@ -60,7 +60,7 @@ export default function NotesPanel({ ticketId }) {
 
       {/* Add note form */}
       <form onSubmit={handleSubmit} className="space-y-2">
-        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
+        <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">
           Add Internal Note
         </label>
         <textarea
@@ -68,7 +68,7 @@ export default function NotesPanel({ ticketId }) {
           onChange={(e) => setText(e.target.value)}
           placeholder="Write an internal note visible only to staff…"
           rows={4}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400"
+          className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm focus:border-yellow-400 focus:outline-none focus:ring-1 focus:ring-yellow-400"
         />
         {error && <p className="text-xs text-red-500">{error}</p>}
         <button

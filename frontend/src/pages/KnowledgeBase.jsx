@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { knowledgeService } from '../services/knowledgeService'
 import { useNavigate } from 'react-router-dom'
 import { formatDate } from '../utils/format'
+import DarkModeToggle from '../components/DarkModeToggle'
 
 const CATEGORIES = [
   'FAQ',
@@ -20,10 +21,10 @@ const EMPTY_FORM = { title: '', category: 'FAQ', content: '', is_active: true }
 function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-          <h2 className="text-sm font-bold text-gray-800">{title}</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-lg leading-none">×</button>
+      <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-gray-800 shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 px-6 py-4">
+          <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100">{title}</h2>
+          <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 dark:text-gray-600 text-lg leading-none">×</button>
         </div>
         <div className="px-6 py-5">{children}</div>
       </div>
@@ -44,24 +45,24 @@ function DocForm({ initial, onSubmit, onCancel, saving }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">Title *</label>
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 dark:text-gray-600 mb-1">Title *</label>
         <input
           value={form.title}
           onChange={(e) => set('title', e.target.value)}
           required
           minLength={3}
           maxLength={255}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+          className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
           placeholder="e.g. Standard Refund Policy"
         />
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">Category *</label>
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 dark:text-gray-600 mb-1">Category *</label>
         <select
           value={form.category}
           onChange={(e) => set('category', e.target.value)}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+          className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
         >
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>{c}</option>
@@ -70,14 +71,14 @@ function DocForm({ initial, onSubmit, onCancel, saving }) {
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-gray-600 mb-1">Content *</label>
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-300 dark:text-gray-600 mb-1">Content *</label>
         <textarea
           value={form.content}
           onChange={(e) => set('content', e.target.value)}
           required
           minLength={10}
           rows={8}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 resize-y"
+          className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400 resize-y"
           placeholder="Write the full document content here. This will be used by the AI to answer customer queries."
         />
       </div>
@@ -90,7 +91,7 @@ function DocForm({ initial, onSubmit, onCancel, saving }) {
           onChange={(e) => set('is_active', e.target.checked)}
           className="rounded"
         />
-        <label htmlFor="is_active" className="text-sm text-gray-600">Active (used by AI for reply generation)</label>
+        <label htmlFor="is_active" className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-600">Active (used by AI for reply generation)</label>
       </div>
 
       <div className="flex gap-2 pt-2">
@@ -104,7 +105,7 @@ function DocForm({ initial, onSubmit, onCancel, saving }) {
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-gray-200 px-5 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+          className="rounded-lg border border-gray-200 dark:border-gray-600 px-5 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-900 transition"
         >
           Cancel
         </button>
@@ -192,13 +193,13 @@ export default function KnowledgeBase() {
   const totalPages = Math.ceil(total / 20)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Link to="/dashboard" className="text-sm text-gray-400 hover:text-gray-600">← Dashboard</Link>
-          <span className="text-gray-300">/</span>
-          <span className="text-sm font-semibold text-gray-800">Knowledge Base</span>
+          <Link to="/dashboard" className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 dark:text-gray-600">← Dashboard</Link>
+          <span className="text-gray-300 dark:text-gray-600">/</span>
+          <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">Knowledge Base</span>
         </div>
         <button
           onClick={() => setShowModal(true)}
@@ -206,22 +207,23 @@ export default function KnowledgeBase() {
         >
           + Add Document
         </button>
+        <DarkModeToggle />
       </header>
 
       <div className="max-w-6xl mx-auto px-6 py-6 space-y-4">
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-            <p className="text-2xl font-bold text-gray-800">{total}</p>
-            <p className="text-xs text-gray-400 mt-1">Total Documents</p>
+          <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
+            <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">{total}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Total Documents</p>
           </div>
-          <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+          <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
             <p className="text-2xl font-bold text-green-600">{docs.filter((d) => d.is_active).length}</p>
-            <p className="text-xs text-gray-400 mt-1">Active (used by AI)</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Active (used by AI)</p>
           </div>
-          <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-            <p className="text-2xl font-bold text-gray-400">{CATEGORIES.length}</p>
-            <p className="text-xs text-gray-400 mt-1">Categories</p>
+          <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
+            <p className="text-2xl font-bold text-gray-400 dark:text-gray-500">{CATEGORIES.length}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Categories</p>
           </div>
         </div>
 
@@ -232,12 +234,12 @@ export default function KnowledgeBase() {
             placeholder="Search documents…"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-            className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+            className="flex-1 rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
           />
           <select
             value={categoryFilter}
             onChange={(e) => { setCategoryFilter(e.target.value); setPage(1) }}
-            className="rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+            className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
           >
             <option value="">All Categories</option>
             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -250,42 +252,42 @@ export default function KnowledgeBase() {
         )}
 
         {/* Table */}
-        <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
           {loading ? (
-            <div className="py-16 text-center text-sm text-gray-400 animate-pulse">Loading…</div>
+            <div className="py-16 text-center text-sm text-gray-400 dark:text-gray-500 animate-pulse">Loading…</div>
           ) : docs.length === 0 ? (
             <div className="py-16 text-center">
               <p className="text-2xl mb-2">📚</p>
-              <p className="text-sm text-gray-500 font-medium">No documents found</p>
-              <p className="text-xs text-gray-400 mt-1">Add knowledge base articles to enable AI reply generation</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 font-medium">No documents found</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Add knowledge base articles to enable AI reply generation</p>
             </div>
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Title</th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Category</th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</th>
-                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Updated</th>
-                  <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">Actions</th>
+                <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Title</th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Category</th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Status</th>
+                  <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Updated</th>
+                  <th className="px-5 py-3 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {docs.map((doc) => (
-                  <tr key={doc.id} className="hover:bg-gray-50 transition">
+                  <tr key={doc.id} className="hover:bg-gray-50 dark:bg-gray-900 transition">
                     <td className="px-5 py-4">
-                      <div className="font-medium text-gray-800">{doc.title}</div>
-                      <div className="text-xs text-gray-400 mt-0.5 line-clamp-1">{doc.content.slice(0, 100)}…</div>
+                      <div className="font-medium text-gray-800 dark:text-gray-100">{doc.title}</div>
+                      <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 line-clamp-1">{doc.content.slice(0, 100)}…</div>
                     </td>
                     <td className="px-5 py-4">
                       <span className="rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-xs font-medium">{doc.category}</span>
                     </td>
                     <td className="px-5 py-4">
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${doc.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${doc.is_active ? 'bg-green-50 text-green-700' : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 dark:text-gray-500'}`}>
                         {doc.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-xs text-gray-400">{formatDate(doc.updated_at)}</td>
+                    <td className="px-5 py-4 text-xs text-gray-400 dark:text-gray-500">{formatDate(doc.updated_at)}</td>
                     <td className="px-5 py-4 text-right">
                       <div className="flex justify-end gap-2">
                         <button
@@ -315,15 +317,15 @@ export default function KnowledgeBase() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 disabled:opacity-40 hover:bg-gray-50 transition"
+              className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 dark:text-gray-600 disabled:opacity-40 hover:bg-gray-50 dark:bg-gray-900 transition"
             >
               Previous
             </button>
-            <span className="px-3 py-1.5 text-xs text-gray-500">Page {page} of {totalPages}</span>
+            <span className="px-3 py-1.5 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">Page {page} of {totalPages}</span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 disabled:opacity-40 hover:bg-gray-50 transition"
+              className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 dark:text-gray-600 disabled:opacity-40 hover:bg-gray-50 dark:bg-gray-900 transition"
             >
               Next
             </button>

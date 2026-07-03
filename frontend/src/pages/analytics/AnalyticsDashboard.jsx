@@ -6,6 +6,7 @@ import {
 } from 'recharts'
 import analyticsService from '../../services/analyticsService'
 import useWebSocket from '../../hooks/useWebSocket'
+import DarkModeToggle from '../../components/DarkModeToggle'
 
 const PERIOD_OPTIONS = [
   { label: 'Today', value: 'today' },
@@ -80,20 +81,20 @@ export default function AnalyticsDashboard() {
   const categoryData = (tickets?.by_category ?? []).slice(0, 8).map(p => ({ name: p.label, value: Number(p.count) }))
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Analytics Dashboard</h1>
           {lastRefresh && (
-            <p className="text-xs text-gray-400 mt-0.5">Last updated: {lastRefresh.toLocaleTimeString()}</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Last updated: {lastRefresh.toLocaleTimeString()}</p>
           )}
         </div>
         <div className="flex items-center gap-3">
           <select
             value={period}
             onChange={e => setPeriod(e.target.value)}
-            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             {PERIOD_OPTIONS.map(o => (
               <option key={o.value} value={o.value}>{o.label}</option>
@@ -143,8 +144,8 @@ export default function AnalyticsDashboard() {
           )}
 
           {/* Trend Chart */}
-          <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5">
-            <h2 className="mb-4 text-sm font-semibold text-gray-700">Ticket Volume Trend</h2>
+          <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+            <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Ticket Volume Trend</h2>
             {trendPoints.length > 0 ? (
               <ResponsiveContainer width="100%" height={240}>
                 <AreaChart data={trendPoints}>
@@ -169,15 +170,15 @@ export default function AnalyticsDashboard() {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-center text-sm text-gray-400 py-16">No trend data for this period. Run aggregation to populate.</p>
+              <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-16">No trend data for this period. Run aggregation to populate.</p>
             )}
           </div>
 
           {/* Distribution charts */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             {/* Status Pie */}
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <h2 className="mb-4 text-sm font-semibold text-gray-700">Status Distribution</h2>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+              <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Status Distribution</h2>
               {statusData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
@@ -189,12 +190,12 @@ export default function AnalyticsDashboard() {
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
-              ) : <p className="text-center text-sm text-gray-400 py-16">No data</p>}
+              ) : <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-16">No data</p>}
             </div>
 
             {/* Priority Bar */}
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <h2 className="mb-4 text-sm font-semibold text-gray-700">Priority Distribution</h2>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+              <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Priority Distribution</h2>
               {priorityData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={priorityData} layout="vertical">
@@ -207,12 +208,12 @@ export default function AnalyticsDashboard() {
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
-              ) : <p className="text-center text-sm text-gray-400 py-16">No data</p>}
+              ) : <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-16">No data</p>}
             </div>
 
             {/* Category Bar */}
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <h2 className="mb-4 text-sm font-semibold text-gray-700">Top Categories</h2>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+              <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Top Categories</h2>
               {categoryData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={categoryData} layout="vertical">
@@ -223,13 +224,13 @@ export default function AnalyticsDashboard() {
                     <Bar dataKey="value" name="Tickets" fill="#8B5CF6" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
-              ) : <p className="text-center text-sm text-gray-400 py-16">No data</p>}
+              ) : <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-16">No data</p>}
             </div>
           </div>
 
           {/* Tickets by Hour */}
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
-            <h2 className="mb-4 text-sm font-semibold text-gray-700">Tickets Created by Hour (Today)</h2>
+          <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+            <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Tickets Created by Hour (Today)</h2>
             {(tickets?.by_hour?.length > 0) ? (
               <ResponsiveContainer width="100%" height={160}>
                 <BarChart data={tickets.by_hour.map(p => ({ hour: p.label + ':00', count: Number(p.count) }))}>
@@ -240,7 +241,7 @@ export default function AnalyticsDashboard() {
                   <Bar dataKey="count" name="Tickets" fill="#06B6D4" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            ) : <p className="text-center text-sm text-gray-400 py-8">No tickets created today yet.</p>}
+            ) : <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">No tickets created today yet.</p>}
           </div>
         </>
       )}

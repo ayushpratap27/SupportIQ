@@ -12,7 +12,7 @@ const PRIORITY_COLOR = {
 
 const SENTIMENT_COLOR = {
   Positive:   'bg-green-100 text-green-700',
-  Neutral:    'bg-gray-100 text-gray-600',
+  Neutral:    'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 dark:text-gray-600',
   Frustrated: 'bg-orange-100 text-orange-700',
   Angry:      'bg-red-100 text-red-600',
   Confused:   'bg-purple-100 text-purple-700',
@@ -30,11 +30,11 @@ function ConfidenceBar({ value }) {
   const color = value >= 85 ? 'bg-green-500' : value >= 60 ? 'bg-amber-500' : 'bg-red-500'
   return (
     <div className="space-y-1">
-      <div className="flex justify-between text-xs text-gray-500">
+      <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
         <span>Confidence</span>
-        <span className="font-semibold text-gray-700">{value}%</span>
+        <span className="font-semibold text-gray-700 dark:text-gray-200">{value}%</span>
       </div>
-      <div className="h-2 w-full rounded-full bg-gray-100 overflow-hidden">
+      <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
         <div
           className={`h-full rounded-full transition-all duration-500 ${color}`}
           style={{ width: `${value}%` }}
@@ -93,7 +93,7 @@ export default function AIAnalysisPanel({ ticketId }) {
   }
 
   if (loading) {
-    return <p className="p-4 text-sm text-gray-400 animate-pulse">Loading AI analysis…</p>
+    return <p className="p-4 text-sm text-gray-400 dark:text-gray-500 animate-pulse">Loading AI analysis…</p>
   }
 
   const status = analysis?.processing_status
@@ -107,8 +107,8 @@ export default function AIAnalysisPanel({ ticketId }) {
           <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-gray-700">AI is analyzing this ticket…</p>
-          <p className="text-xs text-gray-400 mt-1">This usually takes a few seconds</p>
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">AI is analyzing this ticket…</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">This usually takes a few seconds</p>
         </div>
       </div>
     )
@@ -120,8 +120,8 @@ export default function AIAnalysisPanel({ ticketId }) {
       <div className="p-6 flex flex-col items-center justify-center gap-4 text-center">
         <span className="text-3xl">⚠️</span>
         <div>
-          <p className="text-sm font-semibold text-gray-700">AI analysis failed</p>
-          <p className="text-xs text-gray-400 mt-1">
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">AI analysis failed</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
             The AI provider was unable to process this ticket.
           </p>
         </div>
@@ -138,7 +138,7 @@ export default function AIAnalysisPanel({ ticketId }) {
 
   // ── Completed ─────────────────────────────────────────────────────────────
   if (status !== 'COMPLETED') {
-    return <p className="p-4 text-sm text-gray-400">No AI analysis available.</p>
+    return <p className="p-4 text-sm text-gray-400 dark:text-gray-500">No AI analysis available.</p>
   }
 
   return (
@@ -146,7 +146,7 @@ export default function AIAnalysisPanel({ ticketId }) {
       {/* Summary */}
       <div className="rounded-xl bg-blue-50 border border-blue-100 p-4">
         <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide mb-1">AI Summary</p>
-        <p className="text-sm text-gray-800 leading-relaxed">{analysis.summary}</p>
+        <p className="text-sm text-gray-800 dark:text-gray-100 leading-relaxed">{analysis.summary}</p>
       </div>
 
       {/* Confidence */}
@@ -156,32 +156,32 @@ export default function AIAnalysisPanel({ ticketId }) {
 
       {/* Classification grid */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-          <p className="text-xs text-gray-400 mb-2">Detected Category</p>
+        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Detected Category</p>
           <Badge
             label={analysis.category}
             colorClass="bg-indigo-50 text-indigo-700 border-indigo-100"
           />
         </div>
 
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-          <p className="text-xs text-gray-400 mb-2">Suggested Priority</p>
+        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Suggested Priority</p>
           <Badge
             label={analysis.priority}
-            colorClass={PRIORITY_COLOR[analysis.priority] || 'bg-gray-100 text-gray-600 border-gray-200'}
+            colorClass={PRIORITY_COLOR[analysis.priority] || 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 dark:text-gray-600 border-gray-200 dark:border-gray-600'}
           />
         </div>
 
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-          <p className="text-xs text-gray-400 mb-2">Customer Sentiment</p>
+        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Customer Sentiment</p>
           <Badge
             label={analysis.sentiment}
-            colorClass={`${SENTIMENT_COLOR[analysis.sentiment] || 'bg-gray-100 text-gray-600'} border border-transparent`}
+            colorClass={`${SENTIMENT_COLOR[analysis.sentiment] || 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 dark:text-gray-600'} border border-transparent`}
           />
         </div>
 
-        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-          <p className="text-xs text-gray-400 mb-2">Recommended Team</p>
+        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Recommended Team</p>
           <Badge
             label={analysis.recommended_team}
             colorClass="bg-teal-50 text-teal-700 border-teal-100"
@@ -192,12 +192,12 @@ export default function AIAnalysisPanel({ ticketId }) {
       {/* Tags */}
       {analysis.tags && analysis.tags.length > 0 && (
         <div>
-          <p className="text-xs text-gray-400 mb-2">Tags</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Tags</p>
           <div className="flex flex-wrap gap-2">
             {analysis.tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600"
+                className="rounded-full bg-gray-100 dark:bg-gray-800 px-3 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 dark:text-gray-600"
               >
                 #{tag}
               </span>
@@ -207,8 +207,8 @@ export default function AIAnalysisPanel({ ticketId }) {
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-        <p className="text-xs text-gray-400">
+      <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+        <p className="text-xs text-gray-400 dark:text-gray-500">
           {analysis.processed_at
             ? `Analyzed at ${new Date(analysis.processed_at).toLocaleString()}`
             : ''}
@@ -216,7 +216,7 @@ export default function AIAnalysisPanel({ ticketId }) {
         <button
           onClick={handleRetry}
           disabled={retrying}
-          className="text-xs text-gray-400 hover:text-blue-600 underline disabled:opacity-50 transition"
+          className="text-xs text-gray-400 dark:text-gray-500 hover:text-blue-600 underline disabled:opacity-50 transition"
         >
           {retrying ? 'Queuing…' : 'Re-analyze'}
         </button>

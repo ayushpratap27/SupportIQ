@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 import analyticsService from '../../services/analyticsService'
+import DarkModeToggle from '../../components/DarkModeToggle'
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#F97316']
 
@@ -8,18 +9,18 @@ function Medal({ rank }) {
   if (rank === 1) return <span className="text-lg">🥇</span>
   if (rank === 2) return <span className="text-lg">🥈</span>
   if (rank === 3) return <span className="text-lg">🥉</span>
-  return <span className="text-sm text-gray-400 font-mono w-5 text-center">{rank}</span>
+  return <span className="text-sm text-gray-400 dark:text-gray-500 font-mono w-5 text-center">{rank}</span>
 }
 
 function Bar2({ label, value, max, color = '#3B82F6' }) {
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0
   return (
     <div className="flex items-center gap-3 text-sm">
-      <span className="w-24 truncate text-gray-600">{label}</span>
-      <div className="flex-1 h-2 rounded-full bg-gray-100">
+      <span className="w-24 truncate text-gray-600 dark:text-gray-300 dark:text-gray-600">{label}</span>
+      <div className="flex-1 h-2 rounded-full bg-gray-100 dark:bg-gray-800">
         <div className="h-2 rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
       </div>
-      <span className="w-8 text-right text-gray-700 font-medium">{value}</span>
+      <span className="w-8 text-right text-gray-700 dark:text-gray-200 font-medium">{value}</span>
     </div>
   )
 }
@@ -54,12 +55,12 @@ export default function AgentPerformance() {
   const maxResolved = agents.reduce((m, a) => Math.max(m, a.tickets_resolved), 0)
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Agent Performance</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Agent Performance</h1>
         <button
           onClick={load}
-          className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:bg-gray-900"
         >
           Refresh
         </button>
@@ -70,15 +71,15 @@ export default function AgentPerformance() {
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
         </div>
       ) : agents.length === 0 ? (
-        <div className="rounded-xl border border-gray-200 bg-white p-12 text-center text-gray-400">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-12 text-center text-gray-400 dark:text-gray-500">
           <p className="text-lg mb-1">No agent data yet</p>
           <p className="text-sm">Run aggregation to populate agent metrics.</p>
         </div>
       ) : (
         <>
           {/* Leaderboard chart */}
-          <div className="rounded-xl border border-gray-200 bg-white p-5 mb-6">
-            <h2 className="mb-4 text-sm font-semibold text-gray-700">Agent Activity Overview</h2>
+          <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5 mb-6">
+            <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Agent Activity Overview</h2>
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={240}>
                 <BarChart data={chartData}>
@@ -92,13 +93,13 @@ export default function AgentPerformance() {
                   <Bar dataKey="active" name="Active" fill="#F59E0B" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
-            ) : <p className="py-12 text-center text-sm text-gray-400">No data</p>}
+            ) : <p className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">No data</p>}
           </div>
 
           {/* Resolution leaderboard */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <h2 className="mb-4 text-sm font-semibold text-gray-700">Resolution Leaderboard</h2>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+              <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Resolution Leaderboard</h2>
               <div className="space-y-3">
                 {agents.slice(0, 10).map((a, i) => (
                   <Bar2
@@ -112,8 +113,8 @@ export default function AgentPerformance() {
               </div>
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white p-5">
-              <h2 className="mb-4 text-sm font-semibold text-gray-700">Avg Resolution Time (hours)</h2>
+            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
+              <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Avg Resolution Time (hours)</h2>
               <div className="space-y-3">
                 {[...agents]
                   .sort((a, b) => a.average_resolution_time - b.average_resolution_time)
@@ -136,14 +137,14 @@ export default function AgentPerformance() {
           </div>
 
           {/* Full agent table */}
-          <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-            <div className="px-5 py-3 border-b border-gray-100">
-              <h2 className="text-sm font-semibold text-gray-700">All Agents</h2>
+          <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 overflow-hidden">
+            <div className="px-5 py-3 border-b border-gray-100 dark:border-gray-700">
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-200">All Agents</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50 text-xs text-gray-500">
+                  <tr className="border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">
                     <th className="px-4 py-3 text-left font-medium">#</th>
                     <th className="px-4 py-3 text-left font-medium">Agent</th>
                     <th className="px-4 py-3 text-right font-medium">Assigned</th>
@@ -156,20 +157,20 @@ export default function AgentPerformance() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {agents.map((a, i) => (
-                    <tr key={a.user_id} className="hover:bg-gray-50 transition-colors">
+                    <tr key={a.user_id} className="hover:bg-gray-50 dark:bg-gray-900 transition-colors">
                       <td className="px-4 py-3"><Medal rank={i + 1} /></td>
                       <td className="px-4 py-3">
                         <div>
-                          <p className="font-medium text-gray-900">{a.name || `Agent ${a.user_id}`}</p>
-                          <p className="text-xs text-gray-400">{a.email}</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{a.name || `Agent ${a.user_id}`}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500">{a.email}</p>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-right text-gray-700">{a.tickets_assigned}</td>
+                      <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-200">{a.tickets_assigned}</td>
                       <td className="px-4 py-3 text-right font-semibold text-green-700">{a.tickets_resolved}</td>
                       <td className="px-4 py-3 text-right text-yellow-700">{a.active_tickets}</td>
-                      <td className="px-4 py-3 text-right text-gray-700">{a.average_resolution_time}h</td>
-                      <td className="px-4 py-3 text-right text-gray-700">{a.average_reply_time}h</td>
-                      <td className="px-4 py-3 text-right text-gray-400 text-xs">
+                      <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-200">{a.average_resolution_time}h</td>
+                      <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-200">{a.average_reply_time}h</td>
+                      <td className="px-4 py-3 text-right text-gray-400 dark:text-gray-500 text-xs">
                         {a.last_calculated ? new Date(a.last_calculated).toLocaleDateString() : '—'}
                       </td>
                     </tr>
