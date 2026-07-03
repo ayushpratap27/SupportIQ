@@ -5,7 +5,6 @@ import StatusBadge from '../../components/tickets/StatusBadge'
 import PriorityBadge from '../../components/tickets/PriorityBadge'
 import Toast, { useToast } from '../../components/Toast'
 import { formatDate } from '../../utils/format'
-import DarkModeToggle from '../../components/DarkModeToggle'
 
 const STATUSES = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT']
@@ -58,25 +57,18 @@ function TicketList() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <>
       <Toast toast={toast} />
-
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <Link to="/dashboard" className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-200">← Dashboard</Link>
-          <h1 className="font-bold text-gray-800 dark:text-gray-100">Tickets</h1>
-        </div>
-        <Link
-          to="/tickets/new"
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
-        >
-          + New Ticket
-        </Link>
-        <DarkModeToggle />
-      </header>
-
       <main className="max-w-7xl mx-auto px-6 py-6">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="font-bold text-gray-800 dark:text-gray-100 text-lg">All Tickets</h1>
+          <Link
+            to="/tickets/new"
+            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
+          >
+            + New Ticket
+          </Link>
+        </div>
         {/* Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 mb-4 flex flex-wrap gap-3 items-center">
           <form onSubmit={handleSearchSubmit} className="flex gap-2 flex-1 min-w-[200px]">
@@ -193,7 +185,7 @@ function TicketList() {
           </div>
         )}
       </main>
-    </div>
+    </>
   )
 }
 

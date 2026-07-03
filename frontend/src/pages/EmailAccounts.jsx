@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import emailService from '../services/emailService'
 import { useToast } from '../components/Toast'
-import DarkModeToggle from '../components/DarkModeToggle'
 
 const PROVIDERS = ['SMTP_IMAP', 'GMAIL', 'OUTLOOK', 'SENDGRID', 'SES', 'MAILGUN']
 

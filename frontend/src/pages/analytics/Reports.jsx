@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
 import analyticsService from '../../services/analyticsService'
-import DarkModeToggle from '../../components/DarkModeToggle'
 
 const PERIOD_OPTIONS = [
   { label: 'Today', value: 'today' },
@@ -118,7 +117,7 @@ export default function Reports() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className="p-6">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Reports</h1>
 
       {/* Generator form */}

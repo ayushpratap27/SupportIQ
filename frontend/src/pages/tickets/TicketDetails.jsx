@@ -14,7 +14,6 @@ import AIReplyPanel from '../../components/tickets/AIReplyPanel'
 import EmailConversationPanel from '../../components/tickets/EmailConversationPanel'
 import SLACountdown from '../../components/SLACountdown'
 import { formatDate } from '../../utils/format'
-import DarkModeToggle from '../../components/DarkModeToggle'
 
 const TABS = ['Overview', 'Conversation', 'Notes', 'Activity', 'AI Analysis', 'AI Reply', 'Email']
 
@@ -118,7 +117,7 @@ export default function TicketDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="flex items-center justify-center p-12">
         <p className="text-gray-400 dark:text-gray-500 animate-pulse">Loading ticket…</p>
       </div>
     )
@@ -126,58 +125,53 @@ export default function TicketDetails() {
 
   if (!ticket) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500">Ticket not found.</p>
+      <div className="flex items-center justify-center p-12">
+        <p className="text-gray-500 dark:text-gray-400">Ticket not found.</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link to="/tickets" className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 dark:text-gray-600">← Tickets</Link>
-          <span className="text-gray-300 dark:text-gray-600">/</span>
-          <span className="text-sm font-mono font-medium text-gray-700 dark:text-gray-200">{ticket.ticket_number}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            to={`/tickets/${id}/edit`}
-            className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-900 transition"
-          >
-            Edit
-          </Link>
-          {NEXT_STATUS[ticket.status] && (
-            <button
-              onClick={handleStatusUpdate}
-              disabled={statusLoading}
-              className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition"
-            >
-              {statusLoading ? 'Updating…' : NEXT_STATUS_LABEL[ticket.status]}
-            </button>
-          )}
-          {isAdmin && (
-            <button
-              onClick={handleDelete}
-              className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-50 transition"
-            >
-              Delete
-            </button>
-          )}
-        </div>
-        <DarkModeToggle />
-      </header>
-
+    <div>
       {/* Title bar */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-6 py-4">
         <div className="flex items-start justify-between gap-4">
           <div>
+            <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">
+              <Link to="/tickets" className="hover:text-gray-600 dark:hover:text-gray-300">← Tickets</Link>
+              <span className="mx-1">/</span>
+              <span className="font-mono">{ticket.ticket_number}</span>
+            </p>
             <h1 className="text-lg font-bold text-gray-900 dark:text-white">{ticket.subject}</h1>
             <div className="mt-1 flex items-center gap-2">
               <StatusBadge status={ticket.status} />
               <PriorityBadge priority={ticket.priority} />
             </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              to={`/tickets/${id}/edit`}
+              className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+            >
+              Edit
+            </Link>
+            {NEXT_STATUS[ticket.status] && (
+              <button
+                onClick={handleStatusUpdate}
+                disabled={statusLoading}
+                className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition"
+              >
+                {statusLoading ? 'Updating…' : NEXT_STATUS_LABEL[ticket.status]}
+              </button>
+            )}
+            {isAdmin && (
+              <button
+                onClick={handleDelete}
+                className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-50 transition"
+              >
+                Delete
+              </button>
+            )}
           </div>
         </div>
 

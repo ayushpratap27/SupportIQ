@@ -4,7 +4,6 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts'
 import analyticsService from '../../services/analyticsService'
-import DarkModeToggle from '../../components/DarkModeToggle'
 
 const PERIOD_OPTIONS = [
   { label: 'Today', value: 'today' },
@@ -62,7 +61,7 @@ export default function AIInsights() {
   const sentData = (data?.top_sentiments ?? []).map(c => ({ name: c.label, count: Number(c.count) }))
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">AI Insights</h1>
         <select

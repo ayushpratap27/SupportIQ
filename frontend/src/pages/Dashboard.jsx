@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { authService } from '../services/authService'
 import { ticketService } from '../services/ticketService'
 import { activityService } from '../services/activityService'
 import { formatDate } from '../utils/format'
-import DarkModeToggle from '../components/DarkModeToggle'
 
 const ACTIVITY_ICON = {
   CREATE_TICKET: '🎫',
@@ -31,8 +30,7 @@ function StatCard({ label, value, color, to }) {
 }
 
 export default function Dashboard() {
-  const { user: ctxUser, logout } = useAuth()
-  const navigate = useNavigate()
+  const { user: ctxUser } = useAuth()
   const [user, setUser] = useState(ctxUser)
   const [stats, setStats] = useState({
     total: null, myTickets: null, open: null, unassigned: null,
@@ -70,41 +68,8 @@ export default function Dashboard() {
       .catch(() => {})
   }, [])
 
-  const handleLogout = async () => {
-    await logout()
-    navigate('/login')
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-6 py-4 flex justify-between items-center">
-        <span className="font-bold text-gray-800 dark:text-gray-100">AI Support Assistant</span>
-        <div className="flex items-center gap-4">          <Link to="/tickets/unassigned" className="text-sm text-indigo-600 font-medium hover:underline">Unassigned</Link>
-          <Link to="/my-tickets" className="text-sm text-purple-600 font-medium hover:underline">My Tickets</Link>
-          <Link to="/tickets" className="text-sm text-blue-600 font-medium hover:underline">All Tickets</Link>
-          {user?.role === 'Admin' && (
-            <>
-              <Link to="/knowledge-base" className="text-sm text-emerald-600 font-medium hover:underline">Knowledge Base</Link>
-              <Link to="/jobs" className="text-sm text-violet-600 font-medium hover:underline">Job Monitor</Link>
-              <Link to="/email/accounts" className="text-sm text-orange-600 font-medium hover:underline">Email Accounts</Link>
-              <Link to="/email/monitor" className="text-sm text-cyan-600 font-medium hover:underline">Email Monitor</Link>
-              <Link to="/analytics" className="text-sm text-blue-700 font-medium hover:underline">Analytics</Link>
-              <Link to="/analytics/ai" className="text-sm text-purple-600 font-medium hover:underline">AI Insights</Link>
-              <Link to="/analytics/agents" className="text-sm text-green-700 font-medium hover:underline">Agent Performance</Link>
-              <Link to="/analytics/queues" className="text-sm text-yellow-700 font-medium hover:underline">Queue Monitor</Link>
-              <Link to="/analytics/reports" className="text-sm text-gray-700 dark:text-gray-200 font-medium hover:underline">Reports</Link>
-              <Link to="/integrations" className="text-sm text-indigo-700 font-medium hover:underline">Integrations</Link>
-            </>
-          )}
-          {user?.role === 'SupportAgent' && (
-            <Link to="/analytics/agents" className="text-sm text-green-700 font-medium hover:underline">My Performance</Link>
-          )}
-          <button onClick={handleLogout} className="text-sm text-red-500 hover:text-red-600 font-medium transition">Logout</button>
-          <DarkModeToggle />
-        </div>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+    <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
         {/* Stat cards */}
         <div>
           <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">Overview</h2>
@@ -185,6 +150,5 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
-    </div>
   )
 }

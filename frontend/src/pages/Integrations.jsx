@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { integrationService } from '../services/integrationService';
-import DarkModeToggle from '../components/DarkModeToggle'
 
 const PROVIDER_META = {
   slack:       { label: 'Slack',            icon: '💬', fields: [{ key: 'webhook_url', label: 'Webhook URL', required: true }] },

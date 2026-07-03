@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import jobService from '../services/jobService';
-import DarkModeToggle from '../components/DarkModeToggle'
 
 const STATUS_COLORS = {
   QUEUED:     'bg-yellow-100 text-yellow-800',

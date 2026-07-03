@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import emailService from '../services/emailService'
-import DarkModeToggle from '../components/DarkModeToggle'
 
 function StatCard({ label, value, color, sub }) {
   return (

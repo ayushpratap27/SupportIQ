@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { ticketService } from '../../services/ticketService'
 import PriorityBadge from '../../components/tickets/PriorityBadge'
 import { formatDate } from '../../utils/format'
-import DarkModeToggle from '../../components/DarkModeToggle'
 
 export default function UnassignedTickets() {
   const navigate = useNavigate()
@@ -44,13 +43,9 @@ export default function UnassignedTickets() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <Link to="/dashboard" className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 dark:text-gray-600">← Dashboard</Link>
-          <span className="text-gray-300 dark:text-gray-600">/</span>
-          <h1 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Unassigned Tickets</h1>
-        </div>
+    <main className="max-w-6xl mx-auto px-6 py-6">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="font-bold text-gray-800 dark:text-gray-100 text-lg">Unassigned Tickets</h1>
         <div className="flex items-center gap-3">
           {message && (
             <span className={`text-xs font-medium px-2 py-1 rounded-full ${
@@ -62,15 +57,12 @@ export default function UnassignedTickets() {
           <span className="text-xs text-gray-400 dark:text-gray-500">{total} unassigned</span>
           <button
             onClick={load}
-            className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-900 transition"
+            className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
           >
             Refresh
           </button>
         </div>
-        <DarkModeToggle />
-      </header>
-
-      <main className="max-w-6xl mx-auto px-6 py-6">
+      </div>
         <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
           {loading ? (
             <p className="p-6 text-sm text-gray-400 dark:text-gray-500 animate-pulse text-center">Loading…</p>
@@ -116,6 +108,5 @@ export default function UnassignedTickets() {
           )}
         </div>
       </main>
-    </div>
   )
 }

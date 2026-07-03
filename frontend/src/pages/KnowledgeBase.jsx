@@ -4,7 +4,6 @@ import { useAuth } from '../contexts/AuthContext'
 import { knowledgeService } from '../services/knowledgeService'
 import { useNavigate } from 'react-router-dom'
 import { formatDate } from '../utils/format'
-import DarkModeToggle from '../components/DarkModeToggle'
 
 const CATEGORIES = [
   'FAQ',
@@ -193,24 +192,16 @@ export default function KnowledgeBase() {
   const totalPages = Math.ceil(total / 20)
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link to="/dashboard" className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 dark:text-gray-600">← Dashboard</Link>
-          <span className="text-gray-300 dark:text-gray-600">/</span>
-          <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">Knowledge Base</span>
-        </div>
+    <div className="max-w-6xl mx-auto px-6 py-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="font-bold text-gray-800 dark:text-gray-100 text-lg">Knowledge Base</h1>
         <button
           onClick={() => setShowModal(true)}
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
         >
           + Add Document
         </button>
-        <DarkModeToggle />
-      </header>
-
-      <div className="max-w-6xl mx-auto px-6 py-6 space-y-4">
+      </div>
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
           <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
@@ -331,7 +322,6 @@ export default function KnowledgeBase() {
             </button>
           </div>
         )}
-      </div>
 
       {/* Create modal */}
       {showModal && (

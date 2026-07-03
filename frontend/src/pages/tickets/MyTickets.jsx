@@ -4,7 +4,6 @@ import { ticketService } from '../../services/ticketService'
 import StatusBadge from '../../components/tickets/StatusBadge'
 import PriorityBadge from '../../components/tickets/PriorityBadge'
 import { formatDate } from '../../utils/format'
-import DarkModeToggle from '../../components/DarkModeToggle'
 
 export default function MyTickets() {
   const navigate = useNavigate()
@@ -49,18 +48,11 @@ export default function MyTickets() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-6 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <Link to="/dashboard" className="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 dark:text-gray-600">← Dashboard</Link>
-          <span className="text-gray-300 dark:text-gray-600">/</span>
-          <h1 className="text-sm font-semibold text-gray-700 dark:text-gray-200">My Tickets</h1>
-        </div>
+    <main className="max-w-6xl mx-auto px-6 py-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="font-bold text-gray-800 dark:text-gray-100 text-lg">My Tickets</h1>
         <span className="text-xs text-gray-400 dark:text-gray-500">{total} ticket{total !== 1 ? 's' : ''}</span>
-        <DarkModeToggle />
-      </header>
-
-      <main className="max-w-6xl mx-auto px-6 py-6 space-y-4">
+      </div>
         {/* Filters */}
         <div className="flex flex-wrap gap-3">
           <form onSubmit={handleSearch} className="flex gap-2">
@@ -158,6 +150,5 @@ export default function MyTickets() {
           </div>
         )}
       </main>
-    </div>
   )
 }

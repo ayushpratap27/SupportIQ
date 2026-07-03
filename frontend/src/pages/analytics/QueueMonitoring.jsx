@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import analyticsService from '../../services/analyticsService'
 import useWebSocket from '../../hooks/useWebSocket'
-import DarkModeToggle from '../../components/DarkModeToggle'
 
 const STATUS_COLORS = {
   QUEUED: '#F59E0B',
@@ -69,7 +68,7 @@ export default function QueueMonitoring() {
   }))
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Queue Monitoring</h1>

@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import MainLayout from '../layouts/MainLayout'
-import ProtectedRoute from '../components/ProtectedRoute'
+import AppLayout from '../layouts/AppLayout'
 import Home from '../pages/Home'
 import Login from '../pages/Login'
 import Register from '../pages/Register'
@@ -36,7 +36,7 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      <Route element={<ProtectedRoute />}>
+      <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/my-tickets" element={<MyTickets />} />
         <Route path="/tickets/unassigned" element={<UnassignedTickets />} />

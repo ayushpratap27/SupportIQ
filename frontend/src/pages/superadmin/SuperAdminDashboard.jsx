@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { tenantService } from '../../services/tenantService'
-import DarkModeToggle from '../../components/DarkModeToggle'
 
 export default function SuperAdminDashboard() {
   const [overview, setOverview] = useState(null)

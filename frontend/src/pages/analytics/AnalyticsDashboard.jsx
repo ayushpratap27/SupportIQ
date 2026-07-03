@@ -6,7 +6,6 @@ import {
 } from 'recharts'
 import analyticsService from '../../services/analyticsService'
 import useWebSocket from '../../hooks/useWebSocket'
-import DarkModeToggle from '../../components/DarkModeToggle'
 
 const PERIOD_OPTIONS = [
   { label: 'Today', value: 'today' },
@@ -81,7 +80,7 @@ export default function AnalyticsDashboard() {
   const categoryData = (tickets?.by_category ?? []).slice(0, 8).map(p => ({ name: p.label, value: Number(p.count) }))
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className="p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>

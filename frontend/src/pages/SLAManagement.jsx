@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { slaService } from '../services/slaService'
 import SLABadge from '../components/SLABadge'
-import DarkModeToggle from '../components/DarkModeToggle'
 
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT']
 

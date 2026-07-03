@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { ticketService } from '../../services/ticketService'
 import Toast, { useToast } from '../../components/Toast'
-import DarkModeToggle from '../../components/DarkModeToggle'
 
 function CreateTicket() {
   const navigate = useNavigate()
@@ -59,15 +58,8 @@ function CreateTicket() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <>
       <Toast toast={toast} />
-
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-6 py-4 flex items-center gap-4">
-        <Link to="/tickets" className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-200">← Tickets</Link>
-        <h1 className="font-bold text-gray-800 dark:text-gray-100">New Ticket</h1>
-        <DarkModeToggle />
-      </header>
-
       <main className="max-w-2xl mx-auto px-6 py-8">
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -153,7 +145,7 @@ function CreateTicket() {
           </form>
         </div>
       </main>
-    </div>
+    </>
   )
 }
 

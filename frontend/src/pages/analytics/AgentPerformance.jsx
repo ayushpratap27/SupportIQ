@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 import analyticsService from '../../services/analyticsService'
-import DarkModeToggle from '../../components/DarkModeToggle'
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#F97316']
 
@@ -55,7 +54,7 @@ export default function AgentPerformance() {
   const maxResolved = agents.reduce((m, a) => Math.max(m, a.tickets_resolved), 0)
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+    <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Agent Performance</h1>
         <button

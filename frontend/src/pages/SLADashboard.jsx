@@ -4,7 +4,6 @@ import { slaService } from '../services/slaService'
 import { useWebSocket } from '../contexts/WebSocketContext'
 import SLABadge from '../components/SLABadge'
 import SLACountdown from '../components/SLACountdown'
-import DarkModeToggle from '../components/DarkModeToggle'
 
 function StatCard({ label, value, sub, color = 'text-gray-900 dark:text-white' }) {
   return (
