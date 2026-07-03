@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { Link, Navigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 import { healthService } from '../services/api'
 
 // Possible values: 'loading' | 'online' | 'offline'
@@ -9,6 +11,7 @@ const STATUS = {
 }
 
 function Home() {
+  const { user, loading: authLoading } = useAuth()
   const [backendStatus, setBackendStatus] = useState(STATUS.LOADING)
 
   useEffect(() => {
@@ -23,6 +26,9 @@ function Home() {
 
     checkBackend()
   }, [])
+
+  // Redirect already-authenticated users straight to the dashboard
+  if (!authLoading && user) return <Navigate to="/dashboard" replace />
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen gap-8">
@@ -45,6 +51,21 @@ function Home() {
         {backendStatus === STATUS.OFFLINE && (
           <span className="text-red-500 font-semibold">🔴 Backend Offline</span>
         )}
+      </div>
+
+      <div className="flex gap-4">
+        <Link
+          to="/login"
+          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition"
+        >
+          Login
+        </Link>
+        <Link
+          to="/register"
+          className="px-6 py-3 bg-white text-blue-600 font-semibold rounded-lg shadow border border-blue-600 hover:bg-blue-50 transition"
+        >
+          Register
+        </Link>
       </div>
     </div>
   )

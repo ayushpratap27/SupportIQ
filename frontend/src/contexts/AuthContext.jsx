@@ -19,7 +19,10 @@ export function AuthProvider({ children }) {
     authService
       .getMe()
       .then((res) => setUser(res.data.data))
-      .catch(() => localStorage.removeItem(TOKEN_KEY))
+      .catch(() => {
+        localStorage.removeItem(TOKEN_KEY)
+        setUser(null)
+      })
       .finally(() => setLoading(false))
   }, [])
 

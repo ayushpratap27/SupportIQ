@@ -10,8 +10,17 @@ function Register() {
   const [apiError, setApiError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
+  // Show a spinner while auth state is being restored on first load
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-sm text-gray-400 animate-pulse">Loading...</p>
+      </div>
+    )
+  }
+
   // Redirect already-authenticated users away from the register page.
-  if (!loading && user) return <Navigate to="/dashboard" replace />
+  if (user) return <Navigate to="/dashboard" replace />
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))

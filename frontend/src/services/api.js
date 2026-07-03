@@ -24,15 +24,13 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response interceptor — redirect to /login on 401 Unauthorized.
+// Response interceptor — clear token on 401. Navigation is handled by
+// ProtectedRoute / AuthContext so we don't force a full-page reload.
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem(TOKEN_KEY)
-      if (window.location.pathname !== '/login') {
-        window.location.href = '/login'
-      }
     }
     return Promise.reject(error)
   }
