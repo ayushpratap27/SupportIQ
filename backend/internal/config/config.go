@@ -36,6 +36,12 @@ type Config struct {
 	EmailPollInterval int    // seconds between IMAP polls (default 60)
 	MaxEmailRetries   int    // max SMTP retry attempts (default 3)
 	AttachmentPath    string // local attachment storage directory
+
+	// Analytics configuration
+	ReportRetentionDays    int    // days to keep generated report files (default 30)
+	MetricsRefreshInterval int    // seconds for scheduler interval (default 3600)
+	AggregationInterval    int    // alias for MetricsRefreshInterval
+	ReportStoragePath      string // directory for report files (default ./storage/reports)
 }
 
 // Load reads environment variables (from .env in development) and returns a Config.
@@ -150,6 +156,26 @@ func Load() (*Config, error) {
 	}
 
 	cfg.AttachmentPath = getEnv("ATTACHMENT_PATH", "./storage/attachments")
+
+	if v := getEnv("REPORT_RETENTION_DAYS", ""); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			cfg.ReportRetentionDays = n
+		}
+	}
+	if cfg.ReportRetentionDays == 0 {
+		cfg.ReportRetentionDays = 30
+	}
+
+	if v := getEnv("METRICS_REFRESH_INTERVAL", ""); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			cfg.MetricsRefreshInterval = n
+		}
+	}
+	if cfg.MetricsRefreshInterval == 0 {
+		cfg.MetricsRefreshInterval = 3600
+	}
+	cfg.AggregationInterval = cfg.MetricsRefreshInterval
+	cfg.ReportStoragePath = getEnv("REPORT_STORAGE_PATH", "./storage/reports")
 
 	return cfg, nil
 }

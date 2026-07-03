@@ -9,6 +9,8 @@ import (
 	"github.com/ayush/supportiq/internal/ai/gemini"
 	"github.com/ayush/supportiq/internal/ai/provider"
 	replyprovider "github.com/ayush/supportiq/internal/ai/reply/provider"
+	"github.com/ayush/supportiq/internal/analytics"
+	analyticsreports "github.com/ayush/supportiq/internal/analytics/reports"
 	"github.com/ayush/supportiq/internal/config"
 	emailattachments "github.com/ayush/supportiq/internal/email/attachments"
 	emailworkers "github.com/ayush/supportiq/internal/email/workers"
@@ -256,6 +258,41 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 			users := protected.Group("/users")
 			{
 				users.GET("/agents", userHandler.ListAgents)
+			}
+
+			// Analytics — admins see everything; agents see personal metrics only
+			analyticsRepo      := analytics.NewAnalyticsRepository(db)
+			analyticsAggregator := analytics.NewAggregator(analyticsRepo)
+			analyticsSvc       := analytics.NewService(analyticsRepo, analyticsAggregator)
+			reportSvc          := analyticsreports.NewService(db, cfg.ReportStoragePath, cfg.ReportRetentionDays)
+			collector          := analyticsreports.NewDataCollector(db)
+			analyticsHandler   := handlers.NewAnalyticsHandler(analyticsSvc, reportSvc, collector)
+
+			// Start analytics scheduler
+			aggInterval := time.Duration(cfg.AggregationInterval) * time.Second
+			analyticsScheduler := analytics.NewScheduler(analyticsAggregator, analyticsSvc, wsHub, aggInterval)
+			go analyticsScheduler.Start(context.Background())
+
+			analyticsGroup := protected.Group("/analytics")
+			{
+				analyticsGroup.GET("/overview",  analyticsHandler.Overview)
+				analyticsGroup.GET("/tickets",   analyticsHandler.TicketStats)
+				analyticsGroup.GET("/agents",    analyticsHandler.AgentStats)
+				analyticsGroup.GET("/ai",        analyticsHandler.AIStats)
+				analyticsGroup.GET("/queues",    analyticsHandler.QueueStats)
+				analyticsGroup.GET("/email",     analyticsHandler.EmailStats)
+				analyticsGroup.GET("/trends",    analyticsHandler.Trends)
+
+				// Report generation (all authenticated users; scope enforced in handler)
+				analyticsGroup.POST("/reports",               analyticsHandler.GenerateReport)
+				analyticsGroup.GET("/reports",                analyticsHandler.ListReports)
+				analyticsGroup.GET("/reports/:id",            analyticsHandler.GetReport)
+				analyticsGroup.GET("/reports/:id/download",   analyticsHandler.DownloadReport)
+
+				// Manual aggregation trigger (admin only)
+				analyticsGroup.POST("/aggregate",
+					middleware.RequireRole(models.RoleAdmin),
+					analyticsHandler.TriggerAggregation)
 			}
 		}
 	}

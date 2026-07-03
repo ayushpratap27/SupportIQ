@@ -88,7 +88,15 @@ export default function Dashboard() {
               <Link to="/jobs" className="text-sm text-violet-600 font-medium hover:underline">Job Monitor</Link>
               <Link to="/email/accounts" className="text-sm text-orange-600 font-medium hover:underline">Email Accounts</Link>
               <Link to="/email/monitor" className="text-sm text-cyan-600 font-medium hover:underline">Email Monitor</Link>
+              <Link to="/analytics" className="text-sm text-blue-700 font-medium hover:underline">Analytics</Link>
+              <Link to="/analytics/ai" className="text-sm text-purple-600 font-medium hover:underline">AI Insights</Link>
+              <Link to="/analytics/agents" className="text-sm text-green-700 font-medium hover:underline">Agent Performance</Link>
+              <Link to="/analytics/queues" className="text-sm text-yellow-700 font-medium hover:underline">Queue Monitor</Link>
+              <Link to="/analytics/reports" className="text-sm text-gray-700 font-medium hover:underline">Reports</Link>
             </>
+          )}
+          {user?.role === 'SupportAgent' && (
+            <Link to="/analytics/agents" className="text-sm text-green-700 font-medium hover:underline">My Performance</Link>
           )}
           <button onClick={handleLogout} className="text-sm text-red-500 hover:text-red-600 font-medium transition">Logout</button>
         </div>

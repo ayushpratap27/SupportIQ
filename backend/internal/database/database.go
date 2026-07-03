@@ -43,6 +43,10 @@ func Connect(cfg *config.Config) (*gorm.DB, error) {
 		&models.BackgroundJob{},
 		&models.EmailAccount{},
 		&models.EmailMessage{},
+		&models.DailyTicketMetrics{},
+		&models.AgentMetrics{},
+		&models.AIMetrics{},
+		&models.Report{},
 	); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
