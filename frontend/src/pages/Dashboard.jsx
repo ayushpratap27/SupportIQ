@@ -21,9 +21,9 @@ const ACTIVITY_ICON = {
 
 function StatCard({ label, value, accent, to }) {
   const inner = (
-    <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-4 hover:bg-white/10 transition-colors">
+    <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-white/10 dark:bg-white/5 dark:backdrop-blur-sm dark:shadow-none p-4 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors">
       <p className={`text-2xl font-bold ${accent}`}>{value === null ? '…' : value}</p>
-      <p className="text-xs font-medium mt-1 text-gray-400">{label}</p>
+      <p className="text-xs font-medium mt-1 text-gray-500 dark:text-gray-400">{label}</p>
     </div>
   )
   return to ? <Link to={to}>{inner}</Link> : inner
