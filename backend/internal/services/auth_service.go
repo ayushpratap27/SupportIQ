@@ -136,6 +136,25 @@ func (s *AuthService) Login(req *dto.LoginRequest) (*dto.AuthResponse, int, erro
 	return s.buildAuthResponse(&user, user.TenantID)
 }
 
+// RefreshToken validates a refresh token and returns a new token pair.
+func (s *AuthService) RefreshToken(refreshToken string) (*dto.AuthResponse, int, error) {
+	claims, err := jwtpkg.ValidateToken(refreshToken, s.cfg.JWTRefreshSecret)
+	if err != nil {
+		return nil, http.StatusUnauthorized, errors.New("invalid or expired refresh token")
+	}
+
+	var user models.User
+	if err := s.db.First(&user, claims.UserID).Error; err != nil {
+		return nil, http.StatusUnauthorized, ErrUserNotFound
+	}
+
+	if !user.IsActive {
+		return nil, http.StatusForbidden, errors.New("account is disabled")
+	}
+
+	return s.buildAuthResponse(&user, user.TenantID)
+}
+
 // GetUserByID fetches a user record by primary key and returns a safe DTO.
 func (s *AuthService) GetUserByID(id uint) (*dto.UserResponse, int, error) {
 	var user models.User

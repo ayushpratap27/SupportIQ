@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/ayush/supportiq/internal/dto"
@@ -13,13 +14,24 @@ import (
 type CommentService struct {
 	commentRepo  *repositories.CommentRepository
 	activityRepo *repositories.ActivityRepository
+	ticketRepo   *repositories.TicketRepository
 }
 
 func NewCommentService(commentRepo *repositories.CommentRepository, activityRepo *repositories.ActivityRepository) *CommentService {
 	return &CommentService{commentRepo: commentRepo, activityRepo: activityRepo}
 }
 
+func (s *CommentService) SetTicketRepo(r *repositories.TicketRepository) {
+	s.ticketRepo = r
+}
+
 func (s *CommentService) Create(tenantID uuid.UUID, ticketID uuid.UUID, req *dto.CreateCommentRequest, userID uint) (*dto.CommentResponse, int, error) {
+	// Verify the ticket exists and belongs to this tenant
+	if s.ticketRepo != nil {
+		if _, err := s.ticketRepo.FindByID(tenantID, ticketID); err != nil {
+			return nil, http.StatusNotFound, errors.New("ticket not found")
+		}
+	}
 	commentType := models.CommentTypePublic
 	if req.CommentType == "INTERNAL" {
 		commentType = models.CommentTypeInternal

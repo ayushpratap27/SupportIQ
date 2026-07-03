@@ -373,7 +373,7 @@ func (s *SLAService) broadcastSLAEvent(t *models.Ticket) {
 	if s.hub == nil {
 		return
 	}
-	s.hub.Broadcast(events.New(events.SLAUpdated, t.ID.String(), 0, "", map[string]interface{}{
+	s.hub.BroadcastToTenant(t.TenantID, events.New(events.SLAUpdated, t.ID.String(), 0, "", map[string]interface{}{
 		"sla_status":        t.SLAStatus,
 		"resolution_due_at": t.ResolutionDueAt,
 		"ticket_number":     t.TicketNumber,

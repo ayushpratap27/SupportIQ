@@ -40,17 +40,17 @@ func (r *ReplyRepository) Update(reply *models.AIReply) error {
 	return r.db.Save(reply).Error
 }
 
-func (r *ReplyRepository) FindLatestByTicketID(ticketID uuid.UUID) (*models.AIReply, error) {
+func (r *ReplyRepository) FindLatestByTicketID(tenantID uuid.UUID, ticketID uuid.UUID) (*models.AIReply, error) {
 	var reply models.AIReply
-	err := r.db.Where("ticket_id = ?", ticketID).Order("created_at DESC").First(&reply).Error
+	err := r.db.Where("tenant_id = ? AND ticket_id = ?", tenantID, ticketID).Order("created_at DESC").First(&reply).Error
 	if err != nil {
 		return nil, err
 	}
 	return &reply, nil
 }
 
-func (r *ReplyRepository) FindAllByTicketID(ticketID uuid.UUID) ([]models.AIReply, error) {
+func (r *ReplyRepository) FindAllByTicketID(tenantID uuid.UUID, ticketID uuid.UUID) ([]models.AIReply, error) {
 	var replies []models.AIReply
-	err := r.db.Where("ticket_id = ?", ticketID).Order("created_at DESC").Find(&replies).Error
+	err := r.db.Where("tenant_id = ? AND ticket_id = ?", tenantID, ticketID).Order("created_at DESC").Find(&replies).Error
 	return replies, err
 }

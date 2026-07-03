@@ -153,8 +153,9 @@ func (h *AnalyticsHandler) GenerateReport(c *gin.Context) {
 
 	userID, _ := c.Get("userID")
 	uid, _ := userID.(uint)
+	tenantID := middleware.GetTenantID(c)
 
-	report, err := h.reportSvc.Schedule(&req, uid, h.collector)
+	report, err := h.reportSvc.Schedule(&req, tenantID, uid, h.collector)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, err.Error())
 		return
@@ -173,7 +174,7 @@ func (h *AnalyticsHandler) ListReports(c *gin.Context) {
 		generatedBy = &uid
 	}
 
-	reports, err := h.reportSvc.ListReports(generatedBy)
+	reports, err := h.reportSvc.ListReports(middleware.GetTenantID(c), generatedBy)
 	if err != nil {
 		utils.SendError(c, http.StatusInternalServerError, err.Error())
 		return
@@ -193,7 +194,7 @@ func (h *AnalyticsHandler) GetReport(c *gin.Context) {
 		utils.SendError(c, http.StatusBadRequest, "invalid report id")
 		return
 	}
-	report, err := h.reportSvc.GetReport(uint(id))
+	report, err := h.reportSvc.GetReport(middleware.GetTenantID(c), uint(id))
 	if err != nil {
 		utils.SendError(c, http.StatusNotFound, "report not found")
 		return
@@ -209,7 +210,7 @@ func (h *AnalyticsHandler) DownloadReport(c *gin.Context) {
 		return
 	}
 
-	data, mime, filename, err := h.reportSvc.DownloadReport(uint(id))
+	data, mime, filename, err := h.reportSvc.DownloadReport(middleware.GetTenantID(c), uint(id))
 	if err != nil {
 		utils.SendError(c, http.StatusNotFound, err.Error())
 		return

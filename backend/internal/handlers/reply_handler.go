@@ -34,7 +34,7 @@ func (h *ReplyHandler) GetReply(c *gin.Context) {
 		return
 	}
 
-	reply, err := h.replySvc.GetLatest(ticketID)
+	reply, err := h.replySvc.GetLatest(middleware.GetTenantID(c), ticketID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			utils.SendSuccess(c, http.StatusOK, "No reply generated yet", nil)

@@ -13,6 +13,7 @@ import (
 	"github.com/ayush/supportiq/internal/dto"
 	"github.com/ayush/supportiq/internal/models"
 	"github.com/ayush/supportiq/internal/utils"
+	"github.com/google/uuid"
 	"github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
 )
@@ -38,7 +39,7 @@ type ReportData struct {
 }
 
 // Schedule creates a PENDING report record and launches generation in a goroutine.
-func (s *Service) Schedule(req *dto.GenerateReportRequest, userID uint, svc interface{ CollectData(string, dto.DateFilter) (*ReportData, error) }) (*models.Report, error) {
+func (s *Service) Schedule(req *dto.GenerateReportRequest, tenantID uuid.UUID, userID uint, svc interface{ CollectData(string, dto.DateFilter) (*ReportData, error) }) (*models.Report, error) {
 	filtersJSON, _ := json.Marshal(req)
 	report := &models.Report{
 		Name:        req.Name,
@@ -47,6 +48,7 @@ func (s *Service) Schedule(req *dto.GenerateReportRequest, userID uint, svc inte
 		Status:      "PENDING",
 		Parameters:  string(filtersJSON),
 		GeneratedBy: userID,
+		TenantID:    tenantID,
 	}
 	if err := s.db.Create(report).Error; err != nil {
 		return nil, err
@@ -115,16 +117,16 @@ func (s *Service) markFailed(report *models.Report, reason string) {
 }
 
 // GetReport returns a single report by ID.
-func (s *Service) GetReport(id uint) (*models.Report, error) {
+func (s *Service) GetReport(tenantID uuid.UUID, id uint) (*models.Report, error) {
 	var report models.Report
-	err := s.db.Preload("Generator").First(&report, id).Error
+	err := s.db.Preload("Generator").Where("id = ? AND tenant_id = ?", id, tenantID).First(&report).Error
 	return &report, err
 }
 
-// ListReports returns all reports, optionally scoped to a single user.
-func (s *Service) ListReports(generatedBy *uint) ([]models.Report, error) {
+// ListReports returns all reports scoped to a tenant, optionally filtered to a single user.
+func (s *Service) ListReports(tenantID uuid.UUID, generatedBy *uint) ([]models.Report, error) {
 	var reports []models.Report
-	q := s.db.Order("created_at DESC")
+	q := s.db.Where("tenant_id = ?", tenantID).Order("created_at DESC")
 	if generatedBy != nil {
 		q = q.Where("generated_by = ?", *generatedBy)
 	}
@@ -132,9 +134,9 @@ func (s *Service) ListReports(generatedBy *uint) ([]models.Report, error) {
 }
 
 // DownloadReport returns the file bytes and MIME type for a completed report.
-func (s *Service) DownloadReport(id uint) ([]byte, string, string, error) {
+func (s *Service) DownloadReport(tenantID uuid.UUID, id uint) ([]byte, string, string, error) {
 	var report models.Report
-	if err := s.db.First(&report, id).Error; err != nil {
+	if err := s.db.Where("id = ? AND tenant_id = ?", id, tenantID).First(&report).Error; err != nil {
 		return nil, "", "", err
 	}
 	if report.Status != "COMPLETED" {

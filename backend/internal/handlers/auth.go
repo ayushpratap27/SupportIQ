@@ -64,6 +64,25 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	utils.SendSuccess(c, http.StatusOK, "Logged out successfully", nil)
 }
 
+// Refresh handles POST /api/v1/auth/refresh
+func (h *AuthHandler) Refresh(c *gin.Context) {
+	var req struct {
+		RefreshToken string `json:"refreshToken" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	resp, statusCode, err := h.authService.RefreshToken(req.RefreshToken)
+	if err != nil {
+		utils.SendError(c, statusCode, err.Error())
+		return
+	}
+
+	utils.SendSuccess(c, http.StatusOK, "Token refreshed", resp)
+}
+
 // Me handles GET /api/v1/auth/me
 func (h *AuthHandler) Me(c *gin.Context) {
 	userID, exists := c.Get("userID")

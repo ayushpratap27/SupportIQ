@@ -60,7 +60,7 @@ func (s *ReplyService) Generate(ctx context.Context, tenantID uuid.UUID, ticketI
 }
 
 func (s *ReplyService) Regenerate(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, userID uint) (*models.AIReply, error) {
-	if latest, err := s.replyRepo.FindLatestByTicketID(ticketID); err == nil {
+	if latest, err := s.replyRepo.FindLatestByTicketID(tenantID, ticketID); err == nil {
 		if latest.Status == models.AIReplyStatusGenerated {
 			latest.Status = models.AIReplyStatusRegenerated
 			_ = s.replyRepo.Update(latest)
@@ -84,7 +84,7 @@ func (s *ReplyService) Regenerate(ctx context.Context, tenantID uuid.UUID, ticke
 }
 
 func (s *ReplyService) Approve(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, userID uint) (*models.AIReply, error) {
-	reply, err := s.replyRepo.FindLatestByTicketID(ticketID)
+	reply, err := s.replyRepo.FindLatestByTicketID(tenantID, ticketID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, fmt.Errorf("no reply draft found for this ticket")
@@ -117,7 +117,7 @@ func (s *ReplyService) Approve(ctx context.Context, tenantID uuid.UUID, ticketID
 }
 
 func (s *ReplyService) Edit(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, userID uint, editedReply string) (*models.AIReply, error) {
-	reply, err := s.replyRepo.FindLatestByTicketID(ticketID)
+	reply, err := s.replyRepo.FindLatestByTicketID(tenantID, ticketID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, fmt.Errorf("no reply draft found for this ticket")
@@ -146,7 +146,7 @@ func (s *ReplyService) Edit(ctx context.Context, tenantID uuid.UUID, ticketID uu
 }
 
 func (s *ReplyService) Reject(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, userID uint) (*models.AIReply, error) {
-	reply, err := s.replyRepo.FindLatestByTicketID(ticketID)
+	reply, err := s.replyRepo.FindLatestByTicketID(tenantID, ticketID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, fmt.Errorf("no reply draft found for this ticket")
@@ -174,12 +174,12 @@ func (s *ReplyService) Reject(ctx context.Context, tenantID uuid.UUID, ticketID 
 	return reply, nil
 }
 
-func (s *ReplyService) GetLatest(ticketID uuid.UUID) (*models.AIReply, error) {
-	return s.replyRepo.FindLatestByTicketID(ticketID)
+func (s *ReplyService) GetLatest(tenantID uuid.UUID, ticketID uuid.UUID) (*models.AIReply, error) {
+	return s.replyRepo.FindLatestByTicketID(tenantID, ticketID)
 }
 
-func (s *ReplyService) GetHistory(ticketID uuid.UUID) ([]dto.AIReplyResponse, error) {
-	replies, err := s.replyRepo.FindAllByTicketID(ticketID)
+func (s *ReplyService) GetHistory(tenantID uuid.UUID, ticketID uuid.UUID) ([]dto.AIReplyResponse, error) {
+	replies, err := s.replyRepo.FindAllByTicketID(tenantID, ticketID)
 	if err != nil {
 		return nil, err
 	}

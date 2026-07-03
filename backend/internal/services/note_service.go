@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/ayush/supportiq/internal/dto"
@@ -13,13 +14,25 @@ import (
 type NoteService struct {
 	noteRepo     *repositories.NoteRepository
 	activityRepo *repositories.ActivityRepository
+	ticketRepo   *repositories.TicketRepository
 }
 
 func NewNoteService(noteRepo *repositories.NoteRepository, activityRepo *repositories.ActivityRepository) *NoteService {
 	return &NoteService{noteRepo: noteRepo, activityRepo: activityRepo}
 }
 
+func (s *NoteService) SetTicketRepo(r *repositories.TicketRepository) {
+	s.noteRepo = s.noteRepo
+	s.ticketRepo = r
+}
+
 func (s *NoteService) Create(tenantID uuid.UUID, ticketID uuid.UUID, req *dto.CreateNoteRequest, userID uint) (*dto.NoteResponse, int, error) {
+	// Verify the ticket exists and belongs to this tenant
+	if s.ticketRepo != nil {
+		if _, err := s.ticketRepo.FindByID(tenantID, ticketID); err != nil {
+			return nil, http.StatusNotFound, errors.New("ticket not found")
+		}
+	}
 	note := &models.TicketNote{
 		TenantID:   tenantID,
 		TicketID:   ticketID,

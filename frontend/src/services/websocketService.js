@@ -18,7 +18,7 @@ class WebSocketService {
 
   /** Connect using the stored JWT access token. */
   connect() {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem('access_token');
     if (!token) return;
 
     this.intentionalClose = false;
@@ -61,7 +61,7 @@ class WebSocketService {
     const delay = BASE_DELAY_MS * Math.pow(2, this.retryCount);
     this.retryCount += 1;
     this.retryTimer = setTimeout(() => {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('access_token');
       if (token) this._openSocket(token);
     }, delay);
   }

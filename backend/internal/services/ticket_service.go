@@ -273,6 +273,9 @@ func (s *TicketService) Assign(tenantID uuid.UUID, id uuid.UUID, req *dto.Assign
 	if err != nil {
 		return nil, http.StatusNotFound, ErrAssigneeNotFound
 	}
+	if assignee.TenantID != tenantID {
+		return nil, http.StatusForbidden, errors.New("assignee does not belong to this tenant")
+	}
 	if assignee.Role != models.RoleSupportAgent {
 		return nil, http.StatusBadRequest, ErrAssigneeNotAgent
 	}

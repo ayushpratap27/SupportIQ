@@ -28,6 +28,7 @@ import (
 	"github.com/ayush/supportiq/internal/utils"
 	appws "github.com/ayush/supportiq/internal/websocket"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -39,6 +40,13 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 	router.Use(gin.Recovery())
 	router.Use(middleware.RequestLogger())
 	router.Use(middleware.CORS())
+	router.Use(middleware.SecurityHeaders())
+	router.Use(middleware.RateLimit())
+	// Cap request bodies at 2 MB to prevent large payload DoS.
+	router.Use(func(c *gin.Context) {
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 2<<20)
+		c.Next()
+	})
 
 	// ─── WebSocket hub ────────────────────────────────────────────────────────
 	wsHub := appws.NewHub()
@@ -76,9 +84,10 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 
 		auth := api.Group("/auth")
 		{
-			auth.POST("/register", authHandler.Register)
-			auth.POST("/login", authHandler.Login)
-			auth.POST("/logout", authHandler.Logout)
+		auth.POST("/register", middleware.RateLimitAuth(), authHandler.Register)
+		auth.POST("/login", middleware.RateLimitAuth(), authHandler.Login)
+		auth.POST("/logout", authHandler.Logout)
+		auth.POST("/refresh", middleware.RateLimitAuth(), authHandler.Refresh)
 			auth.GET("/me", middleware.Authenticate(db, cfg), authHandler.Me)
 		}
 
@@ -99,7 +108,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 				c.JSON(http.StatusUnauthorized, gin.H{"error": "user not found"})
 				return
 			}
-			wsHub.ServeWS(c.Writer, c.Request, user.ID)
+			wsHub.ServeWS(c.Writer, c.Request, user.ID, user.TenantID)
 		})
 
 		// All routes below require a valid JWT
@@ -159,11 +168,13 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 
 				noteService     := services.NewNoteService(noteRepo, activityRepo)
 			commentService  := services.NewCommentService(commentRepo, activityRepo)
-			knowledgeService := services.NewKnowledgeService(knowledgeRepo)
+				noteService.SetTicketRepo(ticketRepo)
+				commentService.SetTicketRepo(ticketRepo)
+				knowledgeService := services.NewKnowledgeService(knowledgeRepo)
 
-			// Email services
-			emailAccountSvc := services.NewEmailAccountService(emailAccountRepo, cfg.JWTAccessSecret)
-			threadDetector  := threading.NewDetector(emailMessageRepo)
+				// Email services
+				emailAccountSvc := services.NewEmailAccountService(emailAccountRepo, cfg.JWTAccessSecret)
+				threadDetector  := threading.NewDetector(emailMessageRepo)
 			attachStorage   := emailattachments.NewLocalStorage(cfg.AttachmentPath)
 			emailSvc := services.NewEmailService(
 				emailAccountRepo, emailMessageRepo,
@@ -376,6 +387,13 @@ func subscribeToWorkerEvents(rq *redisqueue.Client, hub *appws.Hub) {
 		if err := json.Unmarshal([]byte(msg.Payload), &payload); err != nil {
 			utils.Logger.WithError(err).Warn("WS: failed to parse worker event")
 			continue
+		}
+		// Route to the correct tenant if tenant_id is present in the payload
+		if tidStr, ok := payload["tenant_id"].(string); ok && tidStr != "" {
+			if tid, err := uuid.Parse(tidStr); err == nil && tid != uuid.Nil {
+				hub.BroadcastToTenant(tid, payload)
+				continue
+			}
 		}
 		hub.Broadcast(payload)
 	}

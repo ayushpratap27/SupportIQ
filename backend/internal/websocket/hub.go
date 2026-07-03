@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ayush/supportiq/internal/utils"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -28,10 +29,11 @@ var upgrader = websocket.Upgrader{
 
 // Client represents a single WebSocket connection.
 type Client struct {
-	hub    *Hub
-	conn   *websocket.Conn
-	send   chan []byte
-	userID uint
+	hub      *Hub
+	conn     *websocket.Conn
+	send     chan []byte
+	userID   uint
+	tenantID uuid.UUID
 }
 
 // Hub manages all active WebSocket clients and broadcasts events to them.
@@ -90,7 +92,9 @@ func (h *Hub) Run() {
 	}
 }
 
-// Broadcast sends an arbitrary payload to all connected clients.
+// Broadcast sends an arbitrary payload to all connected clients in the same tenant.
+// Use BroadcastToTenant for tenant-scoped events. This method broadcasts to ALL
+// clients and should only be used for system-wide events (e.g. maintenance).
 func (h *Hub) Broadcast(payload interface{}) {
 	data, err := json.Marshal(payload)
 	if err != nil {
@@ -101,6 +105,27 @@ func (h *Hub) Broadcast(payload interface{}) {
 	case h.broadcast <- data:
 	default:
 		utils.Logger.Warn("WS: Broadcast channel full, dropping message")
+	}
+}
+
+// BroadcastToTenant sends a payload only to clients belonging to a specific tenant.
+func (h *Hub) BroadcastToTenant(tenantID uuid.UUID, payload interface{}) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		utils.Logger.WithError(err).Warn("WS: Failed to marshal tenant broadcast payload")
+		return
+	}
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	for client := range h.clients {
+		if client.tenantID != tenantID {
+			continue
+		}
+		select {
+		case client.send <- data:
+		default:
+			go func(c *Client) { h.unregister <- c }(client)
+		}
 	}
 }
 
@@ -121,8 +146,8 @@ func (h *Hub) ConnectedCount() int {
 }
 
 // ServeWS upgrades an HTTP request to a WebSocket connection and registers the client.
-// userID must be validated by the calling handler before invoking this.
-func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request, userID uint) {
+// userID and tenantID must be validated by the calling handler before invoking this.
+func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request, userID uint, tenantID uuid.UUID) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		utils.Logger.WithError(err).Warn("WS: Upgrade failed")
@@ -130,10 +155,11 @@ func (h *Hub) ServeWS(w http.ResponseWriter, r *http.Request, userID uint) {
 	}
 
 	client := &Client{
-		hub:    h,
-		conn:   conn,
-		send:   make(chan []byte, 256),
-		userID: userID,
+		hub:      h,
+		conn:     conn,
+		send:     make(chan []byte, 256),
+		userID:   userID,
+		tenantID: tenantID,
 	}
 
 	h.register <- client
