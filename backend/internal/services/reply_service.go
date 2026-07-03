@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	replyprovider "github.com/ayush/supportiq/internal/ai/reply/provider"
 	replyprompt "github.com/ayush/supportiq/internal/ai/reply/prompt"
+	replyprovider "github.com/ayush/supportiq/internal/ai/reply/provider"
 	"github.com/ayush/supportiq/internal/dto"
 	"github.com/ayush/supportiq/internal/knowledge/retrieval"
 	"github.com/ayush/supportiq/internal/models"
@@ -23,8 +23,11 @@ type ReplyService struct {
 	ticketRepo    *repositories.TicketRepository
 	replyRepo     *repositories.ReplyRepository
 	activityRepo  *repositories.ActivityRepository
+	emailSvc      *EmailService
 	model         string
 }
+
+func (s *ReplyService) SetEmailService(e *EmailService) { s.emailSvc = e }
 
 func NewReplyService(
 	replyProvider replyprovider.ReplyProvider,
@@ -112,6 +115,15 @@ func (s *ReplyService) Approve(ctx context.Context, tenantID uuid.UUID, ticketID
 		ActivityType: models.ActivityReplyApproved,
 		Description:  "AI reply approved by agent",
 	})
+
+	// Auto-queue outbound email to customer
+	if s.emailSvc != nil {
+		go func() {
+			if err := s.emailSvc.QueueReplyForTicket(context.Background(), ticketID, reply.GeneratedReply, userID); err != nil {
+				utils.Logger.WithError(err).Warn("Reply: failed to queue outbound email")
+			}
+		}()
+	}
 
 	return reply, nil
 }
@@ -209,12 +221,11 @@ func (s *ReplyService) generate(ctx context.Context, tenantID uuid.UUID, ticketI
 
 	docs, err := s.retriever.Retrieve(ctx, tenantID, query, 5)
 	if err != nil {
-		log.WithError(err).Error("Reply: Knowledge base retrieval failed")
-		return nil, fmt.Errorf("knowledge base unavailable: %w", err)
+		log.WithError(err).Warn("Reply: Knowledge base retrieval failed, proceeding without KB")
+		docs = nil
 	}
 	if len(docs) == 0 {
-		log.Warn("Reply: No relevant knowledge base documents found")
-		return nil, fmt.Errorf("knowledge base unavailable: no relevant documents found for this ticket — add knowledge base articles to enable AI reply generation")
+		log.Info("Reply: No KB documents found — generating from AI general knowledge")
 	}
 
 	log.WithField("docs_found", len(docs)).Info("Reply: Knowledge documents retrieved")

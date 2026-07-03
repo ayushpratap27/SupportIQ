@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import Sidebar from '../components/Sidebar'
+import DarkModeToggle from '../components/DarkModeToggle'
 
 export default function AppLayout() {
   const { user, loading } = useAuth()

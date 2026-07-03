@@ -28,21 +28,27 @@ func BuildReplyPrompt(req replyprovider.ReplyRequest) string {
 	sb.WriteString(fmt.Sprintf("Priority: %s\n", req.Priority))
 	sb.WriteString(fmt.Sprintf("Customer Sentiment: %s\n\n", req.Sentiment))
 
-	sb.WriteString("--- RELEVANT KNOWLEDGE BASE DOCUMENTS ---\n\n")
-	for i, doc := range req.Documents {
-		sb.WriteString(fmt.Sprintf("[Document %d] %s (%s)\n", i+1, doc.Title, doc.Category))
-		sb.WriteString(doc.Content)
-		sb.WriteString("\n\n")
-	}
-	sb.WriteString("--- END OF KNOWLEDGE BASE DOCUMENTS ---\n\n")
-
-	sb.WriteString(`Instructions:
+	if len(req.Documents) > 0 {
+		sb.WriteString("--- RELEVANT KNOWLEDGE BASE DOCUMENTS ---\n\n")
+		for i, doc := range req.Documents {
+			sb.WriteString(fmt.Sprintf("[Document %d] %s (%s)\n", i+1, doc.Title, doc.Category))
+			sb.WriteString(doc.Content)
+			sb.WriteString("\n\n")
+		}
+		sb.WriteString("--- END OF KNOWLEDGE BASE DOCUMENTS ---\n\n")
+		sb.WriteString(`Instructions:
 - Write a professional, empathetic customer support reply.
 - Be concise and solution-focused.
-- NEVER invent company policies. Use ONLY the information from the documents above.
-- If the documents do not fully address the issue, acknowledge the concern and state that you will follow up.
+- Prefer information from the knowledge base documents above when available.
+- If documents do not fully address the issue, use your general knowledge to help.
 - Do not include subject lines or greetings like "Dear Customer" — go straight to the response body.
+`)
+	} else {
+		sb.WriteString("--- NO KNOWLEDGE BASE DOCUMENTS AVAILABLE ---\n\n")
+		sb.WriteString("Instructions:\n- Write a professional, empathetic customer support reply using your general knowledge.\n- Be concise and solution-focused.\n- Acknowledge the customer's concern and provide helpful, actionable guidance.\n- Do not include subject lines or greetings like \"Dear Customer\" — go straight to the response body.\n")
+	}
 
+	sb.WriteString(`
 Required JSON structure (use EXACTLY these field names):
 {
   "reply": "<the complete ready-to-send reply text>",
@@ -51,7 +57,7 @@ Required JSON structure (use EXACTLY these field names):
 
 Rules:
 - Output ONLY the JSON object. Nothing before or after it.
-- confidence must be an integer reflecting how well the knowledge base covers the issue (100 = perfect match).
+- confidence must be an integer reflecting how well the response covers the issue (100 = perfect).
 - reply must be a complete, professional customer support response.`)
 
 	return sb.String()

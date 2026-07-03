@@ -19,6 +19,8 @@ type Config struct {
 	// AI configuration
 	GeminiAPIKey     string
 	GeminiModel      string
+	GroqAPIKey       string
+	GroqModel        string
 	AITimeout        int // seconds
 	AIMaxRetries     int
 	MaxReplyTokens   int
@@ -62,6 +64,8 @@ func Load() (*Config, error) {
 		JWTRefreshSecret: getEnv("JWT_REFRESH_SECRET", ""),
 		GeminiAPIKey:     getEnv("GEMINI_API_KEY", ""),
 		GeminiModel:      getEnv("GEMINI_MODEL", "gemini-2.0-flash"),
+		GroqAPIKey:       getEnv("GROQ_API_KEY", ""),
+		GroqModel:        getEnv("GROQ_MODEL", "llama-3.3-70b-versatile"),
 	}
 
 	if cfg.DatabaseURL == "" {
