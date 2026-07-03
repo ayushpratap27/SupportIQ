@@ -40,3 +40,45 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
   }
 }
+
+@layer utilities {
+  /* Fade up — cards, panels, forms */
+  .animate-fade-up {
+    animation: fadeUp 0.3s ease both;
+  }
+  /* Fade in — subtle opacity only */
+  .animate-fade-in {
+    animation: fadeIn 0.25s ease both;
+  }
+  /* Scale in — modals, dropdowns */
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease both;
+  }
+  /* Stagger helpers */
+  .delay-50  { animation-delay: 50ms;  }
+  .delay-100 { animation-delay: 100ms; }
+  .delay-150 { animation-delay: 150ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-250 { animation-delay: 250ms; }
+  .delay-300 { animation-delay: 300ms; }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Smooth page transition wrapper */
+.page-enter {
+  animation: fadeUp 0.3s ease both;
+}

@@ -23,9 +23,9 @@ type TokenPair struct {
 	RefreshToken string
 }
 
-// GenerateTokenPair creates a signed access token (15 min) and refresh token (7 days).
+// GenerateTokenPair creates a signed access token (1 day) and refresh token (7 days).
 func GenerateTokenPair(userID uint, tenantID uuid.UUID, email, role, accessSecret, refreshSecret string) (*TokenPair, error) {
-	access, err := newSignedToken(userID, tenantID, email, role, 15*time.Minute, accessSecret)
+	access, err := newSignedToken(userID, tenantID, email, role, 24*time.Hour, accessSecret)
 	if err != nil {
 		return nil, err
 	}

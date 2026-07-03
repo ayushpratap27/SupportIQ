@@ -23,7 +23,13 @@ func CORS() gin.HandlerFunc {
 		}
 	}
 	if len(origins) == 0 {
-		origins = []string{"http://localhost:5173", "http://localhost:3000"}
+		origins = []string{
+			"http://localhost:5173",
+			"http://localhost:5174",
+			"http://localhost:5175",
+			"http://localhost:5176",
+			"http://localhost:3000",
+		}
 	}
 
 	return cors.New(cors.Config{

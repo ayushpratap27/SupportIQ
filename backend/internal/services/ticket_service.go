@@ -71,6 +71,14 @@ func (s *TicketService) Create(tenantID uuid.UUID, req *dto.CreateTicketRequest,
 		if err != nil {
 			return err
 		}
+		priority := models.TicketPriorityMedium
+		if req.Priority != "" {
+			priority = models.TicketPriority(req.Priority)
+		}
+		category := models.TicketCategoryGeneral
+		if req.Category != "" {
+			category = models.TicketCategory(req.Category)
+		}
 		created = models.Ticket{
 			TenantID:      tenantID,
 			Subject:       req.Subject,
@@ -79,8 +87,8 @@ func (s *TicketService) Create(tenantID uuid.UUID, req *dto.CreateTicketRequest,
 			CustomerEmail: req.CustomerEmail,
 			TicketNumber:  ticketNum,
 			Status:        models.TicketStatusOpen,
-			Priority:      models.TicketPriorityMedium,
-			Category:      models.TicketCategoryGeneral,
+			Priority:      priority,
+			Category:      category,
 			Source:        models.TicketSourceWeb,
 			CreatedBy:     createdBy,
 		}

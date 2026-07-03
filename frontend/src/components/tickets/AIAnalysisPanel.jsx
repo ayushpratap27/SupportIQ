@@ -142,21 +142,23 @@ export default function AIAnalysisPanel({ ticketId }) {
   }
 
   return (
-    <div className="p-5 space-y-6">
+    <div className="p-5 space-y-6 animate-fade-up">
       {/* Summary */}
-      <div className="rounded-xl bg-blue-50 border border-blue-100 p-4">
+      <div className="rounded-xl bg-blue-50 border border-blue-100 p-4 animate-fade-up delay-50">
         <p className="text-xs font-semibold text-blue-500 uppercase tracking-wide mb-1">AI Summary</p>
         <p className="text-sm text-gray-800 dark:text-gray-100 leading-relaxed">{analysis.summary}</p>
       </div>
 
       {/* Confidence */}
       {analysis.confidence != null && (
-        <ConfidenceBar value={analysis.confidence} />
+        <div className="animate-fade-up delay-100">
+          <ConfidenceBar value={analysis.confidence} />
+        </div>
       )}
 
       {/* Classification grid */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
+        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm animate-fade-up delay-100">
           <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Detected Category</p>
           <Badge
             label={analysis.category}
@@ -164,7 +166,7 @@ export default function AIAnalysisPanel({ ticketId }) {
           />
         </div>
 
-        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
+        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm animate-fade-up delay-150">
           <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Suggested Priority</p>
           <Badge
             label={analysis.priority}
@@ -172,7 +174,7 @@ export default function AIAnalysisPanel({ ticketId }) {
           />
         </div>
 
-        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
+        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm animate-fade-up delay-200">
           <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Customer Sentiment</p>
           <Badge
             label={analysis.sentiment}
@@ -180,7 +182,7 @@ export default function AIAnalysisPanel({ ticketId }) {
           />
         </div>
 
-        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
+        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm animate-fade-up delay-250">
           <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">Recommended Team</p>
           <Badge
             label={analysis.recommended_team}

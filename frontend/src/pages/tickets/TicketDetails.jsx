@@ -181,13 +181,19 @@ export default function TicketDetails() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
+              className={`relative px-4 py-2 text-sm font-medium border-b-2 transition ${
                 activeTab === tab
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-200'
               }`}
             >
               {tab}
+              {tab === 'AI Analysis' && (ticket.ai_processing_status === 'PENDING' || ticket.ai_processing_status === 'PROCESSING') && (
+                <span className="absolute top-1.5 right-1 w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+              )}
+              {tab === 'AI Analysis' && ticket.ai_processing_status === 'COMPLETED' && activeTab !== 'AI Analysis' && (
+                <span className="absolute top-1.5 right-1 w-2 h-2 rounded-full bg-green-500" />
+              )}
             </button>
           ))}
         </div>
@@ -195,6 +201,7 @@ export default function TicketDetails() {
 
       {/* Tab content */}
       <div className="max-w-5xl mx-auto px-6 py-6">
+        <div key={activeTab} className="animate-fade-up">
         {activeTab === 'Overview' && (
           <div className="grid grid-cols-3 gap-6">
             {/* Main content */}
@@ -253,6 +260,35 @@ export default function TicketDetails() {
                     <dd className="text-gray-700 dark:text-gray-200">{formatDate(ticket.updated_at)}</dd>
                   </div>
                 </dl>
+              </div>
+
+              {/* AI Status mini-card */}
+              <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
+                <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">AI Analysis</h3>
+                {(ticket.ai_processing_status === 'PENDING' || ticket.ai_processing_status === 'PROCESSING') && (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded-full border-2 border-blue-500 border-t-transparent animate-spin shrink-0" />
+                    <span className="text-xs text-blue-600 font-medium">Analyzing…</span>
+                  </div>
+                )}
+                {ticket.ai_processing_status === 'COMPLETED' && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-green-500" />
+                      <span className="text-xs text-green-700 font-medium">Analysis complete</span>
+                    </div>
+                    {ticket.ai_category && <p className="text-xs text-gray-500 dark:text-gray-400">Category: <span className="font-medium text-gray-700 dark:text-gray-200">{ticket.ai_category}</span></p>}
+                    {ticket.ai_sentiment && <p className="text-xs text-gray-500 dark:text-gray-400">Sentiment: <span className="font-medium text-gray-700 dark:text-gray-200">{ticket.ai_sentiment}</span></p>}
+                    {ticket.ai_team && <p className="text-xs text-gray-500 dark:text-gray-400">Team: <span className="font-medium text-gray-700 dark:text-gray-200">{ticket.ai_team}</span></p>}
+                    <button onClick={() => setActiveTab('AI Analysis')} className="text-xs text-blue-600 hover:underline">View full analysis →</button>
+                  </div>
+                )}
+                {ticket.ai_processing_status === 'FAILED' && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-red-600">⚠ Failed —</span>
+                    <button onClick={() => setActiveTab('AI Analysis')} className="text-xs text-blue-600 hover:underline">Retry</button>
+                  </div>
+                )}
               </div>
 
               {/* Admin assignment */}
@@ -321,6 +357,7 @@ export default function TicketDetails() {
             />
           </div>
         )}
+        </div>
       </div>
 
       {toast && (

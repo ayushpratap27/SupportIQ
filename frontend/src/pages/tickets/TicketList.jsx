@@ -125,16 +125,18 @@ function TicketList() {
                     <th className="px-4 py-3">Customer</th>
                     <th className="px-4 py-3">Priority</th>
                     <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">AI</th>
                     <th className="px-4 py-3">Assigned To</th>
                     <th className="px-4 py-3">Created</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {tickets.map((t) => (
+                  {tickets.map((t, i) => (
                     <tr
                       key={t.id}
                       onClick={() => navigate(`/tickets/${t.id}`)}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition"
+                      style={{ animationDelay: `${i * 30}ms` }}
+                      className="hover:bg-gray-50 dark:bg-gray-900 cursor-pointer transition-colors animate-fade-up opacity-0 [animation-fill-mode:both]"
                     >
                       <td className="px-4 py-3 font-mono text-xs text-blue-600 font-medium">{t.ticket_number}</td>
                       <td className="px-4 py-3 max-w-[200px] truncate text-gray-800 dark:text-gray-100 font-medium">{t.subject}</td>
@@ -144,6 +146,20 @@ function TicketList() {
                       </td>
                       <td className="px-4 py-3"><PriorityBadge priority={t.priority} /></td>
                       <td className="px-4 py-3"><StatusBadge status={t.status} /></td>
+                      <td className="px-4 py-3">
+                        {t.ai_processing_status === 'COMPLETED' && (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-full px-2 py-0.5">✓ Done</span>
+                        )}
+                        {(t.ai_processing_status === 'PENDING' || t.ai_processing_status === 'PROCESSING') && (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                            AI…
+                          </span>
+                        )}
+                        {t.ai_processing_status === 'FAILED' && (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-full px-2 py-0.5">✗ Failed</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-gray-500 dark:text-gray-400 dark:text-gray-500 text-xs">{t.assignee?.name ?? '—'}</td>
                       <td className="px-4 py-3 text-gray-400 dark:text-gray-500 text-xs">{formatDate(t.created_at)}</td>
                     </tr>

@@ -13,13 +13,15 @@ type CreateTicketRequest struct {
 	Description   string `json:"description"   binding:"required"`
 	CustomerName  string `json:"customerName"  binding:"required"`
 	CustomerEmail string `json:"customerEmail" binding:"required,email"`
+	Priority      string `json:"priority"      binding:"omitempty,oneof=LOW MEDIUM HIGH URGENT"`
+	Category      string `json:"category"      binding:"omitempty"`
 }
 
 type UpdateTicketRequest struct {
 	Subject       string `json:"subject"       binding:"omitempty,min=5,max=150"`
 	Description   string `json:"description"   binding:"omitempty"`
 	Priority      string `json:"priority"      binding:"omitempty,oneof=LOW MEDIUM HIGH URGENT"`
-	Category      string `json:"category"      binding:"omitempty,oneof=GENERAL"`
+	Category      string `json:"category"      binding:"omitempty"`
 	CustomerName  string `json:"customerName"  binding:"omitempty"`
 	CustomerEmail string `json:"customerEmail" binding:"omitempty,email"`
 }

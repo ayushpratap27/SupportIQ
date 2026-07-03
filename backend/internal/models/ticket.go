@@ -76,7 +76,7 @@ const (
 type Ticket struct {
 	TenantID      uuid.UUID      `gorm:"type:uuid;not null;default:'00000000-0000-0000-0000-000000000000';index:idx_ticket_tenant_status;index:idx_ticket_tenant_created" json:"tenant_id"`
 	ID            uuid.UUID      `gorm:"type:uuid;primarykey"                            json:"id"`
-	TicketNumber  string         `gorm:"type:varchar(20);uniqueIndex;not null"           json:"ticket_number"`
+	TicketNumber  string         `gorm:"type:varchar(20);not null"                       json:"ticket_number"`
 	Subject       string         `gorm:"type:varchar(150);not null"                      json:"subject"`
 	Description   string         `gorm:"type:text;not null"                              json:"description"`
 	Status        TicketStatus   `gorm:"type:varchar(20);not null;default:'OPEN';index:idx_ticket_tenant_status"  json:"status"`

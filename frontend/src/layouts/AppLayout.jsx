@@ -18,8 +18,13 @@ export default function AppLayout() {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
       <Sidebar />
-      <div className="flex-1 min-w-0 overflow-y-auto">
-        <Outlet />
+      <div className="flex-1 min-w-0 overflow-auto">
+        <div className="fixed top-3 right-4 z-50">
+          <DarkModeToggle />
+        </div>
+        <div className="animate-fade-up">
+          <Outlet />
+        </div>
       </div>
     </div>
   )
