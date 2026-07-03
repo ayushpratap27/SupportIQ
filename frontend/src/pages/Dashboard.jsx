@@ -19,11 +19,11 @@ const ACTIVITY_ICON = {
   TICKET_CLOSED: '✅',
 }
 
-function StatCard({ label, value, color, to }) {
+function StatCard({ label, value, accent, to }) {
   const inner = (
-    <div className={`rounded-xl border p-4 ${color}`}>
-      <p className="text-2xl font-bold">{value === null ? '…' : value}</p>
-      <p className="text-xs font-medium mt-1 opacity-80">{label}</p>
+    <div className="rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm p-4 hover:bg-white/10 transition-colors">
+      <p className={`text-2xl font-bold ${accent}`}>{value === null ? '…' : value}</p>
+      <p className="text-xs font-medium mt-1 text-gray-400">{label}</p>
     </div>
   )
   return to ? <Link to={to}>{inner}</Link> : inner
@@ -74,13 +74,13 @@ export default function Dashboard() {
         <div>
           <h2 className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">Overview</h2>
           <div className="grid grid-cols-7 gap-3">
-            <StatCard label="Total"       value={stats.total}      color="bg-blue-50   text-blue-700   border-blue-100"   to="/tickets" />
-            <StatCard label="My Tickets"  value={stats.myTickets}  color="bg-purple-50 text-purple-700 border-purple-100" to="/my-tickets" />
-            <StatCard label="Open"        value={stats.open}       color="bg-amber-50  text-amber-700  border-amber-100"  />
-            <StatCard label="Unassigned"  value={stats.unassigned} color="bg-red-50    text-red-600    border-red-100"    to="/tickets/unassigned" />
-            <StatCard label="In Progress" value={stats.inProgress} color="bg-violet-50 text-violet-700 border-violet-100" />
-            <StatCard label="Resolved"    value={stats.resolved}   color="bg-green-50  text-green-700  border-green-100"  />
-            <StatCard label="Closed"      value={stats.closed}     color="bg-gray-50 dark:bg-gray-900   text-gray-600 dark:text-gray-300 dark:text-gray-600   border-gray-100 dark:border-gray-700"   />
+            <StatCard label="Total"       value={stats.total}      accent="text-blue-400"   to="/tickets" />
+            <StatCard label="My Tickets"  value={stats.myTickets}  accent="text-violet-400" to="/my-tickets" />
+            <StatCard label="Open"        value={stats.open}       accent="text-amber-400"  />
+            <StatCard label="Unassigned"  value={stats.unassigned} accent="text-red-400"    to="/tickets/unassigned" />
+            <StatCard label="In Progress" value={stats.inProgress} accent="text-sky-400"    />
+            <StatCard label="Resolved"    value={stats.resolved}   accent="text-green-400"  />
+            <StatCard label="Closed"      value={stats.closed}     accent="text-gray-300"   />
           </div>
         </div>
 
