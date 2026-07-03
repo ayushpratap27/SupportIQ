@@ -20,6 +20,7 @@ import AIInsights from '../pages/analytics/AIInsights'
 import AgentPerformance from '../pages/analytics/AgentPerformance'
 import QueueMonitoring from '../pages/analytics/QueueMonitoring'
 import Reports from '../pages/analytics/Reports'
+import Integrations from '../pages/Integrations'
 
 function AppRoutes() {
   return (
@@ -48,6 +49,7 @@ function AppRoutes() {
         <Route path="/tickets/new" element={<CreateTicket />} />
         <Route path="/tickets/:id" element={<TicketDetails />} />
         <Route path="/tickets/:id/edit" element={<EditTicket />} />
+        <Route path="/integrations" element={<Integrations />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -29,6 +29,13 @@ const (
 	JobTypeOutboundEmail JobType = "OUTBOUND_EMAIL"
 	JobTypeEmailRetry    JobType = "EMAIL_RETRY"
 	JobTypeMailboxSync   JobType = "MAILBOX_SYNC"
+
+	// Integration job types
+	JobTypeIntegrationEvent JobType = "INTEGRATION_EVENT"
+	JobTypeJiraSync         JobType = "JIRA_SYNC"
+	JobTypeWebhook          JobType = "WEBHOOK_DELIVERY"
+	JobTypeCRMSync          JobType = "CRM_SYNC"
+	JobTypeCalendarSync     JobType = "CALENDAR_SYNC"
 )
 
 // BackgroundJob tracks every async job in PostgreSQL for monitoring and auditing.

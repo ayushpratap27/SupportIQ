@@ -42,6 +42,10 @@ type Config struct {
 	MetricsRefreshInterval int    // seconds for scheduler interval (default 3600)
 	AggregationInterval    int    // alias for MetricsRefreshInterval
 	ReportStoragePath      string // directory for report files (default ./storage/reports)
+
+	// Integration configuration
+	IntegrationPollInterval int // seconds between integration event polls (default 30)
+	WebhookSecret           string
 }
 
 // Load reads environment variables (from .env in development) and returns a Config.
@@ -176,6 +180,16 @@ func Load() (*Config, error) {
 	}
 	cfg.AggregationInterval = cfg.MetricsRefreshInterval
 	cfg.ReportStoragePath = getEnv("REPORT_STORAGE_PATH", "./storage/reports")
+
+	if v := getEnv("INTEGRATION_POLL_INTERVAL", ""); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			cfg.IntegrationPollInterval = n
+		}
+	}
+	if cfg.IntegrationPollInterval == 0 {
+		cfg.IntegrationPollInterval = 30
+	}
+	cfg.WebhookSecret = getEnv("WEBHOOK_SECRET", "")
 
 	return cfg, nil
 }

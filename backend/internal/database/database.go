@@ -47,6 +47,9 @@ func Connect(cfg *config.Config) (*gorm.DB, error) {
 		&models.AgentMetrics{},
 		&models.AIMetrics{},
 		&models.Report{},
+		&models.Integration{},
+		&models.IntegrationEvent{},
+		&models.TicketIntegration{},
 	); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}

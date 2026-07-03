@@ -16,6 +16,7 @@ import (
 	emailworkers "github.com/ayush/supportiq/internal/email/workers"
 	"github.com/ayush/supportiq/internal/email/threading"
 	"github.com/ayush/supportiq/internal/handlers"
+	integrationspkg "github.com/ayush/supportiq/internal/integrations"
 	"github.com/ayush/supportiq/internal/knowledge/retrieval"
 	jwtpkg "github.com/ayush/supportiq/internal/jwt"
 	"github.com/ayush/supportiq/internal/middleware"
@@ -294,6 +295,32 @@ func SetupRouter(db *gorm.DB, cfg *config.Config) *gin.Engine {
 					middleware.RequireRole(models.RoleAdmin),
 					analyticsHandler.TriggerAggregation)
 			}
+
+			// Enterprise Integrations (admin only)
+			integrationRepo     := repositories.NewIntegrationRepository(db)
+			integrationRegistry := integrationspkg.NewRegistry()
+			integrationSvc      := services.NewIntegrationService(integrationRepo, ticketRepo, integrationRegistry, cfg.JWTAccessSecret)
+			integrationHandler  := handlers.NewIntegrationHandler(integrationSvc)
+
+			// Start integration background worker
+			integrationWorker := integrationspkg.NewWorker(integrationRepo, ticketRepo, integrationRegistry, cfg.JWTAccessSecret)
+			go integrationWorker.Start(context.Background())
+
+			intGroup := protected.Group("/integrations", middleware.RequireRole(models.RoleAdmin))
+			{
+				intGroup.GET("",          integrationHandler.List)
+				intGroup.POST("",         integrationHandler.Create)
+				intGroup.PUT("/:id",      integrationHandler.Update)
+				intGroup.DELETE("/:id",   integrationHandler.Delete)
+				intGroup.POST("/:id/test",   integrationHandler.TestConnection)
+				intGroup.GET("/:id/events",  integrationHandler.ListEvents)
+			}
+
+			// Ticket integration routes (all authenticated users)
+			tickets.GET("/:id/integrations",       integrationHandler.GetTicketIntegrations)
+			tickets.POST("/:id/create-jira",        integrationHandler.CreateJiraIssue)
+			tickets.POST("/:id/create-linear",      integrationHandler.CreateLinearIssue)
+			tickets.POST("/:id/create-github-issue", integrationHandler.CreateGitHubIssue)
 		}
 	}
 

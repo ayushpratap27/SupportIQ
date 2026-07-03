@@ -93,6 +93,7 @@ export default function Dashboard() {
               <Link to="/analytics/agents" className="text-sm text-green-700 font-medium hover:underline">Agent Performance</Link>
               <Link to="/analytics/queues" className="text-sm text-yellow-700 font-medium hover:underline">Queue Monitor</Link>
               <Link to="/analytics/reports" className="text-sm text-gray-700 font-medium hover:underline">Reports</Link>
+              <Link to="/integrations" className="text-sm text-indigo-700 font-medium hover:underline">Integrations</Link>
             </>
           )}
           {user?.role === 'SupportAgent' && (
