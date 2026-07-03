@@ -59,8 +59,8 @@ function TicketList() {
   return (
     <>
       <Toast toast={toast} />
-      <main className="max-w-7xl mx-auto px-6 py-6">
-        <div className="flex items-center justify-between mb-4">
+      <main className="max-w-6xl mx-auto px-6 py-6 space-y-4">
+        <div className="flex items-center justify-between">
           <h1 className="font-bold text-gray-800 dark:text-gray-100 text-lg">All Tickets</h1>
           <Link
             to="/tickets/new"
@@ -70,7 +70,7 @@ function TicketList() {
           </Link>
         </div>
         {/* Filters */}
-        <div className="flex flex-wrap gap-3 items-center mb-4">
+        <div className="flex flex-wrap gap-3">
           <form onSubmit={handleSearchSubmit} className="flex gap-2">
             <input
               value={search}
@@ -110,11 +110,11 @@ function TicketList() {
         </div>
 
         {/* Table */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+        <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
           {loading ? (
-            <div className="py-16 text-center text-sm text-gray-400 dark:text-gray-500 animate-pulse">Loading tickets…</div>
+            <p className="p-6 text-sm text-gray-400 dark:text-gray-500 animate-pulse text-center">Loading…</p>
           ) : tickets.length === 0 ? (
-            <div className="py-16 text-center text-sm text-gray-400 dark:text-gray-500">No tickets found.</div>
+            <p className="p-6 text-sm text-gray-400 dark:text-gray-500 text-center">No tickets found.</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -156,25 +156,22 @@ function TicketList() {
 
         {/* Pagination */}
         {meta.total_pages > 1 && (
-          <div className="mt-4 flex items-center justify-between text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500">
-            <span>{meta.total_count} total tickets</span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:bg-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition"
-              >
-                ← Prev
-              </button>
-              <span className="px-2">Page {page} of {meta.total_pages}</span>
-              <button
-                onClick={() => setPage((p) => Math.min(meta.total_pages, p + 1))}
-                disabled={page === meta.total_pages}
-                className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:bg-gray-900 disabled:opacity-40 disabled:cursor-not-allowed transition"
-              >
-                Next →
-              </button>
-            </div>
+          <div className="flex items-center justify-between">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 transition"
+            >
+              ← Prev
+            </button>
+            <span className="text-sm text-gray-400 dark:text-gray-500">Page {page} of {meta.total_pages}</span>
+            <button
+              onClick={() => setPage((p) => Math.min(meta.total_pages, p + 1))}
+              disabled={page === meta.total_pages}
+              className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 transition"
+            >
+              Next →
+            </button>
           </div>
         )}
       </main>
