@@ -201,7 +201,7 @@ export default function TicketDetails() {
             <div className="col-span-2 space-y-4">
               <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
                 <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">Description</h3>
-                <p className="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap">{ticket.description}</p>
+                <p className="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap break-words">{ticket.description}</p>
               </div>
 
               <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
