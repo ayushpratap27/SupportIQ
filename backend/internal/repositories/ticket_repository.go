@@ -185,7 +185,13 @@ func (r *TicketRepository) FindTeamTickets(tenantID uuid.UUID, userID uint, team
 	base := r.db.Model(&models.Ticket{}).
 		Preload("Creator").Preload("Assignee").
 		Where("tenant_id = ? AND deleted_at IS NULL", tenantID).
-		Where("assigned_to = ? OR (ai_team = ? AND assigned_to IS NULL)", userID, teamName)
+		Where(`
+			assigned_to = ?
+			OR (ai_team = ? AND assigned_to IS NULL)
+			OR assigned_to IN (
+				SELECT id FROM users WHERE tenant_id = ? AND team = ? AND is_active = true
+			)
+		`, userID, teamName, tenantID, teamName)
 
 	if q.Status != "" {
 		base = base.Where("status = ?", q.Status)

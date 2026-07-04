@@ -25,7 +25,11 @@ export default function AgentQueue() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    const interval = setInterval(load, 15000)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleStatus = async (ticketId, nextStatus) => {
     setUpdating(ticketId)

@@ -25,6 +25,12 @@ export default function AgentDashboard() {
       .then((res) => setMyTickets(res.data.data?.items || []))
       .catch(() => {})
       .finally(() => setLoading(false))
+    const interval = setInterval(() => {
+      ticketService.getTeamTickets({ limit: 50 })
+        .then((res) => setMyTickets(res.data.data?.items || []))
+        .catch(() => {})
+    }, 15000)
+    return () => clearInterval(interval)
   }, [])
 
   const open       = myTickets.filter((t) => t.status === 'OPEN').length
