@@ -45,7 +45,7 @@ export default function UnassignedTickets() {
   return (
     <main className="max-w-6xl mx-auto px-6 py-6">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="font-bold text-gray-800 dark:text-gray-100 text-lg">Unassigned Tickets</h1>
+        <h1 className="font-bold text-gray-800 dark:text-gray-100 text-xl">Unassigned Tickets</h1>
         <div className="flex items-center gap-3">
           {message && (
             <span className={`text-xs font-medium px-2 py-1 rounded-full ${

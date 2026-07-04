@@ -49,12 +49,10 @@ export default function MyTickets() {
 
   return (
     <main className="max-w-6xl mx-auto px-6 py-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="font-bold text-gray-800 dark:text-gray-100 text-lg">My Tickets</h1>
-        <span className="text-xs text-gray-400 dark:text-gray-500">{total} ticket{total !== 1 ? 's' : ''}</span>
-      </div>
-        {/* Filters */}
-        <div className="flex flex-wrap gap-3">
+      <h1 className="font-bold text-gray-800 dark:text-gray-100 text-xl">My Tickets</h1>
+        {/* Filters + count */}
+        <div className="flex flex-wrap gap-3 items-center justify-between">
+          <div className="flex flex-wrap gap-3 items-center">
           <form onSubmit={handleSearch} className="flex gap-2">
             <input
               value={searchInput}
@@ -92,6 +90,8 @@ export default function MyTickets() {
               Clear
             </button>
           )}
+          </div>
+          <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">{total} ticket{total !== 1 ? 's' : ''}</span>
         </div>
 
         {/* Table */}

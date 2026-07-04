@@ -60,18 +60,11 @@ function TicketList() {
     <>
       <Toast toast={toast} />
       <main className="max-w-7xl mx-auto px-6 py-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="font-bold text-gray-800 dark:text-gray-100 text-lg">All Tickets</h1>
-          <Link
-            to="/tickets/new"
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
-          >
-            + New Ticket
-          </Link>
-        </div>
-        {/* Filters */}
-        <div className="flex flex-wrap gap-3 items-center mb-4">
-          <form onSubmit={handleSearchSubmit} className="flex gap-2">
+        <h1 className="font-bold text-gray-800 dark:text-gray-100 text-xl mb-4">All Tickets</h1>
+        {/* Filters + Action */}
+        <div className="flex flex-wrap gap-3 items-center justify-between mb-4">
+          <div className="flex flex-wrap gap-3 items-center">
+            <form onSubmit={handleSearchSubmit} className="flex gap-2 items-center">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -107,6 +100,13 @@ function TicketList() {
               Clear
             </button>
           )}
+          </div>
+          <Link
+            to="/tickets/new"
+            className="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition shrink-0 self-center"
+          >
+            + New Ticket
+          </Link>
         </div>
 
         {/* Table */}

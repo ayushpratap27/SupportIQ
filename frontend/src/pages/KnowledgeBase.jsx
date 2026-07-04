@@ -194,10 +194,10 @@ export default function KnowledgeBase() {
   return (
     <div className="max-w-6xl mx-auto px-6 py-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="font-bold text-gray-800 dark:text-gray-100 text-lg">Knowledge Base</h1>
+        <h1 className="font-bold text-gray-800 dark:text-gray-100 text-xl">Knowledge Base</h1>
         <button
           onClick={() => setShowModal(true)}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition"
+          className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition"
         >
           + Add Document
         </button>
