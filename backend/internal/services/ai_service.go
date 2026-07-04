@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/ayush/supportiq/internal/ai/provider"
@@ -17,6 +18,7 @@ import (
 type AIService struct {
 	provider     provider.Provider
 	ticketRepo   *repositories.TicketRepository
+	userRepo     *repositories.UserRepository
 	activityRepo *repositories.ActivityRepository
 	replySvc     *ReplyService // optional; set via SetReplyService after construction
 }
@@ -28,6 +30,8 @@ func NewAIService(
 ) *AIService {
 	return &AIService{provider: p, ticketRepo: ticketRepo, activityRepo: activityRepo}
 }
+
+func (s *AIService) SetUserRepo(ur *repositories.UserRepository) { s.userRepo = ur }
 
 // SetReplyService injects the reply service so AI analysis can trigger automatic
 // reply generation on completion. Called after both services are constructed
@@ -113,6 +117,29 @@ func (s *AIService) run(ticketID uuid.UUID) {
 		WithField("priority", result.Priority).
 		WithField("confidence", result.Confidence).
 		Info("AI: Analysis completed successfully")
+
+	// Auto-assign to a SupportAgent (or Admin as fallback) if ticket is still unassigned
+	if ticket.AssignedTo == nil && s.userRepo != nil {
+		var assignee *models.User
+		if agents, err := s.userRepo.ListByRole(ticket.TenantID, models.RoleSupportAgent); err == nil && len(agents) > 0 {
+			assignee = &agents[0]
+		} else if admins, err := s.userRepo.ListByRole(ticket.TenantID, models.RoleAdmin); err == nil && len(admins) > 0 {
+			assignee = &admins[0]
+		}
+		if assignee != nil {
+			ticket.AssignedTo = &assignee.ID
+			_ = s.ticketRepo.Update(ticket)
+			_ = s.activityRepo.Create(&models.TicketActivity{
+				TenantID:     ticket.TenantID,
+				TicketID:     ticketID,
+				UserID:       ticket.CreatedBy,
+				ActivityType: models.ActivityAssignTicket,
+				NewValue:     assignee.Name,
+				Description:  fmt.Sprintf("Auto-assigned to %s (AI team: %s)", assignee.Name, result.RecommendedTeam),
+			})
+			log.WithField("agent", assignee.Name).Info("AI: Ticket auto-assigned")
+		}
+	}
 
 	// Automatically trigger reply generation now that we have AI context
 	if s.replySvc != nil {

@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -86,10 +87,18 @@ func (r *TicketRepository) SoftDelete(tenantID uuid.UUID, id uuid.UUID) error {
 
 // UpdateAIFields persists only the AI analysis columns.
 func (r *TicketRepository) UpdateAIFields(t *models.Ticket) error {
-	return r.db.Model(t).
-		Select("AICategory", "AIPriority", "AISentiment", "AITeam",
-			"AIConfidence", "AISummary", "AITags", "AIProcessingStatus", "ProcessedAt").
-		Updates(t).Error
+	tagsJSON, _ := json.Marshal(t.AITags)
+	return r.db.Model(t).Updates(map[string]interface{}{
+		"ai_category":          t.AICategory,
+		"ai_priority":          t.AIPriority,
+		"ai_sentiment":         t.AISentiment,
+		"ai_team":              t.AITeam,
+		"ai_confidence":        t.AIConfidence,
+		"ai_summary":           t.AISummary,
+		"ai_tags":              string(tagsJSON),
+		"ai_processing_status": t.AIProcessingStatus,
+		"processed_at":         t.ProcessedAt,
+	}).Error
 }
 
 // UpdateSLAFields persists only the SLA-related columns.
