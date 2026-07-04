@@ -1,7 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import Sidebar from '../components/Sidebar'
-import DarkModeToggle from '../components/DarkModeToggle'
 
 export default function AppLayout() {
   const { user, loading } = useAuth()
@@ -20,12 +19,7 @@ export default function AppLayout() {
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
       <Sidebar />
       <div className="flex-1 min-w-0 overflow-auto">
-        <div className="fixed top-3 right-4 z-50">
-          <DarkModeToggle />
-        </div>
-        <div className="animate-fade-up">
-          <Outlet />
-        </div>
+        <Outlet />
       </div>
     </div>
   )
