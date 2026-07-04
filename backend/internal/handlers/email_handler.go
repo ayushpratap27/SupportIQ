@@ -119,7 +119,7 @@ func (h *EmailHandler) Monitor(c *gin.Context) {
 
 // Sync handles POST /api/v1/email/sync — triggers an immediate mailbox poll
 func (h *EmailHandler) Sync(c *gin.Context) {
-	// The inbound worker will handle it; here we just signal immediately
+	go h.emailSvc.SyncNow(c.Request.Context())
 	utils.SendSuccess(c, http.StatusAccepted, "Mailbox sync triggered", nil)
 }
 

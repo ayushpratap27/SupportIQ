@@ -12,6 +12,7 @@ type CommentType string
 const (
 	CommentTypePublic   CommentType = "PUBLIC"
 	CommentTypeInternal CommentType = "INTERNAL"
+	CommentTypeCustomer CommentType = "CUSTOMER" // sent by customer via portal
 )
 
 // TicketComment stores communication history attached to a ticket.

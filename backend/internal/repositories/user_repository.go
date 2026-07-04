@@ -34,6 +34,18 @@ func (r *UserRepository) ListByRole(tenantID uuid.UUID, role models.Role) ([]mod
 	return users, nil
 }
 
+// ListByTeam returns active users belonging to a specific team within a tenant.
+// SupportAgents are returned before Admins so proper agents are preferred.
+func (r *UserRepository) ListByTeam(tenantID uuid.UUID, team string) ([]models.User, error) {
+	var users []models.User
+	if err := r.db.Where("tenant_id = ? AND team = ? AND is_active = true", tenantID, team).
+		Order("CASE WHEN role = 'SupportAgent' THEN 0 ELSE 1 END, id").
+		Find(&users).Error; err != nil {
+		return nil, err
+	}
+	return users, nil
+}
+
 // FindByEmail looks up a user by email within a tenant.
 func (r *UserRepository) FindByEmail(tenantID uuid.UUID, email string) (*models.User, error) {
 	var user models.User

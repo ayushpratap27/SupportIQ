@@ -11,12 +11,13 @@ type RelevantDocument struct {
 
 // ReplyRequest is the input to the AI reply provider.
 type ReplyRequest struct {
-	Subject     string
-	Description string
-	Category    string
-	Priority    string
-	Sentiment   string
-	Documents   []RelevantDocument
+	Subject      string
+	Description  string
+	Category     string
+	Priority     string
+	Sentiment    string
+	Documents    []RelevantDocument
+	CustomPrompt string // if non-empty, overrides the standard prompt builder
 }
 
 // ReplyResult is the parsed, validated AI reply output.

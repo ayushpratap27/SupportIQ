@@ -29,6 +29,7 @@ import AgentDashboard from '../pages/agent/AgentDashboard'
 import AgentQueue from '../pages/agent/AgentQueue'
 import AgentAvailable from '../pages/agent/AgentAvailable'
 import AgentTicketDetail from '../pages/agent/AgentTicketDetail'
+import CustomerPortal from '../pages/CustomerPortal'
 
 function AppRoutes() {
   return (
@@ -40,6 +41,7 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/agent-register" element={<AgentRegister />} />
+      <Route path="/portal" element={<CustomerPortal />} />
 
       {/* Agent portal — only accessible to SupportAgent role */}
       <Route element={<AgentLayout />}>
@@ -48,6 +50,9 @@ function AppRoutes() {
         <Route path="/agent/available" element={<AgentAvailable />} />
         <Route path="/agent/tickets/:id" element={<AgentTicketDetail />} />
       </Route>
+
+      {/* Customer portal — no auth wrapper, magic-link token only */}
+      <Route path="/portal" element={<CustomerPortal />} />
 
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />

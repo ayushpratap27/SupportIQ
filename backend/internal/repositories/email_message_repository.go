@@ -87,6 +87,16 @@ func (r *EmailMessageRepository) FindQueued(limit int) ([]models.EmailMessage, e
 	return msgs, err
 }
 
+// HasOutboundForTicket returns true if an outbound email already exists (QUEUED or SENT)
+// for the given ticket. Used to prevent sending duplicate auto-replies.
+func (r *EmailMessageRepository) HasOutboundForTicket(ticketID uuid.UUID) bool {
+	var count int64
+	r.db.Model(&models.EmailMessage{}).
+		Where("ticket_id = ? AND direction = 'OUTBOUND' AND status IN ('QUEUED','SENT')", ticketID).
+		Count(&count)
+	return count > 0
+}
+
 // FindFailedRetryable returns outbound messages in FAILED status with retries below max.
 func (r *EmailMessageRepository) FindFailedRetryable(maxRetries int) ([]models.EmailMessage, error) {
 	var msgs []models.EmailMessage
@@ -134,13 +144,14 @@ func (r *EmailMessageRepository) CountSentToday() (int64, error) {
 		Count(&count).Error
 	return count, err
 }
+
 // CountReceivedToday returns inbound RECEIVED messages created today.
 func (r *EmailMessageRepository) CountReceivedToday() (int64, error) {
-        var count int64
-        now := time.Now().UTC()
-        today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-        err := r.db.Model(&models.EmailMessage{}).
-                Where("direction = 'INBOUND' AND status = 'RECEIVED' AND created_at >= ?", today).
-                Count(&count).Error
-        return count, err
+	var count int64
+	now := time.Now().UTC()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	err := r.db.Model(&models.EmailMessage{}).
+		Where("direction = 'INBOUND' AND status = 'RECEIVED' AND created_at >= ?", today).
+		Count(&count).Error
+	return count, err
 }

@@ -21,11 +21,16 @@ Required JSON structure (use EXACTLY these field names and allowed values):
   "category": "<one of: Payment, Authentication, Technical Issue, Refund, Account, Subscription, General>",
   "priority": "<one of: Low, Medium, High, Urgent>",
   "sentiment": "<one of: Positive, Neutral, Frustrated, Angry, Confused>",
-  "recommended_team": "<one of: Finance, Support, Engineering, Sales, Security>",
+  "recommended_team": "<MUST be exactly one of: Finance, Engineering — Finance for payment/billing/subscription/refund issues; Engineering for technical/bug/app/login issues>",
   "confidence": <integer between 0 and 100>,
   "summary": "<single sentence describing the customer's issue>",
   "tags": ["<lowercase tag>", "<lowercase tag>", "<lowercase tag>"]
 }
+
+Team routing rules (follow strictly):
+- Finance team: payment, billing, refund, subscription, amount, transaction, charge, invoice, money
+- Engineering team: technical issue, bug, crash, login, app, error, not working, feature, performance
+- When in doubt, default to Engineering.
 
 Rules:
 - Output ONLY the JSON object. Nothing before or after it.

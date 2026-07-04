@@ -48,6 +48,9 @@ type Config struct {
 	// Integration configuration
 	IntegrationPollInterval int // seconds between integration event polls (default 30)
 	WebhookSecret           string
+
+	// Portal configuration
+	AppURL string // base URL for the frontend app (used in magic-link portal emails)
 }
 
 // Load reads environment variables (from .env in development) and returns a Config.
@@ -114,9 +117,10 @@ func Load() (*Config, error) {
 		cfg.ReplyTemperature = 0.3
 	}
 
-	cfg.RedisURL        = getEnv("REDIS_URL", "")
+	cfg.RedisURL = getEnv("REDIS_URL", "")
 	cfg.WebSocketOrigin = getEnv("WEBSOCKET_ORIGIN", "http://localhost:5173")
-	cfg.QueueName       = getEnv("QUEUE_NAME", "ai_jobs")
+	cfg.AppURL = getEnv("APP_URL", "http://localhost:5173")
+	cfg.QueueName = getEnv("QUEUE_NAME", "ai_jobs")
 
 	if v := getEnv("WORKER_COUNT", ""); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {

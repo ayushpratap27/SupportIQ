@@ -11,6 +11,7 @@ import (
 	emailattachments "github.com/ayush/supportiq/internal/email/attachments"
 	emailproviders "github.com/ayush/supportiq/internal/email/providers"
 	"github.com/ayush/supportiq/internal/email/threading"
+	jwtpkg "github.com/ayush/supportiq/internal/jwt"
 	"github.com/ayush/supportiq/internal/models"
 	"github.com/ayush/supportiq/internal/repositories"
 	"github.com/ayush/supportiq/internal/utils"
@@ -20,16 +21,18 @@ import (
 
 // EmailService handles inbound processing, outbound queuing, and ticket sync.
 type EmailService struct {
-	accountRepo  *repositories.EmailAccountRepository
-	messageRepo  *repositories.EmailMessageRepository
-	ticketRepo   *repositories.TicketRepository
-	activityRepo *repositories.ActivityRepository
-	accountSvc   *EmailAccountService
-	detector     *threading.Detector
-	storage      emailattachments.Storage
-	jobSvc       *JobService // optional — for queuing AI analysis
-	aiSvc        *AIService  // goroutine fallback
-	db           *gorm.DB
+	accountRepo   *repositories.EmailAccountRepository
+	messageRepo   *repositories.EmailMessageRepository
+	ticketRepo    *repositories.TicketRepository
+	activityRepo  *repositories.ActivityRepository
+	accountSvc    *EmailAccountService
+	detector      *threading.Detector
+	storage       emailattachments.Storage
+	jobSvc        *JobService // optional — for queuing AI analysis
+	aiSvc         *AIService  // goroutine fallback
+	db            *gorm.DB
+	portalBaseURL string // frontend URL for magic-link portal (e.g. http://localhost:5173)
+	portalSecret  string // JWT secret for signing portal tokens
 }
 
 // NewEmailService creates the email service with all dependencies.
@@ -60,6 +63,13 @@ func NewEmailService(
 // SetJobService injects the job service for Redis-backed AI analysis.
 func (s *EmailService) SetJobService(js *JobService) { s.jobSvc = js }
 
+// SetPortalConfig wires in the base URL and JWT secret used to generate
+// customer magic-link portal tokens appended to outbound reply emails.
+func (s *EmailService) SetPortalConfig(baseURL, secret string) {
+	s.portalBaseURL = baseURL
+	s.portalSecret = secret
+}
+
 // ── Inbound ───────────────────────────────────────────────────────────────────
 
 // ProcessInbound processes one parsed inbound email: detects/creates a ticket,
@@ -79,7 +89,9 @@ func (s *EmailService) ProcessInbound(ctx context.Context, account *models.Email
 		return fmt.Errorf("email: thread detect: %w", err)
 	}
 
-	if ticketID == uuid.Nil {
+	isNewTicket := ticketID == uuid.Nil
+
+	if isNewTicket {
 		// New conversation — create ticket
 		ticket, err := s.createTicketFromEmail(account, parsed)
 		if err != nil {
@@ -144,7 +156,12 @@ func (s *EmailService) ProcessInbound(ctx context.Context, account *models.Email
 			fmt.Sprintf("%d attachment(s) received", msg.AttachmentsCount))
 	}
 
-	// Trigger AI analysis (for newly created tickets only)
+	// Trigger AI analysis for newly created tickets:
+	// → AI analyzes category/priority/sentiment → auto-assigns agent → generates reply → auto-sends email
+	if isNewTicket {
+		go s.TriggerAIForTicket(ticketID)
+	}
+
 	return nil
 }
 
@@ -163,21 +180,31 @@ func (s *EmailService) TriggerAIForTicket(ticketID uuid.UUID) {
 // QueueReplyForTicket creates an OUTBOUND email message with status QUEUED.
 // Called after an agent approves an AI reply.
 func (s *EmailService) QueueReplyForTicket(ctx context.Context, ticketID uuid.UUID, replyText string, userID uint) error {
-	// Find the active email account to send from
-	accounts, err := s.accountRepo.ListAllActive()
+	// Load ticket first to get the tenant ID for account lookup
+	tkt, err := s.ticketRepo.FindByIDUnscoped(ticketID)
+	if err != nil {
+		return fmt.Errorf("email: load ticket for outbound: %w", err)
+	}
+
+	// Find the active email account scoped to this ticket's tenant
+	accounts, err := s.accountRepo.ListByTenant(tkt.TenantID)
 	if err != nil || len(accounts) == 0 {
-		return nil // no email account configured — silently skip
+		utils.Logger.WithField("tenant_id", tkt.TenantID).Warn("Email: no active account for tenant — skipping outbound")
+		return nil
 	}
 	account := &accounts[0]
 	if account.SMTPHost == "" {
 		return nil
 	}
 
-	// Load ticket for customer details
-	ticket, err := s.ticketRepo.FindByIDUnscoped(ticketID)
-	if err != nil {
-		return fmt.Errorf("email: load ticket: %w", err)
+	// Guard: prevent sending duplicate auto-replies if one already exists for this ticket.
+	if s.messageRepo.HasOutboundForTicket(ticketID) {
+		utils.Logger.WithField("ticket_id", ticketID).Warn("Email: outbound already exists for ticket — skipping duplicate")
+		return nil
 	}
+
+	// Use already-loaded ticket; alias as ticket for readability
+	ticket := tkt
 
 	// Find the latest inbound message for threading headers
 	var inReplyTo, references, subject string
@@ -189,8 +216,8 @@ func (s *EmailService) QueueReplyForTicket(ctx context.Context, ticketID uuid.UU
 		subject = "Re: " + ticket.Subject
 	}
 
-	// Format the reply body
-	body := formatReplyBody(replyText, ticket)
+	// Format the reply body, appending a magic portal link if configured
+	body := formatReplyBody(replyText, ticket, s.buildPortalLink(ticketID.String(), ticket.CustomerEmail))
 
 	msg := &models.EmailMessage{
 		TicketID:   ticketID,
@@ -213,6 +240,54 @@ func (s *EmailService) QueueReplyForTicket(ctx context.Context, ticketID uuid.UU
 	s.logActivity(ticketID, userID, models.ActivityEmailQueued,
 		fmt.Sprintf("Outbound email queued to %s", ticket.CustomerEmail))
 
+	return nil
+}
+
+// QueuePortalReply is like QueueReplyForTicket but skips the duplicate-outbound
+// guard — used when the customer explicitly sends a new message via the portal.
+func (s *EmailService) QueuePortalReply(ctx context.Context, ticketID uuid.UUID, replyText string, userID uint) error {
+	tkt, err := s.ticketRepo.FindByIDUnscoped(ticketID)
+	if err != nil {
+		return fmt.Errorf("email: load ticket for portal reply: %w", err)
+	}
+	accounts, err := s.accountRepo.ListByTenant(tkt.TenantID)
+	if err != nil || len(accounts) == 0 {
+		return nil
+	}
+	account := &accounts[0]
+	if account.SMTPHost == "" {
+		return nil
+	}
+	ticket := tkt
+	var inReplyTo, references, subject string
+	if prev, err := s.messageRepo.FindLatestInboundByTicket(ticketID); err == nil {
+		inReplyTo = prev.MessageID
+		references = buildReferences(prev.References, prev.MessageID)
+		subject = "Re: " + strings.TrimPrefix(strings.TrimPrefix(prev.Subject, "Re: "), "RE: ")
+	} else {
+		subject = "Re: " + ticket.Subject
+	}
+	body := formatReplyBody(replyText, ticket, s.buildPortalLink(ticketID.String(), ticket.CustomerEmail))
+	msgID := generateEmailMessageID(account.EmailAddress)
+	msg := &models.EmailMessage{
+		TenantID:   ticket.TenantID,
+		TicketID:   ticketID,
+		AccountID:  account.ID,
+		MessageID:  msgID,
+		InReplyTo:  inReplyTo,
+		References: references,
+		Direction:  models.EmailDirectionOutbound,
+		Sender:     account.EmailAddress,
+		Recipient:  ticket.CustomerEmail,
+		Subject:    subject,
+		Body:       body,
+		Status:     models.EmailStatusQueued,
+	}
+	if err := s.messageRepo.Create(msg); err != nil {
+		return fmt.Errorf("email: queue portal reply: %w", err)
+	}
+	s.logActivity(ticketID, userID, models.ActivityEmailQueued,
+		fmt.Sprintf("Portal reply queued to %s", ticket.CustomerEmail))
 	return nil
 }
 
@@ -375,6 +450,59 @@ func (s *EmailService) GetTicketEmails(ticketID uuid.UUID) ([]dto.EmailMessageRe
 	return resp, http.StatusOK, nil
 }
 
+// ── Manual sync ───────────────────────────────────────────────────────────────
+
+// SyncNow immediately polls all active IMAP accounts for new email.
+// It mirrors the logic in StartInboundWorker so it can be triggered on demand.
+func (s *EmailService) SyncNow(ctx context.Context) {
+	accounts, err := s.accountRepo.FindActive()
+	if err != nil {
+		utils.Logger.WithError(err).Warn("SyncNow: failed to load accounts")
+		return
+	}
+
+	for i := range accounts {
+		account := &accounts[i]
+		if account.IMAPHost == "" {
+			continue
+		}
+
+		receiver, err := s.accountSvc.BuildReceiver(account)
+		if err != nil {
+			utils.Logger.WithError(err).WithField("account", account.EmailAddress).
+				Warn("SyncNow: build receiver failed")
+			continue
+		}
+
+		parsed, err := receiver.FetchUnread(ctx)
+		if err != nil {
+			utils.Logger.WithError(err).WithField("account", account.EmailAddress).
+				Warn("SyncNow: IMAP fetch failed")
+			continue
+		}
+
+		for j := range parsed {
+			if err := s.ProcessInbound(ctx, account, &parsed[j]); err != nil {
+				utils.Logger.WithError(err).
+					WithField("message_id", parsed[j].MessageID).
+					Warn("SyncNow: process inbound failed")
+				continue
+			}
+			if parsed[j].UID > 0 {
+				_ = receiver.MarkSeen(ctx, parsed[j].UID)
+			}
+		}
+
+		now := time.Now()
+		account.LastSyncAt = &now
+		_ = s.accountRepo.Update(account)
+
+		utils.Logger.WithField("account", account.EmailAddress).
+			WithField("count", len(parsed)).
+			Info("SyncNow: poll complete")
+	}
+}
+
 // ── Monitor ───────────────────────────────────────────────────────────────────
 
 // GetMonitorStats returns email health metrics for the admin dashboard.
@@ -445,17 +573,17 @@ func (s *EmailService) createTicketFromEmail(account *models.EmailAccount, p *em
 	}
 
 	ticket := &models.Ticket{
-		TenantID:      account.TenantID,
-		TicketNumber:  ticketNumber,
-		Subject:       p.Subject,
-		Description:   description,
-		Status:        models.TicketStatusOpen,
-		Priority:      models.TicketPriorityMedium,
-		Category:      models.TicketCategoryGeneral,
-		Source:        models.TicketSourceEmail,
-		CustomerName:  customerName,
-		CustomerEmail: p.FromAddress,
-		CreatedBy:     systemUserID,
+		TenantID:           account.TenantID,
+		TicketNumber:       ticketNumber,
+		Subject:            p.Subject,
+		Description:        description,
+		Status:             models.TicketStatusOpen,
+		Priority:           models.TicketPriorityMedium,
+		Category:           models.TicketCategoryGeneral,
+		Source:             models.TicketSourceEmail,
+		CustomerName:       customerName,
+		CustomerEmail:      p.FromAddress,
+		CreatedBy:          systemUserID,
 		AIProcessingStatus: models.AIStatusPending,
 	}
 
@@ -501,9 +629,33 @@ func generateEmailMessageID(fromAddr string) string {
 }
 
 // formatReplyBody wraps the AI reply in a professional support email format.
-func formatReplyBody(reply string, ticket *models.Ticket) string {
-	return fmt.Sprintf("Dear %s,\n\nThank you for contacting us.\n\n%s\n\nBest regards,\nSupport Team\n\n---\nRef: %s",
-		ticket.CustomerName, reply, ticket.TicketNumber)
+// If portalLink is non-empty it appends a friendly "any other query" CTA with the link.
+func formatReplyBody(reply string, ticket *models.Ticket, portalLink string) string {
+	base := fmt.Sprintf(
+		"Dear %s,\n\nThank you for contacting us.\n\n%s\n\nBest regards,\nSupport Team\n\n---\nRef: %s",
+		ticket.CustomerName, reply, ticket.TicketNumber,
+	)
+	if portalLink != "" {
+		base += fmt.Sprintf(
+			"\n\n💬 Have more questions? We're here to help!\nIf you have any other queries, feel free to continue this conversation:\n👉 %s\n\n(No login required — the link is unique to your ticket)",
+			portalLink,
+		)
+	}
+	return base
+}
+
+// buildPortalLink generates a magic-link URL for the customer portal.
+// Returns an empty string if portal is not configured.
+func (s *EmailService) buildPortalLink(ticketID, customerEmail string) string {
+	if s.portalBaseURL == "" || s.portalSecret == "" {
+		return ""
+	}
+	token, err := jwtpkg.GeneratePortalToken(ticketID, customerEmail, s.portalSecret)
+	if err != nil {
+		utils.Logger.WithError(err).Warn("Email: failed to generate portal token")
+		return ""
+	}
+	return fmt.Sprintf("%s/portal?token=%s", s.portalBaseURL, token)
 }
 
 // buildReferences appends a new Message-ID to an existing References chain.

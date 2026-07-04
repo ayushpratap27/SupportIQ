@@ -118,14 +118,37 @@ func (s *AIService) run(ticketID uuid.UUID) {
 		WithField("confidence", result.Confidence).
 		Info("AI: Analysis completed successfully")
 
-	// Auto-assign to a SupportAgent (or Admin as fallback) if ticket is still unassigned
+	// Auto-assign: SupportAgent from recommended team → any SupportAgent → Admin last resort
 	if ticket.AssignedTo == nil && s.userRepo != nil {
 		var assignee *models.User
-		if agents, err := s.userRepo.ListByRole(ticket.TenantID, models.RoleSupportAgent); err == nil && len(agents) > 0 {
-			assignee = &agents[0]
-		} else if admins, err := s.userRepo.ListByRole(ticket.TenantID, models.RoleAdmin); err == nil && len(admins) > 0 {
-			assignee = &admins[0]
+
+		// 1st: SupportAgent in the AI-recommended team (Finance or Engineering)
+		if result.RecommendedTeam != "" {
+			if teamUsers, err := s.userRepo.ListByTeam(ticket.TenantID, result.RecommendedTeam); err == nil {
+				for i := range teamUsers {
+					if teamUsers[i].Role == models.RoleSupportAgent {
+						u := teamUsers[i]
+						assignee = &u
+						break
+					}
+				}
+			}
 		}
+		// 2nd: any SupportAgent in the tenant
+		if assignee == nil {
+			if agents, err := s.userRepo.ListByRole(ticket.TenantID, models.RoleSupportAgent); err == nil && len(agents) > 0 {
+				u := agents[0]
+				assignee = &u
+			}
+		}
+		// 3rd: Admin only as last resort
+		if assignee == nil {
+			if admins, err := s.userRepo.ListByRole(ticket.TenantID, models.RoleAdmin); err == nil && len(admins) > 0 {
+				u := admins[0]
+				assignee = &u
+			}
+		}
+
 		if assignee != nil {
 			ticket.AssignedTo = &assignee.ID
 			_ = s.ticketRepo.Update(ticket)
@@ -135,9 +158,9 @@ func (s *AIService) run(ticketID uuid.UUID) {
 				UserID:       ticket.CreatedBy,
 				ActivityType: models.ActivityAssignTicket,
 				NewValue:     assignee.Name,
-				Description:  fmt.Sprintf("Auto-assigned to %s (AI team: %s)", assignee.Name, result.RecommendedTeam),
+				Description:  fmt.Sprintf("Auto-assigned to %s (%s team)", assignee.Name, result.RecommendedTeam),
 			})
-			log.WithField("agent", assignee.Name).Info("AI: Ticket auto-assigned")
+			log.WithField("agent", assignee.Name).WithField("team", result.RecommendedTeam).Info("AI: Ticket auto-assigned")
 		}
 	}
 

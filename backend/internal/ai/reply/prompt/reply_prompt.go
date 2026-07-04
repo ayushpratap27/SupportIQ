@@ -9,11 +9,16 @@ import (
 
 // CurrentVersion is the prompt template version. Bump when the prompt changes.
 const CurrentVersion = "v1"
+const PortalPromptVersion = "portal-v1"
 
 // BuildReplyPrompt constructs the RAG-enhanced Gemini prompt for reply generation.
 // It embeds relevant knowledge base documents so the AI answers only from
 // verified company policies — never from its own pre-trained knowledge.
+// If req.CustomPrompt is set it is returned as-is, bypassing the standard template.
 func BuildReplyPrompt(req replyprovider.ReplyRequest) string {
+	if req.CustomPrompt != "" {
+		return req.CustomPrompt
+	}
 	var sb strings.Builder
 
 	sb.WriteString("You are a professional customer support AI assistant. " +
@@ -59,6 +64,43 @@ Rules:
 - Output ONLY the JSON object. Nothing before or after it.
 - confidence must be an integer reflecting how well the response covers the issue (100 = perfect).
 - reply must be a complete, professional customer support response.`)
+
+	return sb.String()
+}
+
+// BuildPortalReplyPrompt builds a focused, concise prompt for real-time portal chat replies.
+// The reply must directly answer the customer's latest message in 1-2 sentences max.
+func BuildPortalReplyPrompt(subject, latestMessage, category, sentiment string, docs []replyprovider.RelevantDocument) string {
+	var sb strings.Builder
+
+	sb.WriteString("You are a friendly, helpful customer support agent chatting in real-time with a customer.\n\n")
+	sb.WriteString("Return ONLY a valid JSON object. No markdown. No code blocks. Just raw JSON.\n\n")
+
+	sb.WriteString(fmt.Sprintf("Ticket subject: %s\n", subject))
+	if category != "" {
+		sb.WriteString(fmt.Sprintf("Category: %s | Sentiment: %s\n", category, sentiment))
+	}
+
+	if len(docs) > 0 {
+		sb.WriteString("\nRelevant knowledge:\n")
+		for _, d := range docs {
+			sb.WriteString(fmt.Sprintf("- %s: %s\n", d.Title, d.Content))
+		}
+	}
+
+	sb.WriteString(fmt.Sprintf("\nCustomer's latest message: \"%s\"\n\n", latestMessage))
+
+	sb.WriteString(`STRICT RULES:
+- Answer ONLY the customer's latest message above. Do not re-summarize the ticket.
+- Keep reply to 1-2 short sentences MAXIMUM. Be direct and specific.
+- Conversational tone, not formal. No "Dear Customer", no lengthy greetings.
+- If you need more info, ask ONE specific question only.
+
+Required JSON (EXACTLY these fields):
+{
+  "reply": "<1-2 sentence direct answer>",
+  "confidence": <0-100>
+}`)
 
 	return sb.String()
 }

@@ -17,6 +17,8 @@ import { formatDate } from '../../utils/format'
 
 const TABS = ['Overview', 'Conversation', 'Notes', 'Activity', 'AI Analysis', 'AI Reply', 'Email']
 
+const AI_PROCESSING = ['PENDING', 'PROCESSING']
+
 const NEXT_STATUS = {
   OPEN: 'IN_PROGRESS',
   IN_PROGRESS: 'RESOLVED',
@@ -177,19 +179,31 @@ export default function TicketDetails() {
 
         {/* Tabs */}
         <div className="mt-4 flex gap-1">
-          {TABS.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition ${
-                activeTab === tab
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-200'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
+          {TABS.map((tab) => {
+            const isAITab = tab === 'AI Analysis'
+            const aiProcessing = isAITab && AI_PROCESSING.includes(ticket.ai_processing_status)
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`relative px-4 py-2 text-sm font-medium border-b-2 transition ${
+                  activeTab === tab
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-200'
+                }`}
+              >
+                <span className="flex items-center gap-1.5">
+                  {tab}
+                  {aiProcessing && (
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+                    </span>
+                  )}
+                </span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
@@ -257,8 +271,32 @@ export default function TicketDetails() {
 
               {/* Admin assignment */}
               {isAdmin && (
-                <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
-                  <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3">Assign</h3>
+                <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm space-y-3">
+                  <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">Assign</h3>
+
+                  {/* Current assignee chip */}
+                  {ticket.assignee ? (
+                    <div className="flex items-center gap-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 px-3 py-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white shrink-0">
+                        {ticket.assignee.name?.charAt(0).toUpperCase()}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 truncate">{ticket.assignee.name}</p>
+                        <p className="text-[10px] text-blue-500 dark:text-blue-400">{ticket.assignee.role}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400 dark:text-gray-500 italic">Not yet assigned</p>
+                  )}
+
+                  {/* AI team suggestion */}
+                  {ticket.ai_team && (
+                    <p className="text-[10px] text-indigo-500 dark:text-indigo-400 font-medium">
+                      🤖 AI suggests: <span className="font-semibold">{ticket.ai_team}</span> team
+                    </p>
+                  )}
+
+                  {/* Dropdown — merges agents + current assignee so it never shows blank */}
                   <select
                     onChange={handleAssign}
                     disabled={assignLoading}
@@ -266,7 +304,13 @@ export default function TicketDetails() {
                     className="select-field w-full"
                   >
                     <option value="">Unassigned</option>
-                    {agents.map((a) => (
+                    {[
+                      // Always include current assignee even if they're an Admin (not in agents list)
+                      ...(ticket.assignee && !agents.find(a => a.id === ticket.assignee.id)
+                        ? [ticket.assignee]
+                        : []),
+                      ...agents,
+                    ].map((a) => (
                       <option key={a.id} value={a.id}>{a.name}</option>
                     ))}
                   </select>
@@ -285,7 +329,7 @@ export default function TicketDetails() {
 
         {activeTab === 'Conversation' && (
           <div className="max-w-2xl">
-            <ConversationPanel ticketId={id} />
+            <ConversationPanel ticketId={id} customerName={ticket?.customer_name} />
           </div>
         )}
 
@@ -303,7 +347,7 @@ export default function TicketDetails() {
 
         {activeTab === 'AI Analysis' && (
           <div className="max-w-2xl">
-            <AIAnalysisPanel ticketId={id} />
+            <AIAnalysisPanel ticketId={id} ticketCreatedAt={ticket?.created_at} />
           </div>
         )}
 

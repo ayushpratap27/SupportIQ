@@ -13,6 +13,8 @@ import (
 	replyprovider "github.com/ayush/supportiq/internal/ai/reply/provider"
 	"github.com/ayush/supportiq/internal/config"
 	"github.com/ayush/supportiq/internal/database"
+	emailattachments "github.com/ayush/supportiq/internal/email/attachments"
+	"github.com/ayush/supportiq/internal/email/threading"
 	"github.com/ayush/supportiq/internal/knowledge/retrieval"
 	"github.com/ayush/supportiq/internal/models"
 	"github.com/ayush/supportiq/internal/queue/redisqueue"
@@ -90,9 +92,30 @@ func main() {
 	knowledgeRetriever := retrieval.NewPostgresRetriever(knowledgeRepo)
 	replySvc := services.NewReplyService(replyProv, knowledgeRetriever, ticketRepo, replyRepo, activityRepo, activeModel)
 
+	// Wire email service so auto-approved replies get queued for outbound delivery.
+	// The API server's outbound worker will pick them up and send via SMTP.
+	emailAccountRepo := repositories.NewEmailAccountRepository(db)
+	emailMessageRepo := repositories.NewEmailMessageRepository(db)
+	emailAccountSvc := services.NewEmailAccountService(emailAccountRepo, cfg.JWTAccessSecret)
+	threadDetector := threading.NewDetector(emailMessageRepo)
+	attachStorage := emailattachments.NewLocalStorage(cfg.AttachmentPath)
+	// Minimal AIService for the email service dependency (TriggerAIForTicket is never
+	// called from within the worker, so a noop provider is safe here).
+	minimalAISvc := services.NewAIService(&provider.NoopProvider{}, ticketRepo, activityRepo)
+	emailSvc := services.NewEmailService(
+		emailAccountRepo, emailMessageRepo,
+		ticketRepo, activityRepo,
+		emailAccountSvc, threadDetector,
+		attachStorage, minimalAISvc, db,
+	)
+	// Include portal magic-link in outbound reply emails
+	emailSvc.SetPortalConfig(cfg.AppURL, cfg.JWTAccessSecret)
+	replySvc.SetEmailService(emailSvc)
+
 	// ─── Job handlers ────────────────────────────────────────────────────────
 	aiHandler := workerhandlers.NewAIAnalysisHandler(ticketRepo, activityRepo, aiProv)
 	aiHandler.SetUserRepo(userRepo)
+	aiHandler.SetReplyGenerator(replySvc)
 	replyHandler := workerhandlers.NewGenerateReplyHandler(replySvc)
 
 	// ─── Processor ───────────────────────────────────────────────────────────
