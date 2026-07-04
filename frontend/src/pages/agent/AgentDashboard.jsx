@@ -21,8 +21,8 @@ export default function AgentDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    ticketService.getMyTickets({ limit: 50 })
-      .then((res) => setMyTickets(res.data.data?.tickets || []))
+    ticketService.getTeamTickets({ limit: 50 })
+      .then((res) => setMyTickets(res.data.data?.items || []))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])

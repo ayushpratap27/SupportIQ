@@ -19,8 +19,8 @@ export default function AgentQueue() {
   const [updating, setUpdating] = useState(null)
 
   const load = () => {
-    ticketService.getMyTickets({ limit: 50 })
-      .then((res) => setTickets(res.data.data?.tickets || []))
+    ticketService.getTeamTickets({ limit: 50 })
+      .then((res) => setTickets(res.data.data?.items || []))
       .catch(() => {})
       .finally(() => setLoading(false))
   }
@@ -39,8 +39,8 @@ export default function AgentQueue() {
   return (
     <main className="max-w-4xl mx-auto px-6 py-6">
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">My Queue</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Tickets assigned to you</p>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Team Queue</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Tickets assigned to your team or AI-routed to you</p>
       </div>
 
       {loading ? (

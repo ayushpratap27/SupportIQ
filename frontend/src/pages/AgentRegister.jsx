@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { authService } from '../services/authService'
 import DarkModeToggle from '../components/DarkModeToggle'
 
 const TEAMS = ['Support', 'Engineering', 'Billing', 'Sales', 'Operations']
@@ -10,7 +9,8 @@ function TeamPicker({ selected, onSelect, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6 w-full max-w-sm">
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-4">Select your team</h2>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Select team type</h2>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">All members of this team will share this login.</p>
         <div className="space-y-2">
           {TEAMS.map((team) => (
             <button
@@ -104,10 +104,14 @@ export default function AgentRegister() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">SupportIQ</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Join as a Support Agent</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Create a Team Account</p>
         </div>
 
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-8">
+          <div className="mb-5 px-4 py-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-lg">
+            <p className="text-xs text-blue-700 dark:text-blue-300 font-medium">👥 Shared Team Account</p>
+            <p className="text-xs text-blue-600/80 dark:text-blue-400 mt-0.5">One login for the whole team. All members use the same email and password to access the team dashboard.</p>
+          </div>
           {apiError && (
             <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">{apiError}</div>
           )}
@@ -115,9 +119,10 @@ export default function AgentRegister() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">Full Name</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">Team Account Name</label>
               <input
                 name="name" value={form.name} onChange={handleChange} autoComplete="name"
+                placeholder="e.g. Engineering Team, Billing Support"
                 className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-gray-700 dark:text-gray-100 transition ${errors.name ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}`}
               />
               {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
@@ -188,7 +193,7 @@ export default function AgentRegister() {
               type="submit" disabled={submitting}
               className="w-full py-2.5 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition disabled:opacity-50 text-sm mt-2"
             >
-              {submitting ? 'Creating account…' : 'Join as Agent'}
+              {submitting ? 'Creating team account…' : 'Create Team Account'}
             </button>
           </form>
 

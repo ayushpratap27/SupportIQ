@@ -15,7 +15,7 @@ export default function AgentAvailable() {
 
   const load = () => {
     ticketService.getUnassigned({ limit: 50 })
-      .then((res) => setTickets(res.data.data?.tickets || []))
+      .then((res) => setTickets(res.data.data?.tickets || res.data.data?.items || []))
       .catch(() => {})
       .finally(() => setLoading(false))
   }
@@ -33,8 +33,8 @@ export default function AgentAvailable() {
   return (
     <main className="max-w-4xl mx-auto px-6 py-6">
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Available Tickets</h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Unassigned tickets — pick one up to start working</p>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Pick Up a Ticket</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Unassigned tickets — claim one to start working</p>
       </div>
 
       {loading ? (

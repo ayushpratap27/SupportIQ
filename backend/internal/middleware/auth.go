@@ -42,6 +42,7 @@ func Authenticate(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 		// Set user context
 		c.Set("userID", user.ID)
 		c.Set("userRole", string(user.Role))
+		c.Set("team", user.Team)
 		c.Set("user", &user)
 
 		// SuperAdmin: tenant context is optional (all tenants accessible)

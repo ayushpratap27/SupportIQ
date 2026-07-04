@@ -108,11 +108,11 @@ func (r *TicketRepository) UpdateSLAFields(t *models.Ticket) error {
 			"FirstResponseCompletedAt", "ResolvedAt", "SLAStatus").
 		Updates(map[string]interface{}{
 			"sla_policy_id":               t.SLAPolicyID,
-			"first_response_due_at":        t.FirstResponseDueAt,
-			"resolution_due_at":            t.ResolutionDueAt,
-			"first_response_completed_at":  t.FirstResponseCompletedAt,
-			"resolved_at":                  t.ResolvedAt,
-			"sla_status":                   t.SLAStatus,
+			"first_response_due_at":       t.FirstResponseDueAt,
+			"resolution_due_at":           t.ResolutionDueAt,
+			"first_response_completed_at": t.FirstResponseCompletedAt,
+			"resolved_at":                 t.ResolvedAt,
+			"sla_status":                  t.SLAStatus,
 		}).Error
 }
 
@@ -176,5 +176,42 @@ func (r *TicketRepository) List(tenantID uuid.UUID, q *dto.ListTicketsQuery) ([]
 		return nil, 0, err
 	}
 
+	return tickets, total, nil
+}
+
+// FindTeamTickets returns tickets assigned to userID OR ai_team matches teamName.
+// Used by shared team accounts to see all tickets routed to or picked up by their team.
+func (r *TicketRepository) FindTeamTickets(tenantID uuid.UUID, userID uint, teamName string, q *dto.ListTicketsQuery) ([]models.Ticket, int64, error) {
+	base := r.db.Model(&models.Ticket{}).
+		Preload("Creator").Preload("Assignee").
+		Where("tenant_id = ? AND deleted_at IS NULL", tenantID).
+		Where("assigned_to = ? OR (ai_team = ? AND assigned_to IS NULL)", userID, teamName)
+
+	if q.Status != "" {
+		base = base.Where("status = ?", q.Status)
+	}
+	if q.Priority != "" {
+		base = base.Where("priority = ?", q.Priority)
+	}
+
+	var total int64
+	if err := base.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	page := q.Page
+	if page < 1 {
+		page = 1
+	}
+	limit := q.Limit
+	if limit < 1 {
+		limit = 50
+	}
+
+	var tickets []models.Ticket
+	offset := (page - 1) * limit
+	if err := base.Order("created_at DESC").Offset(offset).Limit(limit).Find(&tickets).Error; err != nil {
+		return nil, 0, err
+	}
 	return tickets, total, nil
 }

@@ -54,8 +54,8 @@ export default function AgentLayout() {
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           <NavItem to="/agent"           end   icon="🏠" label="Dashboard" />
-          <NavItem to="/agent/queue"           icon="📋" label="My Queue" />
-          <NavItem to="/agent/available"       icon="📥" label="Available" />
+          <NavItem to="/agent/queue"           icon="📋" label="Team Queue" />
+          <NavItem to="/agent/available"       icon="📥" label="Pick Up" />
         </nav>
 
         {/* Agent info footer */}

@@ -236,6 +236,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config, serverCtx context.Context) *gi
 
 			// My tickets
 			protected.GET("/my-tickets", ticketHandler.MyTickets)
+			protected.GET("/team-tickets", ticketHandler.TeamTickets)
 			protected.GET("/activities", activityHandler.ListRecent)
 
 			tickets := protected.Group("/tickets")
