@@ -86,8 +86,9 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-3 gap-6 items-start">
           {/* Recent Activity */}
-          <div className="col-span-2 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Recent Activity</h2>
+          <div className="col-span-2">
+            <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-3">Recent Activity</h2>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             {recentActivity.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500">No activity yet.</p>
             ) : (
@@ -103,6 +104,7 @@ export default function Dashboard() {
                 ))}
               </ul>
             )}
+            </div>
           </div>
 
           {/* Right column */}
