@@ -84,8 +84,22 @@ function EditTicket() {
   return (
     <>
       <Toast toast={toast} />
-      <main className="max-w-2xl mx-auto px-6 py-8">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-8">
+      <main className="flex items-center justify-center py-10 px-6">
+        <div className="relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 p-8 shadow-sm">
+
+          {/* ✕ close button */}
+          <Link
+            to={`/tickets/${id}`}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+            title="Cancel"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </Link>
+
+          <h1 className="text-lg font-semibold text-gray-900 dark:text-white mb-6">Edit Ticket</h1>
+
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Subject */}
             <div>
@@ -108,8 +122,8 @@ function EditTicket() {
                 name="description"
                 value={form.description}
                 onChange={handleChange}
-                rows={4}
-                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition resize-none"
+                rows={5}
+                className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition resize-y min-h-[80px]"
               />
             </div>
 
@@ -117,25 +131,14 @@ function EditTicket() {
               {/* Priority */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">Priority</label>
-                <select
-                  name="priority"
-                  value={form.priority}
-                  onChange={handleChange}
-                  className="select-field w-full"
-                >
+                <select name="priority" value={form.priority} onChange={handleChange} className="select-field w-full">
                   {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
                 </select>
               </div>
-
               {/* Category */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">Category</label>
-                <select
-                  name="category"
-                  value={form.category}
-                  onChange={handleChange}
-                  className="select-field w-full"
-                >
+                <select name="category" value={form.category} onChange={handleChange} className="select-field w-full">
                   <option value="GENERAL">GENERAL</option>
                 </select>
               </div>
@@ -152,7 +155,6 @@ function EditTicket() {
                   className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                 />
               </div>
-
               {/* Customer Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">Customer Email</label>
@@ -169,20 +171,14 @@ function EditTicket() {
               </div>
             </div>
 
-            <div className="flex gap-3 pt-2">
+            <div className="pt-2">
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:opacity-50 text-sm"
+                className="w-full py-2.5 bg-emerald-600 text-white font-semibold rounded-lg hover:bg-emerald-700 transition disabled:opacity-50 text-sm"
               >
                 {submitting ? 'Saving…' : 'Save Changes'}
               </button>
-              <Link
-                to={`/tickets/${id}`}
-                className="px-5 py-2.5 border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 dark:text-gray-600 font-medium rounded-lg hover:bg-gray-50 dark:bg-gray-900 transition text-sm text-center"
-              >
-                Cancel
-              </Link>
             </div>
           </form>
         </div>
