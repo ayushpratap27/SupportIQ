@@ -24,6 +24,7 @@ type User struct {
 	Email        string    `gorm:"type:varchar(255);not null;uniqueIndex:idx_tenant_email"             json:"email"`
 	PasswordHash string    `gorm:"type:varchar(255);not null"                                         json:"-"`
 	Role         Role      `gorm:"type:varchar(20);not null;default:'SupportAgent'"                   json:"role"`
+	Team         string    `gorm:"type:varchar(50)"                                                   json:"team"` // e.g. Finance, Engineering
 	IsActive     bool      `gorm:"not null;default:true"                                              json:"is_active"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`

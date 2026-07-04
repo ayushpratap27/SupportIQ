@@ -48,7 +48,7 @@ function ConfidenceBar({ value }) {
 
 const POLL_INTERVAL_MS = 3500
 
-export default function AIAnalysisPanel({ ticketId }) {
+export default function AIAnalysisPanel({ ticketId, ticketCreatedAt }) {
   const [analysis, setAnalysis] = useState(null)
   const [loading, setLoading] = useState(true)
   const [retrying, setRetrying] = useState(false)
@@ -101,14 +101,66 @@ export default function AIAnalysisPanel({ ticketId }) {
   // ── Pending / Processing ──────────────────────────────────────────────────
   if (status === 'PENDING' || status === 'PROCESSING') {
     return (
-      <div className="p-6 flex flex-col items-center justify-center gap-4 text-center">
-        <div className="relative w-12 h-12">
-          <div className="absolute inset-0 rounded-full border-4 border-blue-100" />
-          <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin" />
+      <div className="p-8 flex flex-col items-center justify-center gap-6 text-center select-none">
+        {/* Animated AI orb */}
+        <div className="relative flex h-24 w-24 items-center justify-center">
+          {/* Outer glow rings */}
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-400/20 to-indigo-600/20 animate-ping" style={{ animationDuration: '2s' }} />
+          <div className="absolute inset-2 rounded-full bg-gradient-to-br from-blue-400/30 to-indigo-600/30 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.4s' }} />
+          {/* Core orb */}
+          <div className="relative h-16 w-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-700 shadow-lg shadow-blue-500/40 flex items-center justify-center">
+            {/* Rotating scanner ring */}
+            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-white/60 animate-spin" style={{ animationDuration: '1.2s' }} />
+            {/* Spark dots orbiting */}
+            <div className="absolute inset-0 rounded-full animate-spin" style={{ animationDuration: '2.5s' }}>
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 h-2 w-2 rounded-full bg-white/80 shadow-sm" />
+            </div>
+            <div className="absolute inset-0 rounded-full animate-spin" style={{ animationDuration: '3.5s', animationDirection: 'reverse' }}>
+              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1 h-1.5 w-1.5 rounded-full bg-blue-200/90" />
+            </div>
+            {/* AI icon */}
+            <svg className="h-6 w-6 text-white drop-shadow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+            </svg>
+          </div>
         </div>
-        <div>
-          <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">AI is analyzing this ticket…</p>
-          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">This usually takes a few seconds</p>
+
+        {/* Text with animated dots */}
+        <div className="space-y-2">
+          <p className="text-base font-bold text-gray-800 dark:text-white tracking-tight">
+            AI is analyzing this ticket
+            <span className="inline-flex gap-0.5 ml-1 translate-y-0.5">
+              {[0, 0.25, 0.5].map((d) => (
+                <span
+                  key={d}
+                  className="inline-block h-1.5 w-1.5 rounded-full bg-blue-500 animate-bounce"
+                  style={{ animationDelay: `${d}s`, animationDuration: '1.2s' }}
+                />
+              ))}
+            </span>
+          </p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">
+            Detecting category · priority · sentiment · recommended team
+          </p>
+        </div>
+
+        {/* Animated scan bars */}
+        <div className="w-full max-w-xs space-y-2">
+          {['Category & Tags', 'Priority Assessment', 'Sentiment Analysis', 'Team Routing'].map((label, i) => (
+            <div key={label} className="flex items-center gap-3">
+              <span className="w-32 shrink-0 text-right text-[10px] text-gray-400 dark:text-gray-500">{label}</span>
+              <div className="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-gray-700 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-blue-400 to-indigo-500 animate-pulse"
+                  style={{
+                    width: `${60 + i * 10}%`,
+                    animationDelay: `${i * 0.15}s`,
+                    animationDuration: '1.5s',
+                  }}
+                />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     )
@@ -116,6 +168,20 @@ export default function AIAnalysisPanel({ ticketId }) {
 
   // ── Failed ────────────────────────────────────────────────────────────────
   if (status === 'FAILED') {
+    // If ticket was created < 5 minutes ago, the worker is likely still retrying
+    const isRecent = ticketCreatedAt && (Date.now() - new Date(ticketCreatedAt).getTime()) < 5 * 60 * 1000
+    if (isRecent) {
+      return (
+        <div className="p-6 flex flex-col items-center justify-center gap-3 text-center">
+          <div className="relative w-10 h-10">
+            <div className="absolute inset-0 rounded-full border-4 border-blue-100" />
+            <div className="absolute inset-0 rounded-full border-4 border-blue-500 border-t-transparent animate-spin" />
+          </div>
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">AI is still working…</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500">Retrying analysis, please wait a moment</p>
+        </div>
+      )
+    }
     return (
       <div className="p-6 flex flex-col items-center justify-center gap-4 text-center">
         <span className="text-3xl">⚠️</span>

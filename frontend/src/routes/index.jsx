@@ -23,6 +23,7 @@ import TenantSettings from '../pages/TenantSettings'
 import SuperAdminDashboard from '../pages/superadmin/SuperAdminDashboard'
 import SLAManagement from '../pages/SLAManagement'
 import SLADashboard from '../pages/SLADashboard'
+import CustomerPortal from '../pages/CustomerPortal'
 
 function AppRoutes() {
   return (
@@ -33,6 +34,9 @@ function AppRoutes() {
 
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+
+      {/* Customer portal — no auth wrapper, magic-link token only */}
+      <Route path="/portal" element={<CustomerPortal />} />
 
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />

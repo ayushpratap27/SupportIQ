@@ -23,11 +23,13 @@ type ReplyService struct {
 	ticketRepo    *repositories.TicketRepository
 	replyRepo     *repositories.ReplyRepository
 	activityRepo  *repositories.ActivityRepository
+	commentRepo   *repositories.CommentRepository // for portal replies
 	emailSvc      *EmailService
 	model         string
 }
 
-func (s *ReplyService) SetEmailService(e *EmailService) { s.emailSvc = e }
+func (s *ReplyService) SetEmailService(e *EmailService)                  { s.emailSvc = e }
+func (s *ReplyService) SetCommentRepo(r *repositories.CommentRepository) { s.commentRepo = r }
 
 func NewReplyService(
 	replyProvider replyprovider.ReplyProvider,
@@ -48,14 +50,155 @@ func NewReplyService(
 }
 
 // GenerateForTicket is called automatically after AI analysis completes.
+// For email-originated tickets it also auto-approves the reply and queues
+// the outbound email back to the customer — no human approval needed.
 func (s *ReplyService) GenerateForTicket(tenantID uuid.UUID, ticketID uuid.UUID, userID uint) {
 	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	defer cancel()
 	log := utils.Logger.WithField("ticket_id", ticketID)
 	log.Info("Reply: Starting automatic reply generation")
-	if _, err := s.generate(ctx, tenantID, ticketID, userID); err != nil {
+
+	reply, err := s.generate(ctx, tenantID, ticketID, userID)
+	if err != nil {
 		log.WithError(err).Warn("Reply: Automatic generation failed")
+		return
 	}
+
+	// Auto-approve and send for email-originated tickets
+	ticket, err := s.ticketRepo.FindByIDUnscoped(ticketID)
+	if err != nil || ticket.Source != models.TicketSourceEmail {
+		return // non-email ticket or load error — leave as draft for manual approval
+	}
+	if ticket.CustomerEmail == "" {
+		log.Warn("Reply: email ticket has no customer email — skipping auto-send")
+		return
+	}
+
+	// Guard: if an approved reply already exists (from a parallel run), skip to avoid
+	// sending the customer duplicate emails.
+	if existing, err := s.replyRepo.FindLatestByTicketID(tenantID, ticketID); err == nil &&
+		(existing.Status == models.AIReplyStatusApproved) {
+		log.Info("Reply: approved reply already exists — skipping duplicate auto-send")
+		return
+	}
+
+	log.Info("Reply: Auto-approving and sending reply for email ticket")
+	now := time.Now()
+	reply.Status = models.AIReplyStatusApproved
+	reply.ApprovedBy = &userID
+	reply.ApprovedAt = &now
+	if err := s.replyRepo.Update(reply); err != nil {
+		log.WithError(err).Warn("Reply: Failed to auto-approve reply")
+		return
+	}
+	_ = s.activityRepo.Create(&models.TicketActivity{
+		TenantID:     tenantID,
+		TicketID:     ticketID,
+		UserID:       userID,
+		ActivityType: models.ActivityReplyApproved,
+		Description:  "AI reply auto-approved and sent for email ticket",
+	})
+
+	if s.emailSvc != nil {
+		if err := s.emailSvc.QueueReplyForTicket(context.Background(), ticketID, reply.GeneratedReply, userID); err != nil {
+			log.WithError(err).Warn("Reply: Failed to queue outbound email")
+		} else {
+			log.Info("Reply: Outbound email queued to customer")
+		}
+	}
+}
+
+// GenerateAndSendPortalReply generates a concise (1-2 sentence) AI reply directly
+// answering the customer's latest portal message, then saves it as a PUBLIC comment.
+func (s *ReplyService) GenerateAndSendPortalReply(tenantID uuid.UUID, ticketID uuid.UUID, userID uint) {
+	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+	defer cancel()
+	log := utils.Logger.WithField("ticket_id", ticketID).WithField("source", "portal")
+	log.Info("Reply: Generating portal reply")
+
+	// Load ticket
+	ticket, err := s.ticketRepo.FindByIDUnscoped(ticketID)
+	if err != nil {
+		log.WithError(err).Warn("Reply: ticket not found for portal reply")
+		return
+	}
+
+	// Get the latest CUSTOMER comment as the question to answer
+	latestMessage := ticket.Description // fallback
+	if s.commentRepo != nil {
+		if comments, err := s.commentRepo.ListPublicByTicketUnscoped(ticketID); err == nil {
+			for i := len(comments) - 1; i >= 0; i-- {
+				if string(comments[i].CommentType) == "CUSTOMER" {
+					latestMessage = comments[i].Message
+					break
+				}
+			}
+		}
+	}
+
+	// KB retrieval
+	query := ticket.Subject + " " + ticket.AICategory
+	docs, _ := s.retriever.Retrieve(ctx, tenantID, query, 3)
+	replyDocs := make([]replyprovider.RelevantDocument, len(docs))
+	for i, d := range docs {
+		replyDocs[i] = replyprovider.RelevantDocument{Title: d.Title, Category: string(d.Category), Content: d.Content}
+	}
+
+	// Build focused portal prompt and call AI
+	portalPrompt := replyprompt.BuildPortalReplyPrompt(ticket.Subject, latestMessage, ticket.AICategory, ticket.AISentiment, replyDocs)
+	req := replyprovider.ReplyRequest{
+		Subject:      ticket.Subject,
+		CustomPrompt: portalPrompt,
+		Documents:    replyDocs,
+	}
+
+	start := time.Now()
+	result, err := s.replyProvider.GenerateReply(ctx, req)
+	genTime := time.Since(start).Milliseconds()
+	if err != nil {
+		log.WithError(err).Warn("Reply: Portal AI call failed")
+		return
+	}
+
+	// Persist ai_reply record
+	now := time.Now()
+	aiReply := &models.AIReply{
+		TenantID:       tenantID,
+		TicketID:       ticketID,
+		GeneratedReply: result.Reply,
+		Confidence:     result.Confidence,
+		Status:         models.AIReplyStatusApproved,
+		ApprovedBy:     &userID,
+		ApprovedAt:     &now,
+		Model:          s.model,
+		PromptVersion:  replyprompt.PortalPromptVersion,
+		GenerationTime: genTime,
+	}
+	_ = s.replyRepo.Create(aiReply)
+
+	// Save as PUBLIC comment → visible in Conversation tab + portal
+	if s.commentRepo != nil {
+		comment := &models.TicketComment{
+			TenantID:    tenantID,
+			TicketID:    ticketID,
+			UserID:      userID,
+			Message:     result.Reply,
+			CommentType: models.CommentTypePublic,
+		}
+		if err := s.commentRepo.Create(comment); err != nil {
+			log.WithError(err).Warn("Reply: Failed to save portal reply as comment")
+		} else {
+			log.WithField("gen_time_ms", genTime).Info("Reply: Portal AI reply saved as PUBLIC comment")
+		}
+	}
+
+	_ = s.activityRepo.Create(&models.TicketActivity{
+		TenantID:     tenantID,
+		TicketID:     ticketID,
+		UserID:       userID,
+		ActivityType: models.ActivityReplyApproved,
+		Description:  "AI replied to customer portal message",
+	})
 }
 
 func (s *ReplyService) Generate(ctx context.Context, tenantID uuid.UUID, ticketID uuid.UUID, userID uint) (*models.AIReply, error) {

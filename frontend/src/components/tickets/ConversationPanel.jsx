@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { commentService } from '../../services/commentService'
 import { formatDate } from '../../utils/format'
 
-export default function ConversationPanel({ ticketId }) {
+export default function ConversationPanel({ ticketId, customerName }) {
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
@@ -44,17 +44,32 @@ export default function ConversationPanel({ ticketId }) {
         ) : comments.length === 0 ? (
           <p className="text-sm text-gray-400 dark:text-gray-500">No comments yet. Start the conversation.</p>
         ) : (
-          comments.map((c) => (
-            <div key={c.id} className="rounded-lg border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 shadow-sm">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                  {c.user?.name || 'Unknown'}
-                </span>
-                <span className="text-xs text-gray-400 dark:text-gray-500">{formatDate(c.created_at)}</span>
+          comments.map((c) => {
+            const isCustomer = c.comment_type === 'CUSTOMER'
+            const author = isCustomer ? (customerName || 'Customer') : (c.user?.name || 'Support Team')
+            return (
+              <div key={c.id} className={`flex gap-3 ${isCustomer ? 'flex-row-reverse' : ''}`}>
+                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${isCustomer ? 'bg-blue-500' : 'bg-indigo-600'}`}>
+                  {author.charAt(0).toUpperCase()}
+                </div>
+                <div className={`max-w-[80%] space-y-1 ${isCustomer ? 'items-end' : 'items-start'} flex flex-col`}>
+                  <div className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed shadow-sm ${
+                    isCustomer
+                      ? 'rounded-tr-sm bg-blue-600 text-white'
+                      : 'rounded-tl-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-100 dark:border-gray-700'
+                  }`}>
+                    <p className="whitespace-pre-wrap break-words">{c.message}</p>
+                  </div>
+                  <div className={`flex items-center gap-1 px-1 ${isCustomer ? 'flex-row-reverse' : ''}`}>
+                    <span className="text-[10px] text-gray-400 font-medium">{author}</span>
+                    {isCustomer && <span className="text-[9px] bg-blue-100 text-blue-600 rounded px-1">via Portal</span>}
+                    <span className="text-[10px] text-gray-300 dark:text-gray-600">·</span>
+                    <span className="text-[10px] text-gray-400">{formatDate(c.created_at)}</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-sm text-gray-800 dark:text-gray-100 whitespace-pre-wrap">{c.message}</p>
-            </div>
-          ))
+            )
+          })
         )}
       </div>
 

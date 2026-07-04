@@ -36,3 +36,15 @@ func (r *CommentRepository) ListByTicketID(tenantID uuid.UUID, ticketID uuid.UUI
 		Find(&comments).Error
 	return comments, err
 }
+
+// ListPublicByTicketUnscoped returns PUBLIC + CUSTOMER comments for a ticket
+// without a tenant filter — used by the customer portal.
+func (r *CommentRepository) ListPublicByTicketUnscoped(ticketID uuid.UUID) ([]models.TicketComment, error) {
+	var comments []models.TicketComment
+	err := r.db.
+		Preload("User").
+		Where("ticket_id = ? AND comment_type IN ('PUBLIC','CUSTOMER')", ticketID).
+		Order("created_at ASC").
+		Find(&comments).Error
+	return comments, err
+}

@@ -84,6 +84,23 @@ func SetupRouter(db *gorm.DB, cfg *config.Config, serverCtx context.Context) *gi
 		slackHandler := handlers.NewSlackHandler(db, cfg.JWTAccessSecret)
 		api.POST("/slack/events/:integrationID", slackHandler.HandleEvents)
 
+		// Public — customer portal (magic-link auth, no JWT required)
+		portalTicketRepo := repositories.NewTicketRepository(db)
+		portalMsgRepo := repositories.NewEmailMessageRepository(db)
+		portalHandler := handlers.NewPortalHandler(
+			portalTicketRepo,
+			portalMsgRepo,
+			repositories.NewActivityRepository(db),
+			cfg.JWTAccessSecret,
+		)
+		portalHandler.SetEmailAccountRepo(repositories.NewEmailAccountRepository(db))
+		portalHandler.SetCommentRepo(repositories.NewCommentRepository(db))
+		portal := api.Group("/portal")
+		{
+			portal.GET("/conversation", portalHandler.GetConversation)
+			portal.POST("/reply", portalHandler.Reply)
+		}
+
 		// Auth routes
 		authService := services.NewAuthService(db, cfg)
 		authHandler := handlers.NewAuthHandler(authService)
@@ -205,7 +222,10 @@ func SetupRouter(db *gorm.DB, cfg *config.Config, serverCtx context.Context) *gi
 				attachStorage, aiService, db,
 			)
 			emailSvc.SetJobService(jobService)
-			replyService.SetEmailService(emailSvc) // auto-email on reply approval
+			emailSvc.SetPortalConfig(cfg.AppURL, cfg.JWTAccessSecret)
+			replyService.SetEmailService(emailSvc)      // auto-email on reply approval
+			replyService.SetCommentRepo(commentRepo)    // portal replies saved as comments
+			portalHandler.SetReplyTrigger(replyService) // AI reply for portal messages
 
 			// Start email background workers — stop when server shuts down.
 			workerCtx := serverCtx

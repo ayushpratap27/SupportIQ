@@ -108,11 +108,11 @@ func (r *TicketRepository) UpdateSLAFields(t *models.Ticket) error {
 			"FirstResponseCompletedAt", "ResolvedAt", "SLAStatus").
 		Updates(map[string]interface{}{
 			"sla_policy_id":               t.SLAPolicyID,
-			"first_response_due_at":        t.FirstResponseDueAt,
-			"resolution_due_at":            t.ResolutionDueAt,
-			"first_response_completed_at":  t.FirstResponseCompletedAt,
-			"resolved_at":                  t.ResolvedAt,
-			"sla_status":                   t.SLAStatus,
+			"first_response_due_at":       t.FirstResponseDueAt,
+			"resolution_due_at":           t.ResolutionDueAt,
+			"first_response_completed_at": t.FirstResponseCompletedAt,
+			"resolved_at":                 t.ResolvedAt,
+			"sla_status":                  t.SLAStatus,
 		}).Error
 }
 

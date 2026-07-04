@@ -31,6 +31,11 @@ func Connect(cfg *config.Config) (*gorm.DB, error) {
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetConnMaxLifetime(5 * time.Minute)
 
+	// Ensure any new columns are added safely before running AutoMigrate.
+	// This avoids "column already exists" errors on PostgreSQL when a previous
+	// run already applied the migration but AutoMigrate tries again.
+	db.Exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS team varchar(50) DEFAULT ''")
+
 	if err := db.AutoMigrate(
 		&models.Tenant{},
 		&models.User{},
