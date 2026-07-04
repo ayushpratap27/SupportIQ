@@ -2,23 +2,10 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { ticketService } from '../../services/ticketService'
 import Toast, { useToast } from '../../components/Toast'
+import { TICKET_CATEGORIES, TICKET_PRIORITIES } from '../../utils/categories'
 
-const PRIORITIES = [
-  { label: 'Low', value: 'LOW' },
-  { label: 'Medium', value: 'MEDIUM' },
-  { label: 'High', value: 'HIGH' },
-  { label: 'Urgent', value: 'URGENT' },
-]
-const CATEGORIES = [
-  { label: 'General', value: 'GENERAL' },
-  { label: 'Technical Issue', value: 'TECHNICAL_ISSUE' },
-  { label: 'Engineering / Tech Team', value: 'ENGINEERING' },
-  { label: 'Payment', value: 'PAYMENT' },
-  { label: 'Authentication', value: 'AUTHENTICATION' },
-  { label: 'Refund', value: 'REFUND' },
-  { label: 'Account', value: 'ACCOUNT' },
-  { label: 'Subscription', value: 'SUBSCRIPTION' },
-]
+const PRIORITIES = TICKET_PRIORITIES
+const CATEGORIES = TICKET_CATEGORIES
 
 const inputCls = (err) =>
   `w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 transition ${

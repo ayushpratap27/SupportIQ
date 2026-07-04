@@ -4,17 +4,9 @@ import { useAuth } from '../contexts/AuthContext'
 import { knowledgeService } from '../services/knowledgeService'
 import { useNavigate } from 'react-router-dom'
 import { formatDate } from '../utils/format'
+import { KB_CATEGORIES } from '../utils/categories'
 
-const CATEGORIES = [
-  'FAQ',
-  'Refund Policy',
-  'Shipping Policy',
-  'Subscription Policy',
-  'Account Policy',
-  'Payment Policy',
-  'General Documentation',
-  'Engineering Team',
-]
+const CATEGORIES = KB_CATEGORIES
 
 const EMPTY_FORM = { title: '', category: 'FAQ', content: '', is_active: true }
 

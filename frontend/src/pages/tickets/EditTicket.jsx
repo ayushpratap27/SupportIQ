@@ -2,19 +2,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ticketService } from '../../services/ticketService'
 import Toast, { useToast } from '../../components/Toast'
+import { TICKET_CATEGORIES, TICKET_PRIORITIES } from '../../utils/categories'
 
-const CATEGORIES = [
-  { label: 'General', value: 'GENERAL' },
-  { label: 'Technical Issue', value: 'TECHNICAL_ISSUE' },
-  { label: 'Engineering / Tech Team', value: 'ENGINEERING' },
-  { label: 'Payment', value: 'PAYMENT' },
-  { label: 'Authentication', value: 'AUTHENTICATION' },
-  { label: 'Refund', value: 'REFUND' },
-  { label: 'Account', value: 'ACCOUNT' },
-  { label: 'Subscription', value: 'SUBSCRIPTION' },
-]
-
-const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'URGENT']
+const CATEGORIES = TICKET_CATEGORIES
+const PRIORITIES = TICKET_PRIORITIES
 
 function EditTicket() {
   const { id } = useParams()
@@ -143,7 +134,7 @@ function EditTicket() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">Priority</label>
                 <select name="priority" value={form.priority} onChange={handleChange} className="select-field w-full">
-                  {PRIORITIES.map((p) => <option key={p} value={p}>{p}</option>)}
+                  {PRIORITIES.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
                 </select>
               </div>
               {/* Category */}
