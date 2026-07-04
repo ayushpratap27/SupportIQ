@@ -100,7 +100,7 @@ export default function SLAManagement() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-6">
+    <div className="max-w-5xl mx-auto p-8">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">SLA Management</h1>
       <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 mb-8">Define response and resolution time targets per ticket priority.</p>
 
@@ -164,7 +164,7 @@ export default function SLAManagement() {
                 </button>
                 {editId && (
                   <button type="button" onClick={handleCancel}
-                    className="px-4 py-2 border border-gray-200 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800">
+                    className="px-4 py-2 border border-gray-200 dark:border-gray-600 text-sm text-gray-600 dark:text-gray-300 dark:text-gray-600 rounded-lg hover:bg-gray-50 dark:bg-gray-900">
                     Cancel
                   </button>
                 )}

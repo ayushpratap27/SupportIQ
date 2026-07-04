@@ -42,7 +42,7 @@ export default function TenantSettings() {
   if (loading) return <div className="p-8 text-gray-500 dark:text-gray-400 dark:text-gray-500">Loading…</div>
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-6">
+    <div className="max-w-2xl mx-auto p-8">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Tenant Settings</h1>
 
       {message && (

@@ -114,7 +114,7 @@ export default function MyTickets() {
                   <tr
                     key={t.id}
                     onClick={() => navigate(`/tickets/${t.id}`)}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition"
+                    className="hover:bg-gray-50 dark:bg-gray-900 cursor-pointer transition"
                   >
                     <td className="px-4 py-3 font-mono text-xs text-blue-600">{t.ticket_number}</td>
                     <td className="px-4 py-3 font-medium text-gray-800 dark:text-gray-100 max-w-xs truncate">{t.subject}</td>
@@ -135,7 +135,7 @@ export default function MyTickets() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 transition"
+              className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-900 disabled:opacity-40 transition"
             >
               ← Prev
             </button>
@@ -143,7 +143,7 @@ export default function MyTickets() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 transition"
+              className="rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 dark:text-gray-600 hover:bg-gray-50 dark:bg-gray-900 disabled:opacity-40 transition"
             >
               Next →
             </button>

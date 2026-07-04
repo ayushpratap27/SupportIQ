@@ -80,11 +80,11 @@ export default function AnalyticsDashboard() {
   const categoryData = (tickets?.by_category ?? []).slice(0, 8).map(p => ({ name: p.label, value: Number(p.count) }))
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-6">
+    <div className="p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Analytics Dashboard</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Analytics Dashboard</h1>
           {lastRefresh && (
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Last updated: {lastRefresh.toLocaleTimeString()}</p>
           )}
@@ -143,7 +143,7 @@ export default function AnalyticsDashboard() {
           )}
 
           {/* Trend Chart */}
-          <div className="mb-6 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
+          <div className="mb-6 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
             <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Ticket Volume Trend</h2>
             {trendPoints.length > 0 ? (
               <ResponsiveContainer width="100%" height={240}>
@@ -176,7 +176,7 @@ export default function AnalyticsDashboard() {
           {/* Distribution charts */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             {/* Status Pie */}
-            <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
+            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
               <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Status Distribution</h2>
               {statusData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
@@ -193,7 +193,7 @@ export default function AnalyticsDashboard() {
             </div>
 
             {/* Priority Bar */}
-            <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
+            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
               <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Priority Distribution</h2>
               {priorityData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
@@ -211,7 +211,7 @@ export default function AnalyticsDashboard() {
             </div>
 
             {/* Category Bar */}
-            <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
+            <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
               <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Top Categories</h2>
               {categoryData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
@@ -228,7 +228,7 @@ export default function AnalyticsDashboard() {
           </div>
 
           {/* Tickets by Hour */}
-          <div className="rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 p-5">
+          <div className="rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-5">
             <h2 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-200">Tickets Created by Hour (Today)</h2>
             {(tickets?.by_hour?.length > 0) ? (
               <ResponsiveContainer width="100%" height={160}>
