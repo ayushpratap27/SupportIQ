@@ -84,15 +84,15 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 gap-6 items-start">
           {/* Recent Activity */}
           <div className="col-span-2 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Recent Activity</h2>
             {recentActivity.length === 0 ? (
               <p className="text-sm text-gray-400 dark:text-gray-500">No activity yet.</p>
             ) : (
-              <ul className="space-y-3">
-                {recentActivity.slice(0, 10).map((a) => (
+              <ul className="space-y-3 overflow-y-auto max-h-96 pr-1">
+                {recentActivity.map((a) => (
                   <li key={a.id} className="flex items-start gap-3">
                     <span className="text-base">{ACTIVITY_ICON[a.activity_type] || '•'}</span>
                     <div className="flex-1 min-w-0">
