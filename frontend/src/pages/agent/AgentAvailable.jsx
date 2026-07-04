@@ -14,7 +14,7 @@ export default function AgentAvailable() {
   const navigate = useNavigate()
 
   const load = () => {
-    ticketService.getTickets({ status: 'unassigned', limit: 50 })
+    ticketService.getUnassigned({ limit: 50 })
       .then((res) => setTickets(res.data.data?.tickets || []))
       .catch(() => {})
       .finally(() => setLoading(false))

@@ -21,7 +21,7 @@ export default function AgentDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    ticketService.getTickets({ assigned_to: 'me', limit: 50 })
+    ticketService.getMyTickets({ limit: 50 })
       .then((res) => setMyTickets(res.data.data?.tickets || []))
       .catch(() => {})
       .finally(() => setLoading(false))

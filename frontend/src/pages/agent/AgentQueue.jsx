@@ -19,7 +19,7 @@ export default function AgentQueue() {
   const [updating, setUpdating] = useState(null)
 
   const load = () => {
-    ticketService.getTickets({ assigned_to: 'me', limit: 50 })
+    ticketService.getMyTickets({ limit: 50 })
       .then((res) => setTickets(res.data.data?.tickets || []))
       .catch(() => {})
       .finally(() => setLoading(false))
