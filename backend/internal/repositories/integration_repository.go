@@ -32,6 +32,29 @@ func (r *IntegrationRepository) FindByID(tenantID uuid.UUID, id uint) (*models.I
 	return &integration, nil
 }
 
+// FindByIDNoTenant loads an integration by ID without tenant scoping.
+// Used by the public Slack events webhook where tenant is unknown.
+func (r *IntegrationRepository) FindByIDNoTenant(id uint) (*models.Integration, error) {
+	var integration models.Integration
+	err := r.db.Where("id = ?", id).First(&integration).Error
+	if err != nil {
+		return nil, err
+	}
+	return &integration, nil
+}
+
+// FindBySlackThread looks up a TicketIntegration by the Slack thread_ts.
+// Used to map thread replies back to their originating ticket.
+func (r *IntegrationRepository) FindBySlackThread(integrationID uint, threadTS string) (*models.TicketIntegration, error) {
+	var ti models.TicketIntegration
+	err := r.db.Where("integration_id = ? AND external_id = ?", integrationID, threadTS).
+		First(&ti).Error
+	if err != nil {
+		return nil, err
+	}
+	return &ti, nil
+}
+
 func (r *IntegrationRepository) FindAll(tenantID uuid.UUID) ([]models.Integration, error) {
 	var integrations []models.Integration
 	err := r.db.Where("tenant_id = ?", tenantID).Order("created_at DESC").Find(&integrations).Error

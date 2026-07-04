@@ -80,6 +80,10 @@ func SetupRouter(db *gorm.DB, cfg *config.Config, serverCtx context.Context) *gi
 		healthHandler := handlers.NewHealthHandler()
 		api.GET("/health", healthHandler.Check)
 
+		// Public — Slack inbound events (no JWT; verified via Slack signing secret)
+		slackHandler := handlers.NewSlackHandler(db, cfg.JWTAccessSecret)
+		api.POST("/slack/events/:integrationID", slackHandler.HandleEvents)
+
 		// Auth routes
 		authService := services.NewAuthService(db, cfg)
 		authHandler := handlers.NewAuthHandler(authService)

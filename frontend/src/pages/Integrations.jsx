@@ -2,7 +2,12 @@ import { useState, useEffect } from 'react';
 import { integrationService } from '../services/integrationService';
 
 const PROVIDER_META = {
-  slack:       { label: 'Slack',            icon: '💬', fields: [{ key: 'webhook_url', label: 'Webhook URL', required: true }] },
+  slack:       { label: 'Slack',            icon: '💬', fields: [
+    { key: 'webhook_url',        label: 'Outbound Webhook URL', required: true, hint: 'For sending ticket notifications TO Slack' },
+    { key: 'signing_secret',     label: 'Signing Secret', secret: true, hint: 'From Slack App → Basic Information → Signing Secret' },
+    { key: 'bot_token',          label: 'Bot Token (xoxb-...)', secret: true, hint: 'From Slack App → OAuth & Permissions → Bot User OAuth Token' },
+    { key: 'support_channel_id', label: 'Support Channel ID', hint: 'Channel where users post support requests (e.g. C0123456789)' },
+  ]},
   teams:       { label: 'Microsoft Teams',  icon: '🟦', fields: [{ key: 'webhook_url', label: 'Webhook URL', required: true }] },
   discord:     { label: 'Discord',          icon: '🎮', fields: [{ key: 'webhook_url', label: 'Webhook URL', required: true }, { key: 'username', label: 'Bot Username' }] },
   jira:        { label: 'Jira',             icon: '🔵', fields: [
@@ -259,6 +264,9 @@ export default function Integrations() {
                     onChange={(e) => setConfigField(field.key, e.target.value)}
                     className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
+                  {field.hint && (
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{field.hint}</p>
+                  )}
                 </div>
               ))}
 
