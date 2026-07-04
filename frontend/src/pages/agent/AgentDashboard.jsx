@@ -30,6 +30,7 @@ export default function AgentDashboard() {
   const open       = myTickets.filter((t) => t.status === 'OPEN').length
   const inProgress = myTickets.filter((t) => t.status === 'IN_PROGRESS').length
   const resolved   = myTickets.filter((t) => t.status === 'RESOLVED').length
+  const closed     = myTickets.filter((t) => t.status === 'CLOSED').length
   const recent     = [...myTickets].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 5)
 
   return (
@@ -45,10 +46,11 @@ export default function AgentDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <StatCard label="Open"        value={open}        color="text-yellow-500" icon="🟡" />
-        <StatCard label="In Progress" value={inProgress}  color="text-blue-500"   icon="🔵" />
+      <div className="grid grid-cols-4 gap-4 mb-8">
+        <StatCard label="Open"        value={open}        color="text-yellow-500"  icon="🟡" />
+        <StatCard label="In Progress" value={inProgress}  color="text-blue-500"    icon="🔵" />
         <StatCard label="Resolved"    value={resolved}    color="text-emerald-500" icon="✅" />
+        <StatCard label="Closed"      value={closed}      color="text-gray-400"    icon="🔒" />
       </div>
 
       {/* Recent assigned tickets */}
