@@ -53,10 +53,11 @@ type Integration struct {
 type IntegrationEventStatus string
 
 const (
-	IntEventPending   IntegrationEventStatus = "PENDING"
-	IntEventProcessed IntegrationEventStatus = "PROCESSED"
-	IntEventFailed    IntegrationEventStatus = "FAILED"
-	IntEventDead      IntegrationEventStatus = "DEAD"
+	IntEventPending    IntegrationEventStatus = "PENDING"
+	IntEventProcessing IntegrationEventStatus = "PROCESSING" // claimed by a worker, in-flight
+	IntEventProcessed  IntegrationEventStatus = "PROCESSED"
+	IntEventFailed     IntegrationEventStatus = "FAILED"
+	IntEventDead       IntegrationEventStatus = "DEAD"
 )
 
 // IntegrationEvent is a durable outbound event record used for reliable delivery.

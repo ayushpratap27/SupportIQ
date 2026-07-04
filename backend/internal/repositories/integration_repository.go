@@ -135,6 +135,37 @@ func (r *IntegrationRepository) FindAllPendingEvents(limit int) ([]models.Integr
 	return events, err
 }
 
+// ClaimPendingEvents atomically marks up to `limit` PENDING/FAILED events as
+// PROCESSING and returns them. Uses a single UPDATE…RETURNING statement so that
+// two concurrent workers can never claim the same event, eliminating the
+// duplicate-notification race condition.
+func (r *IntegrationRepository) ClaimPendingEvents(limit int) ([]models.IntegrationEvent, error) {
+	var events []models.IntegrationEvent
+	err := r.db.Raw(`
+		UPDATE integration_events
+		SET status = ?
+		WHERE id IN (
+			SELECT id FROM integration_events
+			WHERE status IN (?, ?) AND retry_count < 5
+			ORDER BY created_at ASC
+			LIMIT ?
+		)
+		RETURNING *`,
+		models.IntEventProcessing,
+		models.IntEventPending, models.IntEventFailed,
+		limit,
+	).Scan(&events).Error
+	return events, err
+}
+
+// ResetStuckProcessingEvents resets any events left in PROCESSING state back
+// to PENDING. Called on worker startup to recover from a previous crash.
+func (r *IntegrationRepository) ResetStuckProcessingEvents() error {
+	return r.db.Model(&models.IntegrationEvent{}).
+		Where("status = ?", models.IntEventProcessing).
+		Update("status", models.IntEventPending).Error
+}
+
 func (r *IntegrationRepository) UpdateEventStatus(id uint, status models.IntegrationEventStatus, errMsg string) error {
 	now := time.Now()
 	updates := map[string]interface{}{

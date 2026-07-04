@@ -68,6 +68,11 @@ func (w *Worker) Start(ctx context.Context) {
 			Info("Integration worker: seeded cursor from DB")
 	}
 
+	// Recover any events left in PROCESSING state from a previous crash.
+	if err := w.integrationRepo.ResetStuckProcessingEvents(); err != nil {
+		utils.Logger.WithError(err).Warn("Integration worker: could not reset stuck PROCESSING events")
+	}
+
 	activityTicker := time.NewTicker(w.pollInterval)
 	eventTicker := time.NewTicker(w.pollInterval)
 	defer activityTicker.Stop()
@@ -201,9 +206,11 @@ func (w *Worker) createEventsForActivity(ctx context.Context, tenantID uuid.UUID
 }
 
 func (w *Worker) processEvents(ctx context.Context) {
-	events, err := w.integrationRepo.FindAllPendingEvents(eventBatchSize)
+	// ClaimPendingEvents atomically marks events as PROCESSING before returning
+	// them — prevents two concurrent workers from dispatching the same event.
+	events, err := w.integrationRepo.ClaimPendingEvents(eventBatchSize)
 	if err != nil {
-		utils.Logger.WithError(err).Error("Integration worker: fetch pending events")
+		utils.Logger.WithError(err).Error("Integration worker: claim pending events")
 		return
 	}
 	for _, evt := range events {
