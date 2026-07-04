@@ -26,7 +26,7 @@ export default function AgentAvailable() {
     setClaiming(ticketId)
     try {
       await ticketService.takeOwnership(ticketId)
-      navigate('/agent/queue')
+      navigate(`/agent/tickets/${ticketId}`)
     } catch { setClaiming(null) }
   }
 

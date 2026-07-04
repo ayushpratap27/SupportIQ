@@ -20,6 +20,7 @@ export default function AgentTicketDetail() {
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
   const [statusUpdating, setStatusUpdating] = useState(false)
+  const [claiming, setClaiming] = useState(false)
   const [comment, setComment] = useState('')
   const [posting, setPosting] = useState(false)
 
@@ -45,6 +46,15 @@ export default function AgentTicketDetail() {
       setTicket((t) => ({ ...t, status: newStatus }))
     } catch { /* ignore */ }
     finally { setStatusUpdating(false) }
+  }
+
+  const handlePickUp = async () => {
+    setClaiming(true)
+    try {
+      const res = await ticketService.takeOwnership(id)
+      setTicket(res.data.data)
+    } catch { /* ignore */ }
+    finally { setClaiming(false) }
   }
 
   const handleComment = async (e) => {
@@ -80,11 +90,24 @@ export default function AgentTicketDetail() {
             <div className="flex items-center gap-2 mb-2">
               <span className="font-mono text-xs text-emerald-600 dark:text-emerald-400">{ticket.ticket_number}</span>
               <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${PRIORITY_COLOR[ticket.priority]}`}>{ticket.priority}</span>
+              {!ticket.assigned_to && (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">Unassigned</span>
+              )}
             </div>
             <h1 className="text-base font-semibold text-gray-900 dark:text-white">{ticket.subject}</h1>
           </div>
-          {/* Status selector */}
-          <div className="shrink-0">
+          {/* Actions */}
+          <div className="shrink-0 flex items-center gap-2">
+            {!ticket.assigned_to && (
+              <button
+                onClick={handlePickUp}
+                disabled={claiming}
+                className="px-4 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition"
+              >
+                {claiming ? 'Claiming…' : '📥 Pick Up'}
+              </button>
+            )}
+            {/* Status selector */}
             <select
               value={ticket.status}
               onChange={handleStatusChange}
