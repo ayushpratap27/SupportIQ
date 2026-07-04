@@ -42,6 +42,26 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	utils.SendSuccess(c, http.StatusCreated, "Registration successful", resp)
 }
 
+// AgentJoin handles POST /api/v1/auth/agent-join
+// Registers a new SupportAgent under an existing tenant by company slug.
+func (h *AuthHandler) AgentJoin(c *gin.Context) {
+	var req dto.AgentJoinRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := validators.ValidatePasswordStrength(req.Password); err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	resp, statusCode, err := h.authService.AgentJoin(&req)
+	if err != nil {
+		utils.SendError(c, statusCode, err.Error())
+		return
+	}
+	utils.SendSuccess(c, http.StatusCreated, "Agent registered successfully", resp)
+}
+
 // Login handles POST /api/v1/auth/login
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req dto.LoginRequest

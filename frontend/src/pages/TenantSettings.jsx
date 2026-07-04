@@ -3,6 +3,7 @@ import { tenantService } from '../services/tenantService'
 
 export default function TenantSettings() {
   const [form, setForm] = useState({ name: '', domain: '', plan: '' })
+  const [slug, setSlug] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
@@ -13,6 +14,7 @@ export default function TenantSettings() {
       .then((res) => {
         const t = res.data.data || res.data
         setForm({ name: t.name || '', domain: t.domain || '', plan: t.plan || '' })
+        setSlug(t.slug || '')
       })
       .catch(() => setError('Failed to load settings'))
       .finally(() => setLoading(false))
@@ -44,6 +46,15 @@ export default function TenantSettings() {
   return (
     <div className="max-w-2xl mx-auto p-8">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Tenant Settings</h1>
+
+      {/* Agent join info */}
+      {slug && (
+        <div className="mb-6 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4">
+          <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 mb-1">🔗 Agent Join Code</p>
+          <p className="text-xs text-emerald-600 dark:text-emerald-500 mb-2">Share this slug with agents so they can register at <strong>/agent-register</strong>:</p>
+          <code className="block px-3 py-2 bg-white dark:bg-gray-800 border border-emerald-200 dark:border-emerald-700 rounded-lg text-sm font-mono text-emerald-700 dark:text-emerald-300 select-all">{slug}</code>
+        </div>
+      )}
 
       {message && (
         <div className="mb-4 px-4 py-3 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">

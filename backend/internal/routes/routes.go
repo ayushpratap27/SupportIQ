@@ -91,11 +91,18 @@ func SetupRouter(db *gorm.DB, cfg *config.Config, serverCtx context.Context) *gi
 		auth := api.Group("/auth")
 		{
 			auth.POST("/register", middleware.RateLimitAuth(), authHandler.Register)
+			auth.POST("/agent-join", middleware.RateLimitAuth(), authHandler.AgentJoin)
 			auth.POST("/login", middleware.RateLimitAuth(), authHandler.Login)
 			auth.POST("/logout", authHandler.Logout)
 			auth.POST("/refresh", middleware.RateLimitAuth(), authHandler.Refresh)
 			auth.GET("/me", middleware.Authenticate(db, cfg), authHandler.Me)
 		}
+
+		// Public — returns the list of available agent teams
+		api.GET("/teams", func(c *gin.Context) {
+			teams := []string{"Support", "Engineering", "Billing", "Sales", "Operations"}
+			c.JSON(200, gin.H{"teams": teams})
+		})
 
 		// WebSocket endpoint — authenticated via Authorization: Bearer <token> header.
 		// Fallback to ?token= query param for browser clients that cannot set headers.

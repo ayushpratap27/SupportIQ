@@ -42,6 +42,14 @@ export function AuthProvider({ children }) {
     return user
   }, [])
 
+  const agentJoin = useCallback(async (data) => {
+    const res = await authService.agentJoin(data)
+    const { accessToken, user } = res.data.data
+    localStorage.setItem(TOKEN_KEY, accessToken)
+    setUser(user)
+    return user
+  }, [])
+
   const logout = useCallback(async () => {
     try {
       await authService.logout()
@@ -52,7 +60,7 @@ export function AuthProvider({ children }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, agentJoin, logout }}>
       {children}
     </AuthContext.Provider>
   )

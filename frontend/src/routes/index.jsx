@@ -1,9 +1,11 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import MainLayout from '../layouts/MainLayout'
 import AppLayout from '../layouts/AppLayout'
+import AgentLayout from '../layouts/AgentLayout'
 import Home from '../pages/Home'
 import Login from '../pages/Login'
 import Register from '../pages/Register'
+import AgentRegister from '../pages/AgentRegister'
 import Dashboard from '../pages/Dashboard'
 import TicketList from '../pages/tickets/TicketList'
 import CreateTicket from '../pages/tickets/CreateTicket'
@@ -23,6 +25,10 @@ import TenantSettings from '../pages/TenantSettings'
 import SuperAdminDashboard from '../pages/superadmin/SuperAdminDashboard'
 import SLAManagement from '../pages/SLAManagement'
 import SLADashboard from '../pages/SLADashboard'
+import AgentDashboard from '../pages/agent/AgentDashboard'
+import AgentQueue from '../pages/agent/AgentQueue'
+import AgentAvailable from '../pages/agent/AgentAvailable'
+import AgentTicketDetail from '../pages/agent/AgentTicketDetail'
 
 function AppRoutes() {
   return (
@@ -33,6 +39,15 @@ function AppRoutes() {
 
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/agent-register" element={<AgentRegister />} />
+
+      {/* Agent portal — only accessible to SupportAgent role */}
+      <Route element={<AgentLayout />}>
+        <Route path="/agent" element={<AgentDashboard />} />
+        <Route path="/agent/queue" element={<AgentQueue />} />
+        <Route path="/agent/available" element={<AgentAvailable />} />
+        <Route path="/agent/tickets/:id" element={<AgentTicketDetail />} />
+      </Route>
 
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
