@@ -134,14 +134,14 @@ export default function TicketDetails() {
   return (
     <div>
       {/* Title bar */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 px-6 py-4">
-        <div className="flex items-start justify-between gap-4">
+      <div className="bg-white dark:bg-gray-800 px-6 pt-4 pb-0">
+        <p className="text-xs text-gray-400 dark:text-gray-500 mb-2">
+          <Link to="/tickets" className="hover:text-gray-600 dark:hover:text-gray-300">← Tickets</Link>
+          <span className="mx-1">/</span>
+          <span className="font-mono">{ticket.ticket_number}</span>
+        </p>
+        <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">
-              <Link to="/tickets" className="hover:text-gray-600 dark:hover:text-gray-300">← Tickets</Link>
-              <span className="mx-1">/</span>
-              <span className="font-mono">{ticket.ticket_number}</span>
-            </p>
             <h1 className="text-lg font-bold text-gray-900 dark:text-white">{ticket.subject}</h1>
             <div className="mt-1 flex items-center gap-2">
               <StatusBadge status={ticket.status} />
@@ -176,7 +176,7 @@ export default function TicketDetails() {
         </div>
 
         {/* Tabs */}
-        <div className="mt-4 flex gap-1 border-b border-gray-100 dark:border-gray-700 -mb-[1px]">
+        <div className="mt-4 flex gap-1">
           {TABS.map((tab) => (
             <button
               key={tab}
@@ -308,7 +308,7 @@ export default function TicketDetails() {
         )}
 
         {activeTab === 'AI Reply' && (
-          <div className="max-w-2xl">
+          <div className="w-full max-w-2xl mx-auto">
             <AIReplyPanel ticketId={id} />
           </div>
         )}

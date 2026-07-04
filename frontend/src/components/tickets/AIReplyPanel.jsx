@@ -143,27 +143,52 @@ export default function AIReplyPanel({ ticketId }) {
   // No reply yet
   if (!reply) {
     return (
-      <div className="rounded-xl border border-dashed border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-10 text-center">
-        <div className="text-3xl mb-3">🤖</div>
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">No AI Reply Generated</h3>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mb-5 max-w-xs mx-auto">
-          Generate a reply grounded in your knowledge base. The agent must approve before it becomes official.
-        </p>
+      <div className="flex flex-col items-center justify-center py-20 gap-6">
+        {/* Icon */}
+        <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center text-4xl shadow-sm">
+          🤖
+        </div>
+
+        {/* Text */}
+        <div className="text-center">
+          <p className="text-base font-semibold text-gray-800 dark:text-gray-100">No AI Reply Generated</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1 max-w-xs">
+            Generate a reply grounded in your knowledge base. The agent must approve before it becomes official.
+          </p>
+        </div>
+
+        {/* Error */}
         {error && (
-          <p className="mb-4 text-xs text-red-500 bg-red-50 rounded-lg px-4 py-2">{error}</p>
+          <div className="w-full max-w-sm rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 px-4 py-3 text-sm text-red-600 dark:text-red-400 text-center">
+            {error}
+          </div>
         )}
+
+        {/* Button */}
         <button
           onClick={handleGenerate}
           disabled={actionLoading}
-          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition"
+          className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50 transition shadow-sm"
         >
           {actionLoading ? (
             <>
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
               Generating…
             </>
-          ) : '✨ Generate AI Reply'}
+          ) : (
+            <>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+              </svg>
+              Generate AI Reply
+            </>
+          )}
         </button>
+
+        {/* Info hint */}
+        <p className="text-xs text-gray-400 dark:text-gray-500">
+          Grounded in your knowledge base · Requires agent approval
+        </p>
       </div>
     )
   }
@@ -181,7 +206,7 @@ export default function AIReplyPanel({ ticketId }) {
           <div>
             <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-100">AI Suggested Reply</h3>
             <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-              Generated {new Date(reply.created_at).toLocaleString()} · Model: {reply.model || 'Gemini'} · Prompt {reply.prompt_version}
+              Generated {new Date(reply.created_at).toLocaleString()} · Model: {reply.model || 'AI'} · Prompt {reply.prompt_version}
             </p>
           </div>
           <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${STATUS_COLORS[reply.status] || 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 dark:text-gray-600'}`}>
