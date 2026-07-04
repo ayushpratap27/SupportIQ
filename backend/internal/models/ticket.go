@@ -8,10 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
-type TicketStatus   string
+type TicketStatus string
 type TicketPriority string
 type TicketCategory string
-type TicketSource   string
+type TicketSource string
 
 const (
 	TicketStatusOpen       TicketStatus = "OPEN"
@@ -28,7 +28,8 @@ const (
 )
 
 const (
-	TicketCategoryGeneral TicketCategory = "GENERAL"
+	TicketCategoryGeneral     TicketCategory = "GENERAL"
+	TicketCategoryEngineering TicketCategory = "ENGINEERING"
 )
 
 const (

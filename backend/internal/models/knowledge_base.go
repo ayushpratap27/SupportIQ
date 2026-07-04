@@ -17,6 +17,7 @@ const (
 	KBCategoryAccount      KnowledgeCategory = "Account Policy"
 	KBCategoryPayment      KnowledgeCategory = "Payment Policy"
 	KBCategoryGeneral      KnowledgeCategory = "General Documentation"
+	KBCategoryEngineering  KnowledgeCategory = "Engineering Team"
 )
 
 // KnowledgeBase is a company knowledge document used to ground AI replies (RAG).

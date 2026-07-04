@@ -13,6 +13,7 @@ const CATEGORIES = [
   'Account Policy',
   'Payment Policy',
   'General Documentation',
+  'Engineering Team',
 ]
 
 const EMPTY_FORM = { title: '', category: 'FAQ', content: '', is_active: true }

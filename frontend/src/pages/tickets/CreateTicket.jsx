@@ -12,6 +12,7 @@ const PRIORITIES = [
 const CATEGORIES = [
   { label: 'General', value: 'GENERAL' },
   { label: 'Technical Issue', value: 'TECHNICAL_ISSUE' },
+  { label: 'Engineering / Tech Team', value: 'ENGINEERING' },
   { label: 'Payment', value: 'PAYMENT' },
   { label: 'Authentication', value: 'AUTHENTICATION' },
   { label: 'Refund', value: 'REFUND' },
