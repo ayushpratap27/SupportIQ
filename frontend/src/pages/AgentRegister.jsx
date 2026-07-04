@@ -64,7 +64,6 @@ export default function AgentRegister() {
 
   const validate = () => {
     const next = {}
-    if (!form.name.trim() || form.name.trim().length < 2)  next.name = 'Name must be at least 2 characters.'
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))    next.email = 'Enter a valid email address.'
     if (form.password.length < 8)                           next.password = 'Password must be at least 8 characters.'
     if (!form.company_slug.trim())                          next.company_slug = 'Company slug is required.'
@@ -80,7 +79,7 @@ export default function AgentRegister() {
 
     setSubmitting(true)
     try {
-      await agentJoin(form)
+      await agentJoin({ ...form, name: form.team + ' Team' })
       navigate('/agent')
     } catch (err) {
       setApiError(err.response?.data?.message || 'Registration failed. Check the company slug and try again.')
@@ -117,17 +116,6 @@ export default function AgentRegister() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">Team Account Name</label>
-              <input
-                name="name" value={form.name} onChange={handleChange} autoComplete="name"
-                placeholder="e.g. Engineering Team, Billing Support"
-                className={`w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:bg-gray-700 dark:text-gray-100 transition ${errors.name ? 'border-red-400' : 'border-gray-300 dark:border-gray-600'}`}
-              />
-              {errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
-            </div>
-
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">Email</label>
