@@ -107,8 +107,8 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Right column */}
-          <div className="space-y-4">
+          {/* Right column — pt-8 aligns cards with the left card (offset by the heading above it) */}
+          <div className="space-y-4 pt-8">
             {/* User info */}
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
               <h2 className="text-sm font-bold text-gray-900 dark:text-white mb-4">Account</h2>
