@@ -52,6 +52,7 @@ func main() {
 	// ─── Repositories ────────────────────────────────────────────────────────
 	ticketRepo := repositories.NewTicketRepository(db)
 	activityRepo := repositories.NewActivityRepository(db)
+	userRepo := repositories.NewUserRepository(db)
 	knowledgeRepo := repositories.NewKnowledgeRepository(db)
 	replyRepo := repositories.NewReplyRepository(db)
 	jobRepo := repositories.NewJobRepository(db)
@@ -91,6 +92,7 @@ func main() {
 
 	// ─── Job handlers ────────────────────────────────────────────────────────
 	aiHandler := workerhandlers.NewAIAnalysisHandler(ticketRepo, activityRepo, aiProv)
+	aiHandler.SetUserRepo(userRepo)
 	replyHandler := workerhandlers.NewGenerateReplyHandler(replySvc)
 
 	// ─── Processor ───────────────────────────────────────────────────────────

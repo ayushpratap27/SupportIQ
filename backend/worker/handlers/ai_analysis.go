@@ -17,6 +17,7 @@ import (
 type AIAnalysisHandler struct {
 	ticketRepo   *repositories.TicketRepository
 	activityRepo *repositories.ActivityRepository
+	userRepo     *repositories.UserRepository
 	aiProvider   provider.Provider
 }
 
@@ -31,6 +32,8 @@ func NewAIAnalysisHandler(
 		aiProvider:   aiProvider,
 	}
 }
+
+func (h *AIAnalysisHandler) SetUserRepo(ur *repositories.UserRepository) { h.userRepo = ur }
 
 // Handle runs AI analysis for the given ticket job.
 func (h *AIAnalysisHandler) Handle(ctx context.Context, job queue.Job) error {
@@ -97,5 +100,27 @@ func (h *AIAnalysisHandler) Handle(ctx context.Context, job queue.Job) error {
 	log.WithField("category", result.Category).
 		WithField("confidence", result.Confidence).
 		Info("AI Analysis: Completed successfully")
+
+	// Auto-assign to SupportAgent (or Admin as fallback) if unassigned
+	if ticket.AssignedTo == nil && h.userRepo != nil {
+		var assignee *models.User
+		if agents, err := h.userRepo.ListByRole(ticket.TenantID, models.RoleSupportAgent); err == nil && len(agents) > 0 {
+			assignee = &agents[0]
+		} else if admins, err := h.userRepo.ListByRole(ticket.TenantID, models.RoleAdmin); err == nil && len(admins) > 0 {
+			assignee = &admins[0]
+		}
+		if assignee != nil {
+			ticket.AssignedTo = &assignee.ID
+			_ = h.ticketRepo.Update(ticket)
+			_ = h.activityRepo.Create(&models.TicketActivity{
+				TenantID:     ticket.TenantID,
+				TicketID:     ticketID,
+				UserID:       ticket.CreatedBy,
+				ActivityType: models.ActivityAssignTicket,
+				NewValue:     assignee.Name,
+				Description:  fmt.Sprintf("Auto-assigned to %s (AI team: %s)", assignee.Name, result.RecommendedTeam),
+			})
+		}
+	}
 	return nil
 }

@@ -170,6 +170,7 @@ func SetupRouter(db *gorm.DB, cfg *config.Config, serverCtx context.Context) *gi
 			// Knowledge retrieval (RAG) + core services
 			knowledgeRetriever := retrieval.NewPostgresRetriever(knowledgeRepo)
 			aiService := services.NewAIService(aiProvider, ticketRepo, activityRepo)
+			aiService.SetUserRepo(userRepo)
 			replyService := services.NewReplyService(replyProvider, knowledgeRetriever, ticketRepo, replyRepo, activityRepo, activeModel)
 			jobService := services.NewJobService(jobRepo, jobQueue)
 			aiService.SetReplyService(replyService)
