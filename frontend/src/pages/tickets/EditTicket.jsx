@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ticketService } from '../../services/ticketService'
 import Toast, { useToast } from '../../components/Toast'
 
@@ -75,7 +75,7 @@ function EditTicket() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+      <div className="flex items-center justify-center py-24">
         <p className="text-sm text-gray-400 dark:text-gray-500 animate-pulse">Loading…</p>
       </div>
     )
