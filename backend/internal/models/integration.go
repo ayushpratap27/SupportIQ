@@ -64,6 +64,7 @@ type IntegrationEvent struct {
 	ID            uint                   `gorm:"primarykey;autoIncrement" json:"id"`
 	TenantID      uuid.UUID              `gorm:"type:uuid;not null;default:'00000000-0000-0000-0000-000000000000';index" json:"tenant_id"`
 	IntegrationID uint                   `gorm:"not null;index" json:"integration_id"`
+	ActivityID    uint                   `gorm:"not null;default:0;index" json:"activity_id"`
 	EventType     string                 `gorm:"type:varchar(100);not null;index" json:"event_type"`
 	Payload       string                 `gorm:"type:text" json:"payload"`
 	Status        IntegrationEventStatus `gorm:"type:varchar(20);not null;default:'PENDING';index" json:"status"`
@@ -75,13 +76,13 @@ type IntegrationEvent struct {
 
 // TicketIntegration stores the link between a ticket and an external issue.
 type TicketIntegration struct {
-	ID            uint      `gorm:"primarykey;autoIncrement" json:"id"`
-	TenantID      uuid.UUID `gorm:"type:uuid;not null;default:'00000000-0000-0000-0000-000000000000';index" json:"tenant_id"`
-	TicketID      uuid.UUID `gorm:"type:uuid;not null;index" json:"ticket_id"`
-	IntegrationID uint      `gorm:"not null;index" json:"integration_id"`
-	ExternalID    string    `gorm:"type:varchar(500)" json:"external_id"`
-	ExternalKey   string    `gorm:"type:varchar(200)" json:"external_key"`
-	ExternalURL   string    `gorm:"type:varchar(1000)" json:"external_url"`
+	ID            uint       `gorm:"primarykey;autoIncrement" json:"id"`
+	TenantID      uuid.UUID  `gorm:"type:uuid;not null;default:'00000000-0000-0000-0000-000000000000';index" json:"tenant_id"`
+	TicketID      uuid.UUID  `gorm:"type:uuid;not null;index" json:"ticket_id"`
+	IntegrationID uint       `gorm:"not null;index" json:"integration_id"`
+	ExternalID    string     `gorm:"type:varchar(500)" json:"external_id"`
+	ExternalKey   string     `gorm:"type:varchar(200)" json:"external_key"`
+	ExternalURL   string     `gorm:"type:varchar(1000)" json:"external_url"`
 	SyncedAt      *time.Time `json:"synced_at,omitempty"`
 	CreatedAt     time.Time  `json:"created_at"`
 

@@ -47,6 +47,14 @@ func (r *ActivityRepository) ListRecent(tenantID uuid.UUID, limit int) ([]models
 	return activities, err
 }
 
+// MaxID returns the highest activity ID currently in the database (across all tenants).
+// Used by the integration worker on startup to avoid replaying old events.
+func (r *ActivityRepository) MaxID() uint {
+	var maxID uint
+	r.db.Model(&models.TicketActivity{}).Select("COALESCE(MAX(id), 0)").Scan(&maxID)
+	return maxID
+}
+
 // FindActivitiesSince returns activities with ID > minID for integration worker.
 func (r *ActivityRepository) FindActivitiesSince(tenantID uuid.UUID, minID uint, limit int) ([]models.TicketActivity, error) {
 	var activities []models.TicketActivity

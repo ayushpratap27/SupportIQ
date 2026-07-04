@@ -75,6 +75,20 @@ func (r *IntegrationRepository) CreateEvent(event *models.IntegrationEvent) erro
 	return r.db.Create(event).Error
 }
 
+// EventExistsForActivity returns true if an IntegrationEvent was already
+// created for this (activityID, integrationID) pair. Skipped for legacy
+// rows that have activityID=0 (created before the dedup field existed).
+func (r *IntegrationRepository) EventExistsForActivity(activityID, integrationID uint) bool {
+	if activityID == 0 {
+		return false
+	}
+	var count int64
+	r.db.Model(&models.IntegrationEvent{}).
+		Where("activity_id = ? AND integration_id = ?", activityID, integrationID).
+		Count(&count)
+	return count > 0
+}
+
 func (r *IntegrationRepository) FindPendingEvents(tenantID uuid.UUID, limit int) ([]models.IntegrationEvent, error) {
 	var events []models.IntegrationEvent
 	err := r.db.

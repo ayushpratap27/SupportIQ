@@ -60,6 +60,14 @@ func NewWorker(
 }
 
 func (w *Worker) Start(ctx context.Context) {
+	// Seed the cursor to the current max activity ID so we only process
+	// NEW activities after startup — prevents duplicate notifications on restart.
+	if w.lastActivityID == 0 {
+		w.lastActivityID = w.activityRepo.MaxID()
+		utils.Logger.WithField("last_activity_id", w.lastActivityID).
+			Info("Integration worker: seeded cursor from DB")
+	}
+
 	activityTicker := time.NewTicker(w.pollInterval)
 	eventTicker := time.NewTicker(w.pollInterval)
 	defer activityTicker.Stop()
@@ -170,9 +178,16 @@ func (w *Worker) createEventsForActivity(ctx context.Context, tenantID uuid.UUID
 			continue
 		}
 
+		// Skip if we already created an event for this activity+integration
+		// (guards against replays if the cursor is ever lost).
+		if w.integrationRepo.EventExistsForActivity(act.ID, intg.ID) {
+			continue
+		}
+
 		event := &models.IntegrationEvent{
 			TenantID:      tenantID,
 			IntegrationID: intg.ID,
+			ActivityID:    act.ID,
 			EventType:     eventType,
 			Payload:       string(payloadJSON),
 			Status:        models.IntEventPending,
