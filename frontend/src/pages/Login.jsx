@@ -21,7 +21,7 @@ function Login() {
   }
 
   // Redirect already-authenticated users away from the login page.
-  if (user) return <Navigate to="/dashboard" replace />
+  if (user) return <Navigate to={user.role === 'SupportAgent' ? '/agent' : '/dashboard'} replace />
 
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -31,8 +31,8 @@ function Login() {
     setError('')
     setSubmitting(true)
     try {
-      await login(form)
-      navigate('/dashboard')
+      const loggedInUser = await login(form)
+      navigate(loggedInUser.role === 'SupportAgent' ? '/agent' : '/dashboard')
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.')
     } finally {
@@ -115,6 +115,12 @@ function Login() {
             Don&apos;t have an account?{' '}
             <Link to="/register" className="text-blue-600 font-medium hover:underline">
               Register
+            </Link>
+          </p>
+          <p className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
+            Joining as a support agent?{' '}
+            <Link to="/agent-register" className="text-emerald-600 font-medium hover:underline">
+              Join your team
             </Link>
           </p>
         </div>

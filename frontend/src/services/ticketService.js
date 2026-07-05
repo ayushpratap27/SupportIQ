@@ -31,6 +31,9 @@ export const ticketService = {
   getMyTickets: (params = {}) =>
     apiClient.get('/api/v1/my-tickets', { params }),
 
+  getTeamTickets: (params = {}) =>
+    apiClient.get('/api/v1/team-tickets', { params }),
+
   getUnassigned: (params = {}) =>
     apiClient.get('/api/v1/tickets/unassigned', { params }),
 }

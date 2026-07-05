@@ -357,6 +357,36 @@ func (s *TicketService) MyTickets(tenantID uuid.UUID, userID uint, q *dto.ListTi
 	return s.List(tenantID, q)
 }
 
+// TeamTickets returns tickets for a shared team account:
+// tickets explicitly assigned to this user OR ai_team matches the user's team name.
+func (s *TicketService) TeamTickets(tenantID uuid.UUID, userID uint, teamName string, q *dto.ListTicketsQuery) (*dto.ListTicketsResponse, int, error) {
+	if q.Page < 1 {
+		q.Page = 1
+	}
+	if q.Limit < 1 {
+		q.Limit = 50
+	}
+	tickets, total, err := s.repo.FindTeamTickets(tenantID, userID, teamName, q)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+	items := make([]dto.TicketResponse, 0, len(tickets))
+	for _, t := range tickets {
+		items = append(items, *toTicketResponse(&t))
+	}
+	totalPages := int(total) / q.Limit
+	if int(total)%q.Limit != 0 {
+		totalPages++
+	}
+	return &dto.ListTicketsResponse{
+		Items:       items,
+		TotalCount:  total,
+		CurrentPage: q.Page,
+		TotalPages:  totalPages,
+		Limit:       q.Limit,
+	}, http.StatusOK, nil
+}
+
 // ListUnassigned returns unassigned tickets within a tenant.
 func (s *TicketService) ListUnassigned(tenantID uuid.UUID, q *dto.ListTicketsQuery) (*dto.ListTicketsResponse, int, error) {
 	q.UnassignedOnly = true

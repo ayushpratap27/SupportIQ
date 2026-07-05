@@ -19,7 +19,18 @@ type UserResponse struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Role     string `json:"role"`
+	Team     string `json:"team,omitempty"`
 	IsActive bool   `json:"is_active"`
+}
+
+// AgentJoinRequest is the input body for POST /api/v1/auth/agent-join.
+// Agents use this to register under an existing tenant by company slug.
+type AgentJoinRequest struct {
+	Name        string `json:"name"         binding:"required,min=2,max=100"`
+	Email       string `json:"email"        binding:"required,email"`
+	Password    string `json:"password"     binding:"required,min=8"`
+	CompanySlug string `json:"company_slug" binding:"required"`
+	Team        string `json:"team"         binding:"required"`
 }
 
 // AuthResponse is returned on successful login and registration.

@@ -199,6 +199,27 @@ func (h *TicketHandler) MyTickets(c *gin.Context) {
 	utils.SendSuccess(c, http.StatusOK, "My tickets retrieved", resp)
 }
 
+// TeamTickets handles GET /api/v1/team-tickets
+// Returns tickets assigned to this user OR routed to their team via ai_team.
+func (h *TicketHandler) TeamTickets(c *gin.Context) {
+	userID := c.MustGet("userID").(uint)
+	teamName, _ := c.Get("team")
+	team, _ := teamName.(string)
+
+	var q dto.ListTicketsQuery
+	if err := c.ShouldBindQuery(&q); err != nil {
+		utils.SendError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	resp, statusCode, err := h.service.TeamTickets(middleware.GetTenantID(c), userID, team, &q)
+	if err != nil {
+		utils.SendError(c, statusCode, err.Error())
+		return
+	}
+	utils.SendSuccess(c, http.StatusOK, "Team tickets retrieved", resp)
+}
+
 // ListUnassigned handles GET /api/v1/tickets/unassigned
 func (h *TicketHandler) ListUnassigned(c *gin.Context) {
 	var q dto.ListTicketsQuery

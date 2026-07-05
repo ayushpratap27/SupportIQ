@@ -128,6 +128,42 @@ func (s *AuthService) RefreshToken(refreshToken string) (*dto.AuthResponse, int,
 	return s.buildAuthResponse(&user, user.TenantID)
 }
 
+// AgentJoin registers a new SupportAgent under an existing tenant identified
+// by company_slug. No invite code required — the slug acts as the join key.
+func (s *AuthService) AgentJoin(req *dto.AgentJoinRequest) (*dto.AuthResponse, int, error) {
+	// Find the tenant
+	var tenant models.Tenant
+	if err := s.db.Where("slug = ? AND status = ?", req.CompanySlug, models.TenantStatusActive).First(&tenant).Error; err != nil {
+		return nil, http.StatusNotFound, errors.New("company not found — check the company slug")
+	}
+
+	// Check email uniqueness within this tenant
+	var existing models.User
+	if err := s.db.Where("email = ? AND tenant_id = ?", req.Email, tenant.ID).First(&existing).Error; err == nil {
+		return nil, http.StatusConflict, ErrEmailTaken
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	user := models.User{
+		TenantID:     tenant.ID,
+		Name:         req.Name,
+		Email:        req.Email,
+		PasswordHash: string(hash),
+		Role:         models.RoleSupportAgent,
+		Team:         req.Team,
+		IsActive:     true,
+	}
+	if err := s.db.Create(&user).Error; err != nil {
+		return nil, http.StatusInternalServerError, err
+	}
+
+	return s.buildAuthResponse(&user, tenant.ID)
+}
+
 // GetUserByID fetches a user record by primary key and returns a safe DTO.
 func (s *AuthService) GetUserByID(id uint) (*dto.UserResponse, int, error) {
 	var user models.User
@@ -166,6 +202,7 @@ func toUserResponse(u *models.User) dto.UserResponse {
 		Name:     u.Name,
 		Email:    u.Email,
 		Role:     string(u.Role),
+		Team:     u.Team,
 		IsActive: u.IsActive,
 	}
 }
