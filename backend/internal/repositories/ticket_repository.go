@@ -101,6 +101,14 @@ func (r *TicketRepository) UpdateAIFields(t *models.Ticket) error {
 	}).Error
 }
 
+// MarkAIFailed sets the ai_processing_status to FAILED by ticket UUID.
+// Called by the worker processor when all job retries are exhausted.
+func (r *TicketRepository) MarkAIFailed(ticketID uuid.UUID) error {
+	return r.db.Model(&models.Ticket{}).
+		Where("id = ?", ticketID).
+		Update("ai_processing_status", models.AIStatusFailed).Error
+}
+
 // UpdateSLAFields persists only the SLA-related columns.
 func (r *TicketRepository) UpdateSLAFields(t *models.Ticket) error {
 	return r.db.Model(t).

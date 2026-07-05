@@ -18,11 +18,12 @@ import (
 
 // Client polls an IMAP mailbox and returns unread messages.
 type Client struct {
-	host   string
-	port   int
-	user   string
-	pass   string
-	useTLS bool
+	host      string
+	port      int
+	user      string
+	pass      string
+	useTLS    bool
+	sinceTime *time.Time // if set, only fetch emails received at or after this time
 }
 
 // New creates an IMAP client.
@@ -30,9 +31,12 @@ func New(host string, port int, username, password string, useTLS bool) *Client 
 	return &Client{host: host, port: port, user: username, pass: password, useTLS: useTLS}
 }
 
-// FetchUnread connects, fetches all unseen messages (without marking them), and
-// returns the parsed results.  The caller is expected to call MarkSeen after
-// processing each message successfully.
+// SetSince restricts IMAP SEARCH to emails received at or after the given time.
+// Call this with account.LastSyncAt to avoid re-processing old inbox emails.
+func (c *Client) SetSince(t time.Time) { c.sinceTime = &t }
+
+// FetchUnread connects, fetches unseen messages received since sinceTime
+// (or since today if sinceTime is nil), and returns the parsed results.
 func (c *Client) FetchUnread(_ context.Context) ([]providers.ParsedEmail, error) {
 	cl, err := c.dial()
 	if err != nil {
@@ -44,9 +48,14 @@ func (c *Client) FetchUnread(_ context.Context) ([]providers.ParsedEmail, error)
 		return nil, fmt.Errorf("imap: SELECT INBOX: %w", err)
 	}
 
-	// Search for messages without the \Seen flag
+	// Search for unseen messages received since sinceTime (ignores old inbox emails)
 	criteria := goImap.NewSearchCriteria()
 	criteria.WithoutFlags = []string{goImap.SeenFlag}
+	if c.sinceTime != nil {
+		criteria.Since = *c.sinceTime
+	} else {
+		criteria.Since = time.Now().UTC().Truncate(24 * time.Hour)
+	}
 	uids, err := cl.UidSearch(criteria)
 	if err != nil {
 		return nil, fmt.Errorf("imap: UID SEARCH: %w", err)

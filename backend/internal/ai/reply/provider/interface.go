@@ -18,6 +18,7 @@ type ReplyRequest struct {
 	Sentiment    string
 	Documents    []RelevantDocument
 	CustomPrompt string // if non-empty, overrides the standard prompt builder
+	OrderContext string // optional order status snippet from orders.json
 }
 
 // ReplyResult is the parsed, validated AI reply output.

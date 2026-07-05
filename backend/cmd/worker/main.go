@@ -17,6 +17,7 @@ import (
 	"github.com/ayush/supportiq/internal/email/threading"
 	"github.com/ayush/supportiq/internal/knowledge/retrieval"
 	"github.com/ayush/supportiq/internal/models"
+	orderspkg "github.com/ayush/supportiq/internal/orders"
 	"github.com/ayush/supportiq/internal/queue/redisqueue"
 	"github.com/ayush/supportiq/internal/repositories"
 	"github.com/ayush/supportiq/internal/services"
@@ -112,6 +113,10 @@ func main() {
 	emailSvc.SetPortalConfig(cfg.AppURL, cfg.JWTAccessSecret)
 	replySvc.SetEmailService(emailSvc)
 
+	// Wire order lookup so AI replies include real order status
+	orderLoader := orderspkg.NewLoader("storage/orders.json")
+	replySvc.SetOrderLoader(orderLoader)
+
 	// ─── Job handlers ────────────────────────────────────────────────────────
 	aiHandler := workerhandlers.NewAIAnalysisHandler(ticketRepo, activityRepo, aiProv)
 	aiHandler.SetUserRepo(userRepo)
@@ -120,6 +125,7 @@ func main() {
 
 	// ─── Processor ───────────────────────────────────────────────────────────
 	proc := processor.New(redisQ, redisQ, jobRepo, cfg.WorkerCount, cfg.MaxRetries, cfg.RetryDelay)
+	proc.SetTicketRepo(ticketRepo)
 	proc.RegisterHandler(string(models.JobTypeAIAnalysis), aiHandler)
 	proc.RegisterHandler(string(models.JobTypeGenerateReply), replyHandler)
 	proc.RegisterHandler(string(models.JobTypeRegenerateReply), replyHandler)

@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/ayush/supportiq/internal/dto"
 	emailcrypto "github.com/ayush/supportiq/internal/email/crypto"
 	emailproviders "github.com/ayush/supportiq/internal/email/providers"
 	imapprovider "github.com/ayush/supportiq/internal/email/providers/imap"
 	smtpprovider "github.com/ayush/supportiq/internal/email/providers/smtp"
-	"github.com/ayush/supportiq/internal/dto"
 	"github.com/ayush/supportiq/internal/models"
 	"github.com/ayush/supportiq/internal/repositories"
 	"github.com/ayush/supportiq/internal/utils"
@@ -182,11 +182,18 @@ func (s *EmailAccountService) BuildSender(account *models.EmailAccount) (emailpr
 	}
 	return smtpprovider.New(account.SMTPHost, account.SMTPPort, account.Username, pass, account.EmailAddress, account.DisplayName, account.SMTPImplicitTLS), nil
 }
+
 // BuildReceiver decrypts credentials and returns a ready-to-use IMAP Receiver.
+// If account.LastSyncAt is set, the receiver will only fetch emails received
+// after that timestamp — preventing re-processing of existing inbox emails.
 func (s *EmailAccountService) BuildReceiver(account *models.EmailAccount) (emailproviders.Receiver, error) {
-        pass, err := emailcrypto.Decrypt(s.encryptionKey, account.EncryptedPassword)
-        if err != nil {
-                return nil, fmt.Errorf("failed to decrypt IMAP credentials")
-        }
-        return imapprovider.New(account.IMAPHost, account.IMAPPort, account.Username, pass, account.IMAPUseTLS), nil
+	pass, err := emailcrypto.Decrypt(s.encryptionKey, account.EncryptedPassword)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decrypt IMAP credentials")
+	}
+	cl := imapprovider.New(account.IMAPHost, account.IMAPPort, account.Username, pass, account.IMAPUseTLS)
+	if account.LastSyncAt != nil {
+		cl.SetSince(*account.LastSyncAt)
+	}
+	return cl, nil
 }

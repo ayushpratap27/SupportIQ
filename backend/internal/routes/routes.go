@@ -23,6 +23,7 @@ import (
 	"github.com/ayush/supportiq/internal/knowledge/retrieval"
 	"github.com/ayush/supportiq/internal/middleware"
 	"github.com/ayush/supportiq/internal/models"
+	orderspkg "github.com/ayush/supportiq/internal/orders"
 	"github.com/ayush/supportiq/internal/queue"
 	"github.com/ayush/supportiq/internal/queue/redisqueue"
 	"github.com/ayush/supportiq/internal/repositories"
@@ -227,11 +228,16 @@ func SetupRouter(db *gorm.DB, cfg *config.Config, serverCtx context.Context) *gi
 			replyService.SetCommentRepo(commentRepo)    // portal replies saved as comments
 			portalHandler.SetReplyTrigger(replyService) // AI reply for portal messages
 
+			// Wire order lookup so AI replies include real order status from orders.json
+			orderLoader := orderspkg.NewLoader("storage/orders.json")
+			replyService.SetOrderLoader(orderLoader)
+
 			// Start email background workers — stop when server shuts down.
 			workerCtx := serverCtx
-			pollInterval := time.Duration(cfg.EmailPollInterval) * time.Second
-			go emailworkers.StartInboundWorker(workerCtx, emailAccountRepo, emailSvc, emailAccountSvc, pollInterval)
-			go emailworkers.StartOutboundWorker(workerCtx, emailSvc, pollInterval, cfg.MaxEmailRetries)
+			inboundInterval := time.Duration(cfg.EmailPollInterval) * time.Second
+			outboundInterval := 10 * time.Second // always check outbound every 10s for fast replies
+			go emailworkers.StartInboundWorker(workerCtx, emailAccountRepo, emailSvc, emailAccountSvc, inboundInterval)
+			go emailworkers.StartOutboundWorker(workerCtx, emailSvc, outboundInterval, cfg.MaxEmailRetries)
 
 			// Handlers
 			ticketHandler := handlers.NewTicketHandler(ticketService)

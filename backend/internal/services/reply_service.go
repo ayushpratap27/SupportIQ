@@ -24,12 +24,20 @@ type ReplyService struct {
 	replyRepo     *repositories.ReplyRepository
 	activityRepo  *repositories.ActivityRepository
 	commentRepo   *repositories.CommentRepository // for portal replies
+	orderLoader   OrderLookup                     // optional order-status lookup
 	emailSvc      *EmailService
 	model         string
 }
 
+// OrderLookup is satisfied by *orders.Loader — returns the order context snippet
+// to inject into the AI reply prompt, or empty string if not found.
+type OrderLookup interface {
+	FindOrderContext(text string) string
+}
+
 func (s *ReplyService) SetEmailService(e *EmailService)                  { s.emailSvc = e }
 func (s *ReplyService) SetCommentRepo(r *repositories.CommentRepository) { s.commentRepo = r }
+func (s *ReplyService) SetOrderLoader(l OrderLookup)                     { s.orderLoader = l }
 
 func NewReplyService(
 	replyProvider replyprovider.ReplyProvider,
@@ -390,6 +398,14 @@ func (s *ReplyService) generate(ctx context.Context, tenantID uuid.UUID, ticketI
 		Priority:    ticket.AIPriority,
 		Sentiment:   ticket.AISentiment,
 		Documents:   replyDocs,
+	}
+
+	// Inject real order status if an order number is found in the ticket
+	if s.orderLoader != nil {
+		if ctx := s.orderLoader.FindOrderContext(ticket.Subject + " " + ticket.Description); ctx != "" {
+			req.OrderContext = ctx
+			log.Info("Reply: Order data injected into prompt")
+		}
 	}
 
 	// 4. Call AI provider

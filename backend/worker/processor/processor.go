@@ -11,6 +11,7 @@ import (
 	"github.com/ayush/supportiq/internal/queue/redisqueue"
 	"github.com/ayush/supportiq/internal/repositories"
 	"github.com/ayush/supportiq/internal/utils"
+	"github.com/google/uuid"
 )
 
 // Handler processes a single job. Each job type has its own Handler implementation.
@@ -23,6 +24,7 @@ type Processor struct {
 	queue       queue.Queue
 	redisQ      *redisqueue.Client
 	jobRepo     *repositories.JobRepository
+	ticketRepo  *repositories.TicketRepository
 	handlers    map[string]Handler
 	workerCount int
 	maxRetries  int
@@ -46,6 +48,9 @@ func New(
 		retryDelay:  retryDelay,
 	}
 }
+
+// SetTicketRepo injects the ticket repository so exhausted jobs can mark tickets as FAILED.
+func (p *Processor) SetTicketRepo(r *repositories.TicketRepository) { p.ticketRepo = r }
 
 // RegisterHandler binds a job type string to its Handler implementation.
 func (p *Processor) RegisterHandler(jobType string, h Handler) {
@@ -151,10 +156,15 @@ func (p *Processor) processJob(ctx context.Context, workerID int, job queue.Job)
 		return
 	}
 
-	// All retries exhausted → dead letter
+	// All retries exhausted → dead letter + mark ticket as FAILED so UI shows retry button
 	log.WithField("max_retries", p.maxRetries).Error("Worker: Job exhausted all retries — moving to dead letter")
 	_ = p.jobRepo.MarkDead(job.DBJobID, err.Error())
 	_ = p.queue.MoveToDeadLetter(ctx, job)
+	if p.ticketRepo != nil && job.TicketID != "" {
+		if ticketID, parseErr := uuid.Parse(job.TicketID); parseErr == nil {
+			_ = p.ticketRepo.MarkAIFailed(ticketID)
+		}
+	}
 	p.publishEvent(ctx, events.New(events.JobFailed, job.TicketID, job.DBJobID, job.Type,
 		map[string]string{"error": err.Error()}))
 }
@@ -196,5 +206,3 @@ func (p *Processor) publishEvent(ctx context.Context, evt events.Event) {
 		utils.Logger.WithError(err).Warn("Worker: Failed to publish event")
 	}
 }
-
-

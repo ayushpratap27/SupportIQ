@@ -33,6 +33,13 @@ func BuildReplyPrompt(req replyprovider.ReplyRequest) string {
 	sb.WriteString(fmt.Sprintf("Priority: %s\n", req.Priority))
 	sb.WriteString(fmt.Sprintf("Customer Sentiment: %s\n\n", req.Sentiment))
 
+	// Inject real order status if found — AI must use this, not guess
+	if req.OrderContext != "" {
+		sb.WriteString("--- REAL ORDER DATA (use this EXACTLY in your reply) ---\n")
+		sb.WriteString(req.OrderContext)
+		sb.WriteString("--- END ORDER DATA ---\n\n")
+	}
+
 	if len(req.Documents) > 0 {
 		sb.WriteString("--- RELEVANT KNOWLEDGE BASE DOCUMENTS ---\n\n")
 		for i, doc := range req.Documents {

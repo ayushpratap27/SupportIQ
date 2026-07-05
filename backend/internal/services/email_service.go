@@ -75,6 +75,17 @@ func (s *EmailService) SetPortalConfig(baseURL, secret string) {
 // ProcessInbound processes one parsed inbound email: detects/creates a ticket,
 // stores the message record, persists attachments, and logs activity.
 func (s *EmailService) ProcessInbound(ctx context.Context, account *models.EmailAccount, parsed *emailproviders.ParsedEmail) error {
+	// Skip automated/marketing emails — they have List-Unsubscribe or Auto-Submitted headers.
+	// Real customer support emails never contain these headers.
+	if strings.Contains(parsed.RawHeaders, "List-Unsubscribe") ||
+		strings.Contains(parsed.RawHeaders, "List-ID") ||
+		strings.Contains(parsed.RawHeaders, "Auto-Submitted") ||
+		strings.Contains(parsed.RawHeaders, "Precedence: bulk") ||
+		strings.Contains(parsed.RawHeaders, "Precedence: list") {
+		utils.Logger.WithField("subject", parsed.Subject).
+			Debug("Email: skipping automated/newsletter email")
+		return nil
+	}
 	// Deduplicate — skip if this Message-ID is already recorded
 	if parsed.MessageID != "" {
 		if _, err := s.messageRepo.FindTicketByMessageID(ctx, parsed.MessageID); err == nil {
@@ -482,6 +493,14 @@ func (s *EmailService) SyncNow(ctx context.Context) {
 		}
 
 		for j := range parsed {
+			// Skip emails older than last_sync_at (exact-time filter)
+			if account.LastSyncAt != nil && !parsed[j].Date.IsZero() &&
+				parsed[j].Date.Before(*account.LastSyncAt) {
+				if parsed[j].UID > 0 {
+					_ = receiver.MarkSeen(ctx, parsed[j].UID)
+				}
+				continue
+			}
 			if err := s.ProcessInbound(ctx, account, &parsed[j]); err != nil {
 				utils.Logger.WithError(err).
 					WithField("message_id", parsed[j].MessageID).
@@ -494,8 +513,10 @@ func (s *EmailService) SyncNow(ctx context.Context) {
 		}
 
 		now := time.Now()
-		account.LastSyncAt = &now
-		_ = s.accountRepo.Update(account)
+		if account.LastSyncAt == nil || now.After(*account.LastSyncAt) {
+			account.LastSyncAt = &now
+			_ = s.accountRepo.Update(account)
+		}
 
 		utils.Logger.WithField("account", account.EmailAddress).
 			WithField("count", len(parsed)).
