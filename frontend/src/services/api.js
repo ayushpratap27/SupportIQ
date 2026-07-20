@@ -6,7 +6,7 @@ export const TOKEN_KEY = 'access_token'
 // Single Axios instance — base URL from env, never hardcoded.
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  timeout: 10000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
   },

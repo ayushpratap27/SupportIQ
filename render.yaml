@@ -25,9 +25,9 @@ services:
       - key: APP_URL
         sync: false # Set manually in the Render dashboard (e.g., https://your-app.vercel.app)
       - key: JWT_ACCESS_SECRET
-        generateValue: true
+        sync: false # Set manually in the Render dashboard (must be persistent to decrypt stored IMAP/SMTP credentials)
       - key: JWT_REFRESH_SECRET
-        generateValue: true
+        sync: false # Set manually in the Render dashboard
       - key: GEMINI_API_KEY
         sync: false # Optional
       - key: GROQ_API_KEY
